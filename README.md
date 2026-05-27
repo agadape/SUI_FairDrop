@@ -1,73 +1,94 @@
-# FairDrop
+# FairDrop 🎯
 
-**Fair token launches on Sui — cryptographically enforced, no trust required.**
+> *What if a token launch actually couldn't be gamed?*
 
-FairDrop is a sealed-bid auction protocol for fair token distribution. Every fairness guarantee is enforced on-chain by Sui-native primitives. No backend. No admin keys. No favored insiders.
+FairDrop is a sealed-bid auction for fair token distribution on Sui. Every fairness guarantee is enforced on-chain by cryptographic primitives — not promises, not terms of service, not a multisig you have to trust.
 
-Live on testnet: [suiscan.xyz/testnet/object/0xf078e2...](https://suiscan.xyz/testnet/object/0xf078e2c6ae561ddf4b079c6c15cfa6158489404f5d32c66edbebc5944b5e4006)
+No backend. No admin keys. No favored insiders.
+
+**[→ Try it live on testnet](https://suiscan.xyz/testnet/object/0xf078e2c6ae561ddf4b079c6c15cfa6158489404f5d32c66edbebc5944b5e4006)**
 
 ---
 
-## The problem
+## The problem with every other token launch
 
-Standard token launches are broken by design:
+Picture a typical NFT mint or token sale:
 
-- **Bots** front-run public mints before humans can react
-- **Whales** see bid amounts and shade their bids accordingly  
-- **Insiders** receive allocations before the public launch opens
+1. Team announces launch time
+2. Bots flood the RPC 0.001s before open
+3. Whales watch the mempool and adjust their bids last-second
+4. Insiders got their allocation in a Telegram group last week
 
-FairDrop makes these attacks cryptographically impossible.
+The "fair launch" was never fair. The game was rigged before it started.
+
+**FairDrop makes these attacks cryptographically impossible.** Not "we promise we won't." Impossible.
 
 ---
 
 ## How it works
 
-Three primitives composed into a sealed-bid uniform-price auction:
+Three Sui-native primitives, composed into one airtight protocol:
 
-### 1. zkLogin — one human, one entry
+### 🪪 zkLogin → One human, one entry
 
-Registration takes a zkLogin proof (Google OAuth). The proof produces a **nullifier** — `sha3_256(address || auction_id)` — stored on-chain. One Google account maps to exactly one nullifier. Second registration from any address or nullifier → rejected.
+You sign in with Google. Under the hood, a zero-knowledge proof turns your Google identity into a **nullifier** — a unique fingerprint that's stored on-chain without revealing your identity.
 
-### 2. Commit-reveal — bids are blind
+Try to register twice? The contract rejects it. No second accounts, no burner wallets, no Sybil attacks.
 
-During the commit phase, bidders submit `sha3_256(amount_le || nonce)`. The amount is hidden. No one — not other bidders, not the creator — can see bid values until the reveal phase opens.
+### 🔒 Commit-reveal → Bids are completely blind
 
-### 3. `sui::random` — provably fair winner selection
+During the commit phase, you submit a hash of your bid: `sha3_256(amount || nonce)`. The amount is invisible. No one — not other bidders, not the creator, not a node operator — can see what you bid until the reveal phase opens.
 
-Resolution uses Sui's on-chain randomness (`0x8`), which is produced by a distributed key generation (DKG) network of validators. When multiple bidders tie at the clearing price, the tie is broken by `sui::random::RandomGenerator`. No one can predict or influence the outcome.
+Bid-shading and front-running require seeing the bids. You can't front-run what you can't see.
 
-### Clearing price logic
+### 🎲 `sui::random` → The winner draw nobody can rig
 
-1. Collect all revealed bids
-2. Sort descending
-3. Clearing price = lowest bid where cumulative supply ≥ total supply
-4. Bidders strictly above clearing: automatic winners
-5. Bidders exactly at clearing: randomized via `sui::random`
-6. Winners receive `WinnerCertificate`; losers receive full escrow refund
+When bidders tie at the clearing price, winners are chosen using Sui's on-chain randomness (`0x8`) — produced by a distributed key generation network across all Sui validators. No single party can predict or influence the output.
 
-All refunds and certificate mints happen atomically in one PTB.
+This isn't "we used Chainlink VRF." The randomness is native to the chain itself, built by the same team that designed Sui's cryptography.
+
+---
+
+## The auction flow
+
+```
+Register (zkLogin)
+    ↓
+Commit phase — submit hash(amount || nonce)
+    ↓
+Reveal phase — reveal amount + nonce (contract verifies hash matches)
+    ↓
+Resolution — sort bids, find clearing price, sui::random breaks ties
+    ↓
+Winners get WinnerCertificate → claim tokens
+Losers get full escrow refund, atomically
+```
+
+**Clearing price logic:** sort all revealed bids highest-to-lowest. Find the lowest bid where the cumulative supply of equal-or-higher bids meets the total supply. That's the clearing price. Winners above it pay the clearing price, not their bid. Overbidding costs you nothing extra.
 
 ---
 
 ## Sponsor integrations
 
-| Sponsor | Integration |
-|---------|-------------|
-| **Walrus** | Encrypted nonce blobs — `blob_id` stored in `Commitment` on-chain; used to recover bid nonce if localStorage is cleared |
-| **Seal** | Threshold encryption of nonce — access policy `fairdrop::seal_policy` requires `Entry` ownership; decryption requires the bidder's object, not just their address |
-| **Enoki** | Sponsored transactions — `register` and `commit_bid` are gasless for bidders via Enoki sponsored-tx flow with direct-sign fallback |
-| **Pyth** | SUI/USD price feed — real-time bid value displayed in USD alongside SUI amount |
+| | What | Why it matters |
+|---|---|---|
+| **Walrus** 🦭 | Stores your encrypted nonce as a blob on decentralized storage. The `blob_id` lives in your `Commitment` object on-chain. | Close the tab mid-auction? Your nonce isn't gone. |
+| **Seal** 🔐 | Threshold-encrypts the nonce. The decryption access policy (`fairdrop::seal_policy`) requires ownership of your `Entry` object. | Only *you* can decrypt your nonce — your key server can't hand it to anyone else. |
+| **Enoki** ⛽ | Sponsored transactions for `register` and `commit_bid`. | Zero gas to register and place a bid. Enoki pays. |
+| **Pyth** 📈 | Live SUI/USD price feed in the bid UI. | You always know what your bid is worth in dollars. |
 
 ---
 
-## Deployed contracts (testnet)
+## Deployed contracts
 
 | Object | Address |
 |--------|---------|
-| Package | [`0xd0560a86bca4ee7af9f17d5b91b9f876f9f4b6b1dfee665367d2d88e0bf77dee`](https://suiscan.xyz/testnet/object/0xd0560a86bca4ee7af9f17d5b91b9f876f9f4b6b1dfee665367d2d88e0bf77dee) |
-| Auction | [`0xf078e2c6ae561ddf4b079c6c15cfa6158489404f5d32c66edbebc5944b5e4006`](https://suiscan.xyz/testnet/object/0xf078e2c6ae561ddf4b079c6c15cfa6158489404f5d32c66edbebc5944b5e4006) |
-| Random (shared) | `0x8` |
-| Clock (shared) | `0x6` |
+| Package | [`0xd0560a...`](https://suiscan.xyz/testnet/object/0xd0560a86bca4ee7af9f17d5b91b9f876f9f4b6b1dfee665367d2d88e0bf77dee) |
+| Auction | [`0xf078e2...`](https://suiscan.xyz/testnet/object/0xf078e2c6ae561ddf4b079c6c15cfa6158489404f5d32c66edbebc5944b5e4006) |
+| Randomness | `0x8` (Sui shared object) |
+| Clock | `0x6` (Sui shared object) |
+
+Everything is publicly inspectable on SuiScan right now.
 
 ---
 
@@ -76,36 +97,31 @@ All refunds and certificate mints happen atomically in one PTB.
 ```
 contracts/
   sources/
-    auction.move        # core protocol — commit-reveal, resolution, escrow
-    seal_policy.move    # Seal access policy — entry-ownership gated decryption
+    auction.move        # core protocol: commit-reveal, resolution, escrow
+    seal_policy.move    # Seal access policy: entry-ownership gated decryption
   tests/
-    auction_tests.move  # 23 tests including replay-attack coverage
-  Move.toml
-  Published.toml        # deployed package metadata
+    auction_tests.move  # 23 tests, including 6 exploit-replay scenarios
 
 frontend/
   app/
-    page.tsx            # multi-section landing page
+    page.tsx            # landing page (9 sections, Framer Motion animations)
     components/
-      LiveAuction.tsx   # phase-aware auction UI (commit / reveal / resolve / claim)
-    layout.tsx
-    providers.tsx
+      LiveAuction.tsx   # the actual auction UI: commit / reveal / resolve / claim
   lib/
-    constants.ts        # contract addresses and network config
+    constants.ts        # contract addresses, network config
     hash.ts             # sha3_256 commitment hash
-    enoki.ts            # sponsored tx with direct-sign fallback
+    enoki.ts            # sponsored tx + direct-sign fallback
     seal.ts             # Seal threshold encryption client
     walrus.ts           # Walrus blob storage client
     pyth.ts             # Pyth SUI/USD price feed
 
 scripts/
-  deploy.sh             # publish + auction setup (bash)
-  deploy.ps1            # publish + auction setup (PowerShell)
+  deploy.sh / deploy.ps1   # publish contracts + initialize auction
 ```
 
 ---
 
-## Running locally
+## Run it yourself
 
 ### Contracts
 
@@ -113,7 +129,7 @@ scripts/
 # build
 sui move build --path contracts/
 
-# test (all 23)
+# run all 23 tests
 sui move test --path contracts/
 
 # deploy to testnet
@@ -126,32 +142,37 @@ sui client publish --path contracts/ --gas-budget 200000000
 ```bash
 cd frontend
 cp .env.local.example .env.local
-# fill in NEXT_PUBLIC_PACKAGE_ID, NEXT_PUBLIC_AUCTION_ID, NEXT_PUBLIC_ENOKI_API_KEY, NEXT_PUBLIC_GOOGLE_CLIENT_ID
+# fill in: PACKAGE_ID, AUCTION_ID, ENOKI_API_KEY, GOOGLE_CLIENT_ID
 
 npm install
-npm run dev          # localhost:3000
-npm run build        # static export
+npm run dev        # localhost:3000
+npm run build      # static export, no server needed
 ```
 
 ---
 
-## Security properties
+## Security breakdown
 
-| Attack | Defense |
-|--------|---------|
-| Sybil (multiple entries per person) | zkLogin nullifier + per-address dedup — both checked on `register` |
-| Front-running | Commit phase hides amounts; only hash on-chain until reveal |
-| Bid shading | Uniform clearing price — overbidding wastes nothing beyond clearing price |
-| Winner impersonation | `Entry` has no `store` — cannot be transferred; `commit_bid` checks `entry.owner == sender` |
+| Attack vector | How FairDrop blocks it |
+|---------------|------------------------|
+| Sybil (multiple entries per person) | zkLogin nullifier + per-address dedup — both checked at `register` |
+| Front-running | Commit phase hides amounts behind a hash until reveal |
+| Bid shading | Blind bids — you can't shade what you can't see |
+| Winner impersonation | `Entry` has no `store` — non-transferable; `commit_bid` checks `entry.owner == sender` |
 | Cross-auction object reuse | Every entry function asserts `object.auction_id == auction.id` |
 | Double-resolve | `resolved = true` set before first coin transfer |
 | Winner reclaiming escrow | `reclaim_escrow` checks winners table and rejects |
 
 ---
 
-## Tech stack
+## Stack
 
-- **Smart contracts**: Move 2024 (Sui)
-- **Frontend**: Next.js 14, TypeScript, Tailwind CSS, Framer Motion
-- **Wallet**: `@mysten/dapp-kit`, zkLogin via Enoki
-- **Static export**: no server, no backend — `output: 'export'`
+**Contracts** — Move 2024 (Sui), deployed to testnet
+
+**Frontend** — Next.js 14, TypeScript, Tailwind CSS, Framer Motion, static export (`output: 'export'` — zero backend)
+
+**Wallet** — `@mysten/dapp-kit`, zkLogin via Enoki
+
+---
+
+*Built for Sui Overflow 2026*
