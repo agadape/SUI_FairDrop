@@ -61,9 +61,24 @@ const FLOW_STEPS = [
 // ─── Problem data ─────────────────────────────────────────────────────────────
 
 const PROBLEMS = [
-  { icon: "🤖", title: "Bots front-run bids", body: "Bots watch the mempool and submit identical or higher bids in the same block. Public transactions are weaponized." },
-  { icon: "👁", title: "Whales see your amount", body: "In public-bid auctions, large holders monitor submissions and outbid you at the last second with perfect information." },
-  { icon: "🎲", title: "Randomness is unverifiable", body: "The organizer runs the winner selection. Nobody can verify the outcome wasn't pre-arranged." },
+  {
+    icon: "🤖",
+    title: "Bots steal allocations",
+    body: "Bots watch the mempool and submit higher bids in the same block. Public bids are weapons for front-running.",
+    fix: "Blind bids — no amount on-chain until reveal. Nothing to front-run.",
+  },
+  {
+    icon: "👁",
+    title: "Whales see your bid",
+    body: "In public auctions, large holders watch submissions and shade their bid above yours at the last second.",
+    fix: "Every bid is a hash until reveal phase. Whales can't see, can't shade.",
+  },
+  {
+    icon: "🎲",
+    title: "Nobody verifies the draw",
+    body: "The organizer controls winner selection. \"Random\" just means they said so. No proof exists.",
+    fix: "sui::random at 0x8 — validator DKG. On-chain. Auditable forever.",
+  },
 ];
 
 // ─── Fairness cards ───────────────────────────────────────────────────────────
@@ -128,11 +143,11 @@ const FAIRNESS = [
 // ─── How it works ─────────────────────────────────────────────────────────────
 
 const STEPS = [
-  { num: "01", label: "Register", desc: "Sign in with Google via zkLogin. A unique nullifier is minted on-chain. One entry per human, enforced at the contract level — not by an admin list." },
-  { num: "02", label: "Commit", desc: "Choose your bid amount and submit sha3_256(amount ‖ nonce). Your bid is completely hidden. Even validators can't see the amount until reveal." },
-  { num: "03", label: "Reveal", desc: "After the commit phase closes, reveal your actual bid. The contract verifies your hash matches exactly. Late or incorrect reveals are rejected." },
-  { num: "04", label: "Resolve", desc: "Anyone can call resolve. sui::random at 0x8 provides validator DKG-backed randomness to break ties. No centralized selection, no admin required." },
-  { num: "05", label: "Claim", desc: "Winners claim their allocation and receive escrow change. Losers get full escrow refunds. Creator receives proceeds. All atomic, all in one PTB." },
+  { num: "01", label: "Register with Google", desc: "Your Google login generates a zero-knowledge proof on your device. The proof produces a nullifier — a unique on-chain fingerprint — without revealing your identity. Second registration from any address or nullifier: rejected." },
+  { num: "02", label: "Seal your bid", desc: "You choose an amount and submit sha3_256(amount ‖ nonce). The hash commits you to the bid without revealing it. Miners, validators, and every other bidder see only a 32-byte hash until reveal. Front-running requires seeing the bid. You made that impossible." },
+  { num: "03", label: "Reveal when the phase opens", desc: "After the commit window closes, you send your actual amount and nonce. The contract recomputes the hash and verifies it matches exactly. Reveal a different amount: rejected. Reveal late: rejected. No flexibility, by design." },
+  { num: "04", label: "Anyone calls resolve", desc: "No admin required. Anyone calls resolve and the contract does the work: sort bids, find the clearing price, break ties using sui::random at 0x8. Validator DKG randomness — no single party can predict or bias it. The outcome is on-chain and permanent." },
+  { num: "05", label: "Settle atomically", desc: "Winners receive their allocation and escrow change. Losers receive full refunds. Creator receives proceeds. All of this happens in one Programmable Transaction Block. Everything settles or nothing settles. No second transactions. No admin intervention." },
 ];
 
 // ─── Sui primitives ───────────────────────────────────────────────────────────
@@ -227,8 +242,8 @@ function HeroSection() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.25, duration: 0.55 }}
             >
-              Hidden bids. Verifiable randomness. One human, one entry.
-              No backend. No admin keys. No shortcuts.
+              Bots can&apos;t front-run what they can&apos;t see. Whales can&apos;t shade blind bids.
+              Every winner chosen by on-chain randomness nobody controls.
             </motion.p>
 
             <motion.div
@@ -250,17 +265,32 @@ function HeroSection() {
             </motion.div>
 
             <motion.div
-              className="flex flex-wrap gap-2 pt-1"
+              className="space-y-3 pt-1"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.7, duration: 0.6 }}
             >
-              {["zkLogin", "sui::random", "Seal", "Walrus", "Enoki", "Pyth"].map((s) => (
-                <span key={s}
-                  className="text-[10px] text-zinc-700 border border-zinc-800 rounded-full px-2.5 py-0.5 font-mono">
-                  {s}
-                </span>
-              ))}
+              <div className="flex flex-wrap gap-2">
+                {["zkLogin", "sui::random", "Seal", "Walrus", "Enoki", "Pyth"].map((s) => (
+                  <span key={s}
+                    className="text-[10px] text-zinc-700 border border-zinc-800 rounded-full px-2.5 py-0.5 font-mono">
+                    {s}
+                  </span>
+                ))}
+              </div>
+              <div className="flex flex-wrap gap-x-4 gap-y-1">
+                {[
+                  "No bots",
+                  "Bids hidden",
+                  "Randomness verifiable",
+                  "No backend",
+                  "No admin key",
+                ].map((t) => (
+                  <span key={t} className="text-[11px] text-zinc-500 flex items-center gap-1">
+                    <span className="text-emerald-600">✓</span> {t}
+                  </span>
+                ))}
+              </div>
             </motion.div>
           </div>
 
@@ -321,28 +351,28 @@ function ProblemSection() {
             The problem
           </motion.p>
           <motion.h2 variants={fadeUp} className="text-3xl font-bold text-white mb-3">
-            Current launches are broken.
+            Every launch you&apos;ve seen was gameable.
           </motion.h2>
           <motion.p variants={fadeUp} className="text-zinc-500 mb-12 max-w-xl leading-relaxed">
-            Most token launches look fair on the surface. Underneath, the mechanics favor bots, whales, and insiders.
+            It looks fair from the outside. The mechanics tell a different story — one where bots, whales, and insiders have structural advantages before the first bid is placed.
           </motion.p>
 
           <motion.div variants={stagger} className="grid sm:grid-cols-3 gap-4">
             {PROBLEMS.map((p) => (
               <motion.div key={p.title} variants={fadeUp}
                 whileHover={{ scale: 1.015 }}
-                className="p-5 rounded-2xl border border-red-500/10 bg-red-950/[0.12] hover:border-red-500/20 hover:bg-red-950/20 transition-all cursor-default">
+                className="p-5 rounded-2xl border border-red-500/10 bg-red-950/[0.12] hover:border-red-500/20 hover:bg-red-950/20 transition-all cursor-default flex flex-col">
                 <div className="text-2xl mb-3">{p.icon}</div>
                 <h3 className="text-sm font-semibold text-red-300 mb-2">{p.title}</h3>
-                <p className="text-xs text-zinc-500 leading-relaxed">{p.body}</p>
+                <p className="text-xs text-zinc-500 leading-relaxed flex-1">{p.body}</p>
+                <div className="mt-3 pt-3 border-t border-emerald-500/10">
+                  <p className="text-[11px] text-emerald-600 leading-relaxed">
+                    <span className="text-emerald-500 font-semibold">FairDrop: </span>{p.fix}
+                  </p>
+                </div>
               </motion.div>
             ))}
           </motion.div>
-
-          <motion.p variants={fadeUp} className="mt-8 text-sm text-zinc-400">
-            FairDrop makes these attacks{" "}
-            <span className="text-white font-semibold">cryptographically impossible.</span>
-          </motion.p>
         </motion.div>
       </div>
     </section>
@@ -389,9 +419,12 @@ function HowItWorksSection() {
           <motion.p variants={fadeUp} className="text-[10px] text-zinc-600 font-mono uppercase tracking-[0.2em] mb-3">
             Auction lifecycle
           </motion.p>
-          <motion.h2 variants={fadeUp} className="text-3xl font-bold text-white mb-10">
+          <motion.h2 variants={fadeUp} className="text-3xl font-bold text-white mb-2">
             Five steps. No trust required.
           </motion.h2>
+          <motion.p variants={fadeUp} className="text-zinc-600 text-xs mb-10">
+            Click any step to expand.
+          </motion.p>
 
           <motion.div variants={stagger} className="space-y-2">
             {STEPS.map((step, i) => (
@@ -471,9 +504,25 @@ function VerifiabilitySection() {
           <motion.h2 variants={fadeUp} className="text-3xl font-bold text-white mb-4">
             Everything is publicly inspectable.
           </motion.h2>
-          <motion.p variants={fadeUp} className="text-zinc-500 mb-12 max-w-xl leading-relaxed">
+          <motion.p variants={fadeUp} className="text-zinc-500 mb-8 max-w-xl leading-relaxed">
             Every object, every transaction, every state change. Open on SuiScan right now.
           </motion.p>
+
+          <motion.div variants={stagger} className="flex flex-wrap gap-3 mb-10">
+            {[
+              { label: "zkLogin verified", color: "text-blue-400 border-blue-500/20 bg-blue-950/20" },
+              { label: "No backend", color: "text-emerald-400 border-emerald-500/20 bg-emerald-950/20" },
+              { label: "No admin key", color: "text-emerald-400 border-emerald-500/20 bg-emerald-950/20" },
+              { label: "One PTB settlement", color: "text-violet-400 border-violet-500/20 bg-violet-950/20" },
+              { label: "sui::random DKG", color: "text-violet-400 border-violet-500/20 bg-violet-950/20" },
+              { label: "100% on-chain state", color: "text-cyan-400 border-cyan-500/20 bg-cyan-950/20" },
+            ].map((item) => (
+              <motion.span key={item.label} variants={fadeUp}
+                className={`text-xs font-mono px-3 py-1.5 rounded-full border flex items-center gap-1.5 ${item.color}`}>
+                <span className="text-emerald-500">✓</span> {item.label}
+              </motion.span>
+            ))}
+          </motion.div>
 
           <motion.div variants={stagger} className="grid sm:grid-cols-2 gap-3">
             {RECEIPTS.filter((r) => r.id).map((r) => (
@@ -598,14 +647,15 @@ export default function Home() {
         <div className="max-w-6xl mx-auto px-6 text-center">
           <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }}>
             <motion.h2 variants={fadeUp} className="text-4xl lg:text-5xl font-bold text-white mb-6 leading-tight text-balance">
-              This is what fair crypto infrastructure
+              The primitive every fair launch
               {" "}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-emerald-400">
-                looks like.
+                should have been built on.
               </span>
             </motion.h2>
             <motion.p variants={fadeUp} className="text-zinc-400 text-lg mb-10 max-w-lg mx-auto leading-relaxed">
               No backend. No admin keys. No trust assumptions beyond the Sui protocol itself.
+              This is what token launches look like when they&apos;re designed for users.
             </motion.p>
             <motion.div variants={fadeUp} className="flex justify-center gap-4 flex-wrap">
               <a href="#auction"

@@ -10,6 +10,7 @@ import {
 } from "@mysten/dapp-kit";
 import { ConnectButton } from "@mysten/dapp-kit";
 import { useEffect, useState, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { AUCTION_ID, PACKAGE_ID, CLOCK_ID, RANDOM_ID, MIST_PER_SUI, NETWORK } from "@/lib/constants";
 import { computeCommitmentHash, generateNonce, nonceToHex, hexToNonce } from "@/lib/hash";
 import { walrusStore, walrusRead } from "@/lib/walrus";
@@ -93,6 +94,7 @@ export function LiveAuction() {
   const [refreshTick, setRefreshTick] = useState(0);
   const [countdown, setCountdown] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [revealedAmount, setRevealedAmount] = useState<string | null>(null);
 
   const sessionKeyRef = useRef<SessionKey | null>(null);
   const refreshObjects = () => setRefreshTick((t) => t + 1);
@@ -175,7 +177,7 @@ export function LiveAuction() {
   useEffect(() => {
     setEntryId(null); setCommitmentId(null); setCommitmentBlobId(null);
     setCertificateId(null); setCreatorCapId(null); setHasLocalNonce(false);
-    setLastTxDigest(null); setResolveDigest(null);
+    setLastTxDigest(null); setResolveDigest(null); setRevealedAmount(null);
     sessionKeyRef.current = null;
     if (!account?.address || !PACKAGE_ID) return;
     setHasLocalNonce(!!getLocalBid());
@@ -317,7 +319,7 @@ export function LiveAuction() {
     const tx = new Transaction();
     tx.moveCall({ target: `${PACKAGE_ID}::auction::reveal_bid`, arguments: [tx.object(AUCTION_ID), tx.object(commitmentId), tx.pure.u64(amountMist), tx.pure.vector("u8", Array.from(nonce)), tx.object(CLOCK_ID)] });
     signAndExecute({ transaction: tx }, {
-      onSuccess: (data) => { setIsSubmitting(false); setLastTxDigest(data.digest); setTxStatus("Bid revealed!"); localStorage.removeItem(NONCE_KEY); setHasLocalNonce(false); refreshObjects(); },
+      onSuccess: (data) => { setIsSubmitting(false); setLastTxDigest(data.digest); setTxStatus("Bid revealed!"); setRevealedAmount(amountMist.toString()); localStorage.removeItem(NONCE_KEY); setHasLocalNonce(false); refreshObjects(); },
       onError: (e) => { setIsSubmitting(false); setTxStatus(`Error: ${e.message}`); },
     });
   }
@@ -505,22 +507,75 @@ export function LiveAuction() {
           )}
 
           {commitmentId && phase === "COMMIT" && (
-            <div className="rounded-xl border border-white/10 bg-white/[0.02] px-4 py-3 text-sm text-zinc-400">
-              Bid committed. Waiting for reveal phase.
+            <div className="rounded-xl border border-amber-500/20 bg-amber-950/10 px-4 py-4">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs text-zinc-500 uppercase tracking-widest">Sealed bid</span>
+                <span className="text-amber-500 text-base">🔒</span>
+              </div>
+              <div className="font-mono text-2xl font-bold text-amber-500/60 tracking-[0.15em]">???  SUI</div>
+              <p className="text-[11px] text-zinc-600 mt-1.5">Amount hidden from validators, MEV bots, and other bidders. Reveal phase opens soon.</p>
             </div>
           )}
 
           {/* Step 3: Reveal */}
           {commitmentId && phase === "REVEAL" && (
-            <section className="space-y-2">
+            <section className="space-y-3">
               <p className="text-zinc-500 text-xs uppercase tracking-widest">Step 3 — Reveal</p>
-              {hasLocalNonce && <p className="text-emerald-400 text-xs">Nonce in localStorage — ready to reveal.</p>}
-              {!hasLocalNonce && commitmentBlobId && <p className="text-amber-400 text-xs">Recovering via Seal + Walrus (blob: {commitmentBlobId.slice(0, 12)}…)</p>}
-              {!hasLocalNonce && !commitmentBlobId && <p className="text-red-400 text-xs">localStorage cleared and no Walrus backup. Reveal may fail.</p>}
-              <button onClick={handleReveal} disabled={isSubmitting}
-                className={`w-full py-3 rounded-xl text-sm font-semibold transition-colors ${isSubmitting ? "opacity-50 cursor-not-allowed bg-amber-800" : "bg-amber-600 hover:bg-amber-500"}`}>
-                {isSubmitting ? "Revealing…" : "Reveal Bid →"}
-              </button>
+
+              <AnimatePresence mode="wait">
+                {!revealedAmount ? (
+                  <motion.div
+                    key="sealed"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0, scale: 0.96 }}
+                    className="rounded-xl border border-amber-500/25 bg-amber-950/15 px-4 py-4"
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs text-zinc-500 uppercase tracking-widest">Sealed bid</span>
+                      <motion.span
+                        animate={{ opacity: [1, 0.4, 1] }}
+                        transition={{ duration: 2.5, repeat: Infinity }}
+                        className="text-amber-500 text-base"
+                      >🔒</motion.span>
+                    </div>
+                    <div className="font-mono text-2xl font-bold text-amber-500/50 tracking-[0.2em] select-none">???  SUI</div>
+                    <p className="text-[11px] text-zinc-600 mt-1.5">Amount hidden from everyone until you reveal.</p>
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="revealed"
+                    initial={{ opacity: 0, scale: 0.94, y: 6 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    transition={{ type: "spring", damping: 18, stiffness: 280 }}
+                    className="rounded-xl border border-emerald-500/30 bg-emerald-950/20 px-4 py-4"
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs text-zinc-500 uppercase tracking-widest">Bid revealed</span>
+                      <span className="text-emerald-400 text-base">✓</span>
+                    </div>
+                    <div className="font-mono text-2xl font-bold text-emerald-300 tracking-tight">
+                      {(Number(BigInt(revealedAmount)) / 1e9).toFixed(3)} SUI
+                    </div>
+                    <p className="text-[11px] text-zinc-500 mt-1.5">On-chain. Entered into winner selection.</p>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {!revealedAmount && (
+                <>
+                  {!hasLocalNonce && commitmentBlobId && (
+                    <p className="text-amber-400 text-xs">Recovering via Seal + Walrus (blob: {commitmentBlobId.slice(0, 12)}…)</p>
+                  )}
+                  {!hasLocalNonce && !commitmentBlobId && (
+                    <p className="text-red-400 text-xs">localStorage cleared and no Walrus backup. Reveal may fail.</p>
+                  )}
+                  <button onClick={handleReveal} disabled={isSubmitting}
+                    className={`w-full py-3 rounded-xl text-sm font-semibold transition-colors ${isSubmitting ? "opacity-50 cursor-not-allowed bg-amber-800" : "bg-amber-600 hover:bg-amber-500"}`}>
+                    {isSubmitting ? "Revealing bid…" : "Reveal Bid →"}
+                  </button>
+                </>
+              )}
             </section>
           )}
 
@@ -540,14 +595,27 @@ export function LiveAuction() {
 
           {/* Post-resolution */}
           {phase === "RESOLVED" && (
-            <section className="rounded-xl border border-emerald-900/40 bg-emerald-950/20 px-4 py-4 space-y-3">
-              <p className="text-emerald-400 font-semibold">Auction resolved.</p>
+            <section className="space-y-3">
               {certificateId && commitmentId && (
-                <button onClick={handleClaim} disabled={isSubmitting}
-                  className={`w-full py-3 rounded-xl text-sm font-semibold transition-colors ${isSubmitting ? "opacity-50 cursor-not-allowed bg-emerald-900" : "bg-emerald-700 hover:bg-emerald-600"}`}>
-                  {isSubmitting ? "Claiming…" : "Claim Allocation (you won!) →"}
-                </button>
+                <motion.div
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ type: "spring", damping: 20, stiffness: 260 }}
+                  className="rounded-xl border border-emerald-500/40 bg-emerald-950/30 px-4 py-4"
+                >
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                    <span className="text-emerald-300 text-sm font-bold">WinnerCertificate minted</span>
+                  </div>
+                  <p className="text-xs text-zinc-400 mb-3">Your address was selected by Sui validator DKG randomness. Allocation is yours.</p>
+                  <button onClick={handleClaim} disabled={isSubmitting}
+                    className={`w-full py-3 rounded-xl text-sm font-semibold transition-colors ${isSubmitting ? "opacity-50 cursor-not-allowed bg-emerald-900" : "bg-emerald-600 hover:bg-emerald-500"}`}>
+                    {isSubmitting ? "Claiming…" : "Claim Allocation →"}
+                  </button>
+                </motion.div>
               )}
+              <div className="rounded-xl border border-emerald-900/40 bg-emerald-950/10 px-4 py-3">
+                <p className="text-emerald-400 text-sm font-semibold">Auction resolved.</p>
               {!certificateId && commitmentId && (
                 <button onClick={handleReclaimEscrow} disabled={isSubmitting}
                   className={`w-full py-3 rounded-xl text-sm font-semibold transition-colors ${isSubmitting ? "opacity-50 cursor-not-allowed" : "bg-white/5 hover:bg-white/10 border border-white/10"}`}>
@@ -563,6 +631,7 @@ export function LiveAuction() {
               {!certificateId && !commitmentId && !creatorCapId && (
                 <p className="text-zinc-500 text-sm">No pending actions for this wallet.</p>
               )}
+              </div>
             </section>
           )}
 
