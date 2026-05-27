@@ -6,7 +6,7 @@ FairDrop is a sealed-bid auction for fair token distribution on Sui. Every fairn
 
 No backend. No admin keys. No favored insiders.
 
-**[→ Live demo](https://frontend-rosy-three-pltrtcym1m.vercel.app)** · **[→ Verify on SuiScan](https://suiscan.xyz/testnet/object/0xf078e2c6ae561ddf4b079c6c15cfa6158489404f5d32c66edbebc5944b5e4006)**
+**[→ Live demo](https://sui-fairdrop.vercel.app)** · **[→ Verify on SuiScan](https://suiscan.xyz/testnet/object/0xf078e2c6ae561ddf4b079c6c15cfa6158489404f5d32c66edbebc5944b5e4006)**
 
 ---
 
