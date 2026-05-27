@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
 import { ConnectButton } from "@mysten/dapp-kit";
 import { LiveAuction } from "@/app/components/LiveAuction";
@@ -435,21 +435,29 @@ function HowItWorksSection() {
                     ? "border-violet-500/30 bg-violet-950/20"
                     : "border-white/[0.05] hover:border-white/10 bg-white/[0.015] hover:bg-white/[0.03]"
                 }`}>
-                <span className="text-zinc-700 font-mono text-sm font-bold flex-shrink-0 mt-0.5 w-8">{step.num}</span>
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold text-white group-hover:text-zinc-100 transition-colors">{step.label}</p>
-                  <motion.p
-                    animate={{ height: active === i ? "auto" : 0, opacity: active === i ? 1 : 0 }}
-                    transition={{ duration: 0.25 }}
-                    className="text-xs text-zinc-500 leading-relaxed overflow-hidden mt-1"
-                    style={{ display: active === i ? "block" : undefined }}
-                  >
-                    {step.desc}
-                  </motion.p>
-                  {active !== i && <p className="text-xs text-zinc-600 mt-0.5 line-clamp-1 sm:hidden">{step.desc}</p>}
-                  {active !== i && <p className="text-xs text-zinc-600 mt-0.5 hidden sm:block">{step.desc}</p>}
+                <span className={`font-mono text-sm font-bold flex-shrink-0 mt-0.5 w-8 transition-colors ${active === i ? "text-violet-500" : "text-zinc-700"}`}>{step.num}</span>
+                <div className="min-w-0 flex-1">
+                  <p className={`text-sm font-semibold transition-colors ${active === i ? "text-white" : "text-zinc-300 group-hover:text-white"}`}>{step.label}</p>
+                  <AnimatePresence initial={false}>
+                    {active === i && (
+                      <motion.p
+                        key="desc"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.18 }}
+                        className="text-xs text-zinc-400 leading-relaxed mt-2"
+                      >
+                        {step.desc}
+                      </motion.p>
+                    )}
+                  </AnimatePresence>
                 </div>
-                <span className={`flex-shrink-0 text-zinc-700 group-hover:text-zinc-500 transition-colors text-sm mt-0.5 ${active === i ? "rotate-90" : ""} transition-transform duration-200`}>›</span>
+                <motion.span
+                  animate={{ rotate: active === i ? 90 : 0 }}
+                  transition={{ duration: 0.18 }}
+                  className={`flex-shrink-0 text-sm mt-0.5 transition-colors ${active === i ? "text-violet-400" : "text-zinc-700 group-hover:text-zinc-500"}`}
+                >›</motion.span>
               </motion.div>
             ))}
           </motion.div>

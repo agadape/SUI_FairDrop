@@ -385,6 +385,15 @@ export function LiveAuction() {
   return (
     <div className="space-y-4 max-w-lg">
 
+      {/* Trust strip */}
+      <div className="flex flex-wrap gap-x-4 gap-y-1">
+        {["No backend", "No admin key", "100% on-chain", "Explorer verifiable"].map((t) => (
+          <span key={t} className="text-[10px] text-zinc-600 flex items-center gap-1 font-mono">
+            <span className="text-emerald-700">✓</span>{t}
+          </span>
+        ))}
+      </div>
+
       {/* Phase timeline */}
       {phase !== "LOADING" && (
         <div className="flex items-center gap-1 text-xs select-none">
@@ -528,7 +537,7 @@ export function LiveAuction() {
                     key="sealed"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    exit={{ opacity: 0, scale: 0.96 }}
+                    exit={{ opacity: 0, scale: 0.94, transition: { duration: 0.15 } }}
                     className="rounded-xl border border-amber-500/25 bg-amber-950/15 px-4 py-4"
                   >
                     <div className="flex items-center justify-between mb-2">
@@ -545,9 +554,9 @@ export function LiveAuction() {
                 ) : (
                   <motion.div
                     key="revealed"
-                    initial={{ opacity: 0, scale: 0.94, y: 6 }}
+                    initial={{ opacity: 0, scale: 0.88, y: 10 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
-                    transition={{ type: "spring", damping: 18, stiffness: 280 }}
+                    transition={{ type: "spring", damping: 22, stiffness: 200, delay: 0.08 }}
                     className="rounded-xl border border-emerald-500/30 bg-emerald-950/20 px-4 py-4"
                   >
                     <div className="flex items-center justify-between mb-2">
