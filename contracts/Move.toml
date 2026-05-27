@@ -1,0 +1,9 @@
+[package]
+name = "fairdrop"
+edition = "2024.beta"
+
+[dependencies]
+# Sui framework auto-added by CLI — no explicit dep needed
+
+[addresses]
+fairdrop = "0x0"

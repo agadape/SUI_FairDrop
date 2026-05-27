@@ -1,0 +1,21 @@
+# OAuth client secrets and credentials
+client_secret_*.json
+*.client_secret.json
+
+# Move build artifacts
+contracts/build/
+
+# Claude AI config
+.claude/
+
+# Misc build outputs
+publish_output.json
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Environment files
+.env.local
+.env*.local
