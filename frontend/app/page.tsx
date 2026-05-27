@@ -1,0 +1,629 @@
+"use client";
+
+import { motion } from "framer-motion";
+import { useState } from "react";
+import { ConnectButton } from "@mysten/dapp-kit";
+import { LiveAuction } from "@/app/components/LiveAuction";
+import { PACKAGE_ID, AUCTION_ID, RANDOM_ID, NETWORK } from "@/lib/constants";
+
+// ─── Explorer helpers ─────────────────────────────────────────────────────────
+
+const SUISCAN = `https://suiscan.xyz/${NETWORK}`;
+const objUrl = (id: string) => `${SUISCAN}/object/${id}`;
+
+// ─── Motion variants ──────────────────────────────────────────────────────────
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 28 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.55, ease: [0.25, 0.1, 0.25, 1] as [number, number, number, number] } },
+};
+
+const stagger = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.13 } },
+};
+
+// ─── Protocol flow data ───────────────────────────────────────────────────────
+
+const FLOW_STEPS = [
+  {
+    num: 1, label: "Register",
+    detail: "zkLogin · unique nullifier stored on-chain · one per Google account",
+    dot: "bg-blue-500", border: "border-blue-500/30", bg: "bg-blue-950/25",
+    accent: "text-blue-400", glow: "rgba(59,130,246,0.3)", isRandom: false,
+  },
+  {
+    num: 2, label: "Commit Blind Bid",
+    detail: "sha3_256(amount ‖ nonce) · amount invisible to everyone including validators",
+    dot: "bg-amber-500", border: "border-amber-500/30", bg: "bg-amber-950/25",
+    accent: "text-amber-400", glow: "rgba(245,158,11,0.3)", isRandom: false,
+  },
+  {
+    num: 3, label: "Reveal",
+    detail: "hash verified on-chain · bids become public · late reveals rejected",
+    dot: "bg-yellow-500", border: "border-yellow-500/25", bg: "bg-yellow-950/20",
+    accent: "text-yellow-400", glow: "rgba(234,179,8,0.25)", isRandom: false,
+  },
+  {
+    num: 4, label: "Resolve  ·  0x8",
+    detail: "Sui validator DKG · unpredictable before tx · unbiasable by any single party",
+    dot: "bg-violet-500", border: "border-violet-500/30", bg: "bg-violet-950/25",
+    accent: "text-violet-400", glow: "rgba(139,92,246,0.45)", isRandom: true,
+  },
+  {
+    num: 5, label: "Atomic Settlement",
+    detail: "1 PTB · winners get allocation + change · losers get full refund · no backend",
+    dot: "bg-emerald-500", border: "border-emerald-500/30", bg: "bg-emerald-950/25",
+    accent: "text-emerald-400", glow: "rgba(16,185,129,0.3)", isRandom: false,
+  },
+];
+
+// ─── Problem data ─────────────────────────────────────────────────────────────
+
+const PROBLEMS = [
+  { icon: "🤖", title: "Bots front-run bids", body: "Bots watch the mempool and submit identical or higher bids in the same block. Public transactions are weaponized." },
+  { icon: "👁", title: "Whales see your amount", body: "In public-bid auctions, large holders monitor submissions and outbid you at the last second with perfect information." },
+  { icon: "🎲", title: "Randomness is unverifiable", body: "The organizer runs the winner selection. Nobody can verify the outcome wasn't pre-arranged." },
+];
+
+// ─── Fairness cards ───────────────────────────────────────────────────────────
+
+const FAIRNESS = [
+  {
+    title: "One Human = One Entry",
+    body: "zkLogin ties each Google account to a unique on-chain nullifier via sha3_256. Multi-wallet farming blocked at the protocol level — not policy.",
+    border: "border-blue-500/25", glow: "rgba(59,130,246,0.1)", accent: "text-blue-400",
+    visual: (
+      <div className="flex items-center gap-2 font-mono text-xs">
+        <span className="text-zinc-500 bg-zinc-900 px-2 py-0.5 rounded text-[10px]">Google sub</span>
+        <span className="text-zinc-700">→</span>
+        <span className="text-blue-500 text-[10px]">sha3_256</span>
+        <span className="text-zinc-700">→</span>
+        <span className="text-blue-300 text-[10px] bg-blue-950/40 px-1.5 py-0.5 rounded border border-blue-500/20">0x4f2a…</span>
+      </div>
+    ),
+  },
+  {
+    title: "Hidden Bids",
+    body: "sha3_256(amount ‖ nonce) committed on-chain before any amount is visible. No MEV. No last-second sniping. Amount unknowable until reveal.",
+    border: "border-amber-500/25", glow: "rgba(245,158,11,0.1)", accent: "text-amber-400",
+    visual: (
+      <div className="flex items-center gap-2 font-mono text-xs">
+        <span className="text-amber-300 bg-amber-950/40 px-2 py-0.5 rounded border border-amber-500/20 text-[10px]">5.0 SUI</span>
+        <span className="text-zinc-700">→</span>
+        <span className="text-amber-500 text-[10px]">sha3_256</span>
+        <span className="text-zinc-700">→</span>
+        <span className="text-zinc-600 text-[10px] tracking-wider">0x7c1b…????</span>
+      </div>
+    ),
+  },
+  {
+    title: "Verifiable Randomness",
+    body: "Ties broken by sui::random at 0x8, backed by Sui's validator distributed key generation. The outcome is on-chain, permanent, and inspectable by anyone.",
+    border: "border-violet-500/25", glow: "rgba(139,92,246,0.12)", accent: "text-violet-400",
+    visual: (
+      <div className="flex items-center gap-2 font-mono text-xs">
+        <span className="text-zinc-600 text-[10px]">validator DKG</span>
+        <span className="text-zinc-700">→</span>
+        <span className="text-violet-400 font-bold px-2 py-0.5 rounded bg-violet-950/50 border border-violet-500/30">0x8</span>
+        <span className="text-zinc-700">→</span>
+        <span className="text-violet-300 text-[10px]">winner ✓</span>
+      </div>
+    ),
+  },
+  {
+    title: "Atomic Settlement",
+    body: "Winners, refunds, and proceeds all settle in a single PTB. Everything or nothing. No second transactions. No admin intervention possible.",
+    border: "border-emerald-500/25", glow: "rgba(16,185,129,0.1)", accent: "text-emerald-400",
+    visual: (
+      <div className="font-mono text-[10px] space-y-1">
+        <div className="text-emerald-400">✓ winners → allocation + escrow change</div>
+        <div className="text-zinc-500">↩ losers → full escrow refund</div>
+        <div className="text-zinc-600">→ creator → proceeds</div>
+      </div>
+    ),
+  },
+];
+
+// ─── How it works ─────────────────────────────────────────────────────────────
+
+const STEPS = [
+  { num: "01", label: "Register", desc: "Sign in with Google via zkLogin. A unique nullifier is minted on-chain. One entry per human, enforced at the contract level — not by an admin list." },
+  { num: "02", label: "Commit", desc: "Choose your bid amount and submit sha3_256(amount ‖ nonce). Your bid is completely hidden. Even validators can't see the amount until reveal." },
+  { num: "03", label: "Reveal", desc: "After the commit phase closes, reveal your actual bid. The contract verifies your hash matches exactly. Late or incorrect reveals are rejected." },
+  { num: "04", label: "Resolve", desc: "Anyone can call resolve. sui::random at 0x8 provides validator DKG-backed randomness to break ties. No centralized selection, no admin required." },
+  { num: "05", label: "Claim", desc: "Winners claim their allocation and receive escrow change. Losers get full escrow refunds. Creator receives proceeds. All atomic, all in one PTB." },
+];
+
+// ─── Sui primitives ───────────────────────────────────────────────────────────
+
+const PRIMITIVES = [
+  { name: "zkLogin", by: "Deepak Maram", desc: "One Google account = one entry. No wallet required. Identity without compromise.", color: "text-blue-400", border: "border-blue-500/20", bg: "bg-blue-950/20" },
+  { name: "sui::random", by: "Andrew Schran", desc: "Validator DKG randomness at object 0x8. Unpredictable before the transaction. Unbiasable by any party.", color: "text-violet-400", border: "border-violet-500/20", bg: "bg-violet-950/20" },
+  { name: "Seal", by: "Kostas Chalkias", desc: "Threshold encryption for nonce backup. Access policy enforced on-chain by Move. Key servers verify before releasing.", color: "text-pink-400", border: "border-pink-500/20", bg: "bg-pink-950/20" },
+  { name: "Walrus", by: "Mysten Labs", desc: "Decentralized blob storage for encrypted nonces. Recoverable from any device, no backend needed.", color: "text-cyan-400", border: "border-cyan-500/20", bg: "bg-cyan-950/20" },
+  { name: "Enoki", by: "Mysten Labs", desc: "Sponsored transactions for registration. Zero gas friction for participants.", color: "text-orange-400", border: "border-orange-500/20", bg: "bg-orange-950/20" },
+  { name: "PTBs", by: "Sui protocol", desc: "Programmable Transaction Blocks. Winners, refunds, proceeds — one atomic transaction, no partial states.", color: "text-emerald-400", border: "border-emerald-500/20", bg: "bg-emerald-950/20" },
+];
+
+// ─── Explorer receipts ────────────────────────────────────────────────────────
+
+const RECEIPTS = [
+  { label: "Package contract", id: PACKAGE_ID, hint: "All auction logic on-chain · immutable" },
+  { label: "Live auction", id: AUCTION_ID, hint: "Current state · open to inspect" },
+  { label: "sui::random (0x8)", id: RANDOM_ID, hint: "Validator DKG randomness object" },
+  { label: "Clock (0x6)", id: "0x6", hint: "Timestamp source for phase gating" },
+];
+
+// ─── Components ───────────────────────────────────────────────────────────────
+
+function NavBar() {
+  return (
+    <nav className="sticky top-0 z-50 border-b border-white/[0.06] bg-[#030712]/80 backdrop-blur-xl">
+      <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <span className="text-white font-bold text-lg tracking-tight">FairDrop</span>
+          <span className="hidden sm:block text-[10px] text-zinc-700 font-mono border border-zinc-800 rounded-full px-2 py-0.5">
+            Sui Overflow 2026
+          </span>
+        </div>
+        <div className="flex items-center gap-5">
+          <a href="#how" className="text-xs text-zinc-600 hover:text-zinc-300 transition-colors hidden md:block">How it works</a>
+          <a href="#why-sui" className="text-xs text-zinc-600 hover:text-zinc-300 transition-colors hidden md:block">Why Sui</a>
+          <a href="#auction" className="text-xs text-zinc-600 hover:text-zinc-300 transition-colors hidden md:block">Live auction</a>
+          <ConnectButton />
+        </div>
+      </div>
+    </nav>
+  );
+}
+
+function FlowConnector({ index }: { index: number }) {
+  return (
+    <motion.div
+      initial={{ scaleY: 0, opacity: 0 }}
+      animate={{ scaleY: 1, opacity: 1 }}
+      transition={{ delay: 0.25 + index * 0.3, duration: 0.22, ease: "linear" }}
+      style={{ originY: 0 }}
+      className="relative ml-[13px] w-0.5 h-5 bg-zinc-800 my-0.5"
+    >
+      <motion.div
+        className="absolute w-2 h-2 rounded-full bg-white/30 -left-[3px] top-0"
+        animate={{ y: [0, 20], opacity: [0, 0.9, 0.9, 0] }}
+        transition={{ delay: 0.5 + index * 0.3, duration: 0.65, repeat: Infinity, repeatDelay: 3.2, ease: "linear" }}
+      />
+    </motion.div>
+  );
+}
+
+function HeroSection() {
+  return (
+    <section className="relative overflow-hidden pt-16 pb-24 lg:pt-24 lg:pb-32">
+      {/* Background ambient glows */}
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_75%_60%_at_65%_40%,rgba(139,92,246,0.07),transparent)]" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_50%_50%_at_15%_70%,rgba(59,130,246,0.05),transparent)]" />
+
+      <div className="relative max-w-6xl mx-auto px-6">
+        <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+
+          {/* Left — copy */}
+          <div className="space-y-7">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
+              <p className="text-[10px] text-zinc-600 font-mono uppercase tracking-[0.2em] mb-5">
+                Sui Overflow 2026 · Testnet
+              </p>
+              <h1 className="text-5xl lg:text-[3.75rem] font-bold tracking-tight leading-[1.05] text-white">
+                Fair launches,
+                <br />
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 via-violet-300 to-blue-400">
+                  finally.
+                </span>
+              </h1>
+            </motion.div>
+
+            <motion.p
+              className="text-zinc-400 text-lg leading-relaxed max-w-md"
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.25, duration: 0.55 }}
+            >
+              Hidden bids. Verifiable randomness. One human, one entry.
+              No backend. No admin keys. No shortcuts.
+            </motion.p>
+
+            <motion.div
+              className="flex flex-wrap gap-3"
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.45, duration: 0.55 }}
+            >
+              <a href="#auction"
+                className="px-5 py-2.5 bg-violet-600 hover:bg-violet-500 text-white text-sm font-semibold rounded-xl transition-colors">
+                Launch Live Auction →
+              </a>
+              {AUCTION_ID && (
+                <a href={objUrl(AUCTION_ID)} target="_blank" rel="noopener noreferrer"
+                  className="px-5 py-2.5 bg-white/[0.05] hover:bg-white/[0.09] border border-white/10 text-white text-sm font-semibold rounded-xl transition-colors">
+                  Verify on Explorer ↗
+                </a>
+              )}
+            </motion.div>
+
+            <motion.div
+              className="flex flex-wrap gap-2 pt-1"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.7, duration: 0.6 }}
+            >
+              {["zkLogin", "sui::random", "Seal", "Walrus", "Enoki", "Pyth"].map((s) => (
+                <span key={s}
+                  className="text-[10px] text-zinc-700 border border-zinc-800 rounded-full px-2.5 py-0.5 font-mono">
+                  {s}
+                </span>
+              ))}
+            </motion.div>
+          </div>
+
+          {/* Right — animated protocol flow */}
+          <motion.div
+            variants={stagger}
+            initial="hidden"
+            animate="visible"
+            className="max-w-sm mx-auto lg:mx-0 w-full"
+          >
+            {FLOW_STEPS.map((step, i) => (
+              <div key={step.num}>
+                <motion.div variants={fadeUp}>
+                  <div
+                    className={`flex items-start gap-3 px-4 py-3 rounded-2xl border ${step.border} ${step.bg}`}
+                    style={{ boxShadow: `0 0 24px ${step.glow}` }}
+                  >
+                    <div className="relative flex-shrink-0 mt-0.5">
+                      <div className={`w-7 h-7 rounded-full ${step.dot} flex items-center justify-center text-black text-xs font-bold`}>
+                        {step.num}
+                      </div>
+                      {step.isRandom && (
+                        <>
+                          {[0, 1, 2].map((j) => (
+                            <motion.div key={j} className="absolute inset-0 rounded-full"
+                              animate={{ rotate: 360 }}
+                              transition={{ duration: 2.2 + j * 0.9, repeat: Infinity, ease: "linear", delay: -(j * 0.85) }}>
+                              <div className="absolute -top-[3px] left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-violet-300"
+                                style={{ opacity: 0.65 - j * 0.12 }} />
+                            </motion.div>
+                          ))}
+                        </>
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <p className={`text-sm font-semibold ${step.accent}`}>{step.label}</p>
+                      <p className="text-[11px] text-zinc-500 leading-relaxed mt-0.5">{step.detail}</p>
+                    </div>
+                  </div>
+                </motion.div>
+                {i < FLOW_STEPS.length - 1 && <FlowConnector index={i} />}
+              </div>
+            ))}
+          </motion.div>
+
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function ProblemSection() {
+  return (
+    <section className="py-20 border-t border-white/[0.05]">
+      <div className="max-w-6xl mx-auto px-6">
+        <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }}>
+          <motion.p variants={fadeUp} className="text-[10px] text-zinc-600 font-mono uppercase tracking-[0.2em] mb-3">
+            The problem
+          </motion.p>
+          <motion.h2 variants={fadeUp} className="text-3xl font-bold text-white mb-3">
+            Current launches are broken.
+          </motion.h2>
+          <motion.p variants={fadeUp} className="text-zinc-500 mb-12 max-w-xl leading-relaxed">
+            Most token launches look fair on the surface. Underneath, the mechanics favor bots, whales, and insiders.
+          </motion.p>
+
+          <motion.div variants={stagger} className="grid sm:grid-cols-3 gap-4">
+            {PROBLEMS.map((p) => (
+              <motion.div key={p.title} variants={fadeUp}
+                whileHover={{ scale: 1.015 }}
+                className="p-5 rounded-2xl border border-red-500/10 bg-red-950/[0.12] hover:border-red-500/20 hover:bg-red-950/20 transition-all cursor-default">
+                <div className="text-2xl mb-3">{p.icon}</div>
+                <h3 className="text-sm font-semibold text-red-300 mb-2">{p.title}</h3>
+                <p className="text-xs text-zinc-500 leading-relaxed">{p.body}</p>
+              </motion.div>
+            ))}
+          </motion.div>
+
+          <motion.p variants={fadeUp} className="mt-8 text-sm text-zinc-400">
+            FairDrop makes these attacks{" "}
+            <span className="text-white font-semibold">cryptographically impossible.</span>
+          </motion.p>
+        </motion.div>
+      </div>
+    </section>
+  );
+}
+
+function FairnessSection() {
+  return (
+    <section className="py-20 border-t border-white/[0.05]">
+      <div className="max-w-6xl mx-auto px-6">
+        <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }}>
+          <motion.p variants={fadeUp} className="text-[10px] text-zinc-600 font-mono uppercase tracking-[0.2em] mb-3">
+            How it&apos;s enforced
+          </motion.p>
+          <motion.h2 variants={fadeUp} className="text-3xl font-bold text-white mb-12">
+            Four guarantees, four primitives.
+          </motion.h2>
+
+          <motion.div variants={stagger} className="grid sm:grid-cols-2 gap-4">
+            {FAIRNESS.map((f) => (
+              <motion.div key={f.title} variants={fadeUp}
+                whileHover={{ scale: 1.012 }}
+                className={`p-6 rounded-2xl border ${f.border} transition-all cursor-default`}
+                style={{ background: `radial-gradient(ellipse 80% 60% at 20% 0%, ${f.glow}, transparent 70%)` }}>
+                <div className="mb-4 min-h-[28px] flex items-center">{f.visual}</div>
+                <h3 className={`text-base font-bold ${f.accent} mb-2`}>{f.title}</h3>
+                <p className="text-xs text-zinc-400 leading-relaxed">{f.body}</p>
+              </motion.div>
+            ))}
+          </motion.div>
+        </motion.div>
+      </div>
+    </section>
+  );
+}
+
+function HowItWorksSection() {
+  const [active, setActive] = useState<number | null>(null);
+
+  return (
+    <section id="how" className="py-20 border-t border-white/[0.05]">
+      <div className="max-w-6xl mx-auto px-6">
+        <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }}>
+          <motion.p variants={fadeUp} className="text-[10px] text-zinc-600 font-mono uppercase tracking-[0.2em] mb-3">
+            Auction lifecycle
+          </motion.p>
+          <motion.h2 variants={fadeUp} className="text-3xl font-bold text-white mb-10">
+            Five steps. No trust required.
+          </motion.h2>
+
+          <motion.div variants={stagger} className="space-y-2">
+            {STEPS.map((step, i) => (
+              <motion.div key={step.num} variants={fadeUp}
+                onClick={() => setActive(active === i ? null : i)}
+                className={`group flex gap-5 p-5 rounded-2xl border transition-all cursor-pointer select-none ${
+                  active === i
+                    ? "border-violet-500/30 bg-violet-950/20"
+                    : "border-white/[0.05] hover:border-white/10 bg-white/[0.015] hover:bg-white/[0.03]"
+                }`}>
+                <span className="text-zinc-700 font-mono text-sm font-bold flex-shrink-0 mt-0.5 w-8">{step.num}</span>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-white group-hover:text-zinc-100 transition-colors">{step.label}</p>
+                  <motion.p
+                    animate={{ height: active === i ? "auto" : 0, opacity: active === i ? 1 : 0 }}
+                    transition={{ duration: 0.25 }}
+                    className="text-xs text-zinc-500 leading-relaxed overflow-hidden mt-1"
+                    style={{ display: active === i ? "block" : undefined }}
+                  >
+                    {step.desc}
+                  </motion.p>
+                  {active !== i && <p className="text-xs text-zinc-600 mt-0.5 line-clamp-1 sm:hidden">{step.desc}</p>}
+                  {active !== i && <p className="text-xs text-zinc-600 mt-0.5 hidden sm:block">{step.desc}</p>}
+                </div>
+                <span className={`flex-shrink-0 text-zinc-700 group-hover:text-zinc-500 transition-colors text-sm mt-0.5 ${active === i ? "rotate-90" : ""} transition-transform duration-200`}>›</span>
+              </motion.div>
+            ))}
+          </motion.div>
+        </motion.div>
+      </div>
+    </section>
+  );
+}
+
+function WhySuiSection() {
+  return (
+    <section id="why-sui" className="py-20 border-t border-white/[0.05]">
+      <div className="max-w-6xl mx-auto px-6">
+        <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }}>
+          <motion.p variants={fadeUp} className="text-[10px] text-zinc-600 font-mono uppercase tracking-[0.2em] mb-3">
+            Powered by
+          </motion.p>
+          <motion.h2 variants={fadeUp} className="text-3xl font-bold text-white mb-4">
+            Built entirely from Sui-native primitives.
+          </motion.h2>
+          <motion.p variants={fadeUp} className="text-zinc-500 mb-12 max-w-xl leading-relaxed">
+            No bridges. No oracles from other chains. Every fairness guarantee is enforced by Sui&apos;s own infrastructure.
+          </motion.p>
+
+          <motion.div variants={stagger} className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {PRIMITIVES.map((p) => (
+              <motion.div key={p.name} variants={fadeUp}
+                whileHover={{ scale: 1.018 }}
+                className={`p-4 rounded-xl border ${p.border} ${p.bg} transition-all cursor-default`}>
+                <div className="flex items-start justify-between mb-2">
+                  <span className={`text-sm font-bold ${p.color} font-mono`}>{p.name}</span>
+                  <span className="text-[9px] text-zinc-700 mt-0.5">by {p.by}</span>
+                </div>
+                <p className="text-xs text-zinc-500 leading-relaxed">{p.desc}</p>
+              </motion.div>
+            ))}
+          </motion.div>
+        </motion.div>
+      </div>
+    </section>
+  );
+}
+
+function VerifiabilitySection() {
+  return (
+    <section className="py-20 border-t border-white/[0.05]">
+      <div className="max-w-6xl mx-auto px-6">
+        <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }}>
+          <motion.p variants={fadeUp} className="text-[10px] text-zinc-600 font-mono uppercase tracking-[0.2em] mb-3">
+            Trustless by design
+          </motion.p>
+          <motion.h2 variants={fadeUp} className="text-3xl font-bold text-white mb-4">
+            Everything is publicly inspectable.
+          </motion.h2>
+          <motion.p variants={fadeUp} className="text-zinc-500 mb-12 max-w-xl leading-relaxed">
+            Every object, every transaction, every state change. Open on SuiScan right now.
+          </motion.p>
+
+          <motion.div variants={stagger} className="grid sm:grid-cols-2 gap-3">
+            {RECEIPTS.filter((r) => r.id).map((r) => (
+              <motion.a key={r.label} variants={fadeUp}
+                href={objUrl(r.id!)} target="_blank" rel="noopener noreferrer"
+                whileHover={{ scale: 1.012 }}
+                className="group flex items-center justify-between p-4 rounded-xl border border-white/[0.05] bg-white/[0.015] hover:border-emerald-500/25 hover:bg-emerald-950/10 transition-all">
+                <div className="min-w-0">
+                  <p className="text-sm text-white font-medium group-hover:text-emerald-300 transition-colors">{r.label}</p>
+                  <p className="text-[10px] text-zinc-700 font-mono mt-0.5">{r.id!.slice(0, 20)}…</p>
+                  <p className="text-[10px] text-zinc-600 mt-0.5">{r.hint}</p>
+                </div>
+                <span className="text-zinc-700 group-hover:text-emerald-400 transition-colors text-lg flex-shrink-0 ml-4">↗</span>
+              </motion.a>
+            ))}
+          </motion.div>
+        </motion.div>
+      </div>
+    </section>
+  );
+}
+
+function RecoverySection() {
+  return (
+    <motion.section
+      variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}
+      className="py-20 border-t border-white/[0.05]">
+      <div className="max-w-6xl mx-auto px-6">
+        <div className="max-w-2xl">
+          <p className="text-[10px] text-zinc-600 font-mono uppercase tracking-[0.2em] mb-3">Seal + Walrus</p>
+          <h2 className="text-3xl font-bold text-white mb-4">What if you close the tab mid-auction?</h2>
+          <p className="text-zinc-400 text-base leading-relaxed mb-8">
+            Your reveal secret is encrypted with Seal threshold encryption and stored on Walrus — a decentralized storage network. Even if you lose your device between commit and reveal, you can recover your nonce from any browser. Not even the FairDrop team can read your nonce.
+          </p>
+          <div className="flex flex-wrap items-center gap-2 text-sm font-mono">
+            <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-white/[0.08] bg-white/[0.03] text-xs">
+              <span className="text-zinc-600">1.</span>
+              <span className="text-white">localStorage</span>
+              <span className="text-zinc-600 text-[10px]">primary</span>
+            </div>
+            <span className="text-zinc-700">if cleared →</span>
+            <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-pink-500/20 bg-pink-950/20 text-xs">
+              <span className="text-zinc-600">2.</span>
+              <span className="text-pink-400">Seal</span>
+              <span className="text-zinc-600 text-[10px]">threshold enc</span>
+            </div>
+            <span className="text-zinc-700">+</span>
+            <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-cyan-500/20 bg-cyan-950/20 text-xs">
+              <span className="text-zinc-600">3.</span>
+              <span className="text-cyan-400">Walrus</span>
+              <span className="text-zinc-600 text-[10px]">decentralized</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </motion.section>
+  );
+}
+
+function FooterSection() {
+  return (
+    <footer className="border-t border-white/[0.05] py-12">
+      <div className="max-w-6xl mx-auto px-6 flex flex-col sm:flex-row justify-between gap-8 text-xs text-zinc-600">
+        <div>
+          <p className="text-white font-bold text-sm mb-1">FairDrop</p>
+          <p className="mb-1">Fair launch protocol · Sui Overflow 2026</p>
+          {PACKAGE_ID && (
+            <a href={objUrl(PACKAGE_ID)} target="_blank" rel="noopener noreferrer"
+              className="font-mono text-[10px] hover:text-zinc-400 transition-colors">
+              {PACKAGE_ID.slice(0, 22)}… ↗
+            </a>
+          )}
+        </div>
+        <div>
+          <p className="text-zinc-700 mb-2">Sui-native primitives</p>
+          <div className="flex flex-wrap gap-x-3 gap-y-1 font-mono text-[10px]">
+            {["zkLogin", "sui::random", "Seal", "Walrus", "Enoki", "Pyth"].map((s) => (
+              <span key={s}>{s}</span>
+            ))}
+          </div>
+        </div>
+      </div>
+    </footer>
+  );
+}
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
+
+export default function Home() {
+  return (
+    <main className="min-h-screen bg-[#030712]">
+      <NavBar />
+      <HeroSection />
+      <ProblemSection />
+      <FairnessSection />
+      <HowItWorksSection />
+      <WhySuiSection />
+      <VerifiabilitySection />
+
+      {/* Live Auction */}
+      <section id="auction" className="py-20 border-t border-white/[0.05]">
+        <div className="max-w-6xl mx-auto px-6">
+          <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }} className="mb-10">
+            <motion.p variants={fadeUp} className="text-[10px] text-zinc-600 font-mono uppercase tracking-[0.2em] mb-3">
+              Live on testnet
+            </motion.p>
+            <motion.h2 variants={fadeUp} className="text-3xl font-bold text-white mb-2">
+              Participate in a live auction.
+            </motion.h2>
+            <motion.p variants={fadeUp} className="text-zinc-500 text-sm">
+              All state is on-chain. Every action is verifiable. No server involved.
+            </motion.p>
+          </motion.div>
+          <LiveAuction />
+        </div>
+      </section>
+
+      <RecoverySection />
+
+      {/* Final CTA */}
+      <section className="py-28 border-t border-white/[0.05]">
+        <div className="max-w-6xl mx-auto px-6 text-center">
+          <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }}>
+            <motion.h2 variants={fadeUp} className="text-4xl lg:text-5xl font-bold text-white mb-6 leading-tight text-balance">
+              This is what fair crypto infrastructure
+              {" "}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-emerald-400">
+                looks like.
+              </span>
+            </motion.h2>
+            <motion.p variants={fadeUp} className="text-zinc-400 text-lg mb-10 max-w-lg mx-auto leading-relaxed">
+              No backend. No admin keys. No trust assumptions beyond the Sui protocol itself.
+            </motion.p>
+            <motion.div variants={fadeUp} className="flex justify-center gap-4 flex-wrap">
+              <a href="#auction"
+                className="px-7 py-3.5 bg-violet-600 hover:bg-violet-500 text-white text-sm font-semibold rounded-xl transition-colors">
+                Launch Live Auction →
+              </a>
+              {PACKAGE_ID && (
+                <a href={objUrl(PACKAGE_ID)} target="_blank" rel="noopener noreferrer"
+                  className="px-7 py-3.5 bg-white/[0.05] hover:bg-white/[0.09] border border-white/10 text-white text-sm font-semibold rounded-xl transition-colors">
+                  Read the Contract ↗
+                </a>
+              )}
+            </motion.div>
+          </motion.div>
+        </div>
+      </section>
+
+      <FooterSection />
+    </main>
+  );
+}
