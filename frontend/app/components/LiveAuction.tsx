@@ -204,6 +204,16 @@ export function LiveAuction() {
           if (content.type.includes("::auction::WinnerCertificate")) setCertificateId(obj.data.objectId);
           if (content.type.includes("::auction::CreatorCap")) setCreatorCapId(obj.data.objectId);
         }
+        // Check if this account has already revealed (persists across refresh)
+        try {
+          const auctionObj = await client.getObject({ id: AUCTION_ID, options: { showContent: true } });
+          if (auctionObj.data?.content?.dataType === "moveObject") {
+            const f = (auctionObj.data.content as { dataType: "moveObject"; fields: Record<string, unknown> }).fields;
+            const contents = (f.reveals as { fields?: { contents?: { key: string; value: string }[] } })?.fields?.contents ?? [];
+            const myReveal = contents.find((r) => r.key === account!.address);
+            if (myReveal) setRevealedAmount(myReveal.value);
+          }
+        } catch { /* non-critical */ }
       } catch (e) { console.error(e); }
     }
     fetchUserObjects();
@@ -599,6 +609,12 @@ export function LiveAuction() {
               <p className="text-zinc-600 text-xs">
                 Uses <a href={objUrl(RANDOM_ID)} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">sui::random at 0x8 ↗</a> — callable by anyone.
               </p>
+              {commitmentId && !revealedAmount && (
+                <button onClick={handleReclaimEscrow} disabled={isSubmitting}
+                  className={`w-full py-2.5 rounded-xl text-xs font-semibold border transition-colors ${isSubmitting ? "opacity-50 cursor-not-allowed border-white/10" : "border-white/10 bg-white/[0.03] hover:bg-white/[0.06]"}`}>
+                  {isSubmitting ? "Reclaiming…" : "Reclaim Escrow (did not reveal) →"}
+                </button>
+              )}
             </section>
           )}
 
