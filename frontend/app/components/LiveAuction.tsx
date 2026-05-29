@@ -52,6 +52,10 @@ const objUrl = (id: string) => `${SUISCAN}/object/${id}`;
 
 const PHASE_STEPS: AuctionPhase[] = ["COMMIT", "REVEAL", "ENDED", "RESOLVED"];
 
+function Spinner() {
+  return <span className="inline-block w-3.5 h-3.5 rounded-full border-2 border-current border-t-transparent animate-spin" aria-hidden />;
+}
+
 function getLocalBid(): StoredBid | null {
   try {
     const raw = localStorage.getItem(NONCE_KEY);
@@ -105,6 +109,7 @@ export function LiveAuction() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [revealedAmount, setRevealedAmount] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [balance, setBalance] = useState<bigint | null>(null);
 
   const sessionKeyRef = useRef<SessionKey | null>(null);
   const refreshObjects = () => setRefreshTick((t) => t + 1);
@@ -250,6 +255,16 @@ export function LiveAuction() {
     setHasLocalNonce(!!getLocalBid());
     fetchUserObjects();
   }, [account?.address, refreshTick, fetchUserObjects]);
+
+  // SUI balance for the wallet-context strip (P0-3)
+  useEffect(() => {
+    if (!account?.address) { setBalance(null); return; }
+    let cancelled = false;
+    client.getBalance({ owner: account.address })
+      .then((b) => { if (!cancelled) setBalance(BigInt(b.totalBalance)); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [account?.address, client, refreshTick]);
 
   async function handleRegister() {
     if (isSubmitting || !account || !PACKAGE_ID || !AUCTION_ID) return;
@@ -488,12 +503,25 @@ export function LiveAuction() {
         </div>
       )}
 
-      {/* Transaction status */}
-      {txStatus && (
-        <div className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-zinc-300">
-          {txStatus}
-        </div>
-      )}
+      {/* Transaction status — state-aware, loud (P0-2) */}
+      {txStatus && (() => {
+        const pending = isSubmitting;
+        const success = !pending && /(registered!|committed!|revealed!|resolved|claimed|recovered|syncing)/i.test(txStatus);
+        const error = !pending && /(error|failed|cancelled|insufficient|no sui|below min|not found)/i.test(txStatus);
+        const tone = pending
+          ? "border-amber-500/40 bg-amber-950/30 text-amber-200"
+          : success ? "border-emerald-500/40 bg-emerald-950/30 text-emerald-200"
+          : error ? "border-red-500/40 bg-red-950/30 text-red-200"
+          : "border-white/10 bg-white/[0.03] text-zinc-300";
+        return (
+          <motion.div key={`${pending}-${success}-${error}`} initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }}
+            className={`flex items-center gap-2.5 rounded-xl border px-4 py-3 text-sm font-medium ${tone}`}>
+            {pending && <Spinner />}
+            {success && <span className="text-emerald-400 text-base leading-none">✓</span>}
+            <span>{txStatus}</span>
+          </motion.div>
+        );
+      })()}
 
       {/* Last tx link */}
       {lastTxDigest && (
@@ -532,14 +560,25 @@ export function LiveAuction() {
       {account && (
         <div className="space-y-3">
 
-          {/* Connected address — full + copyable (funding / QA) */}
-          <div className="flex items-center justify-between gap-2 rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2">
-            <span className="font-mono text-[11px] text-zinc-400 break-all">{account.address}</span>
-            <button
-              onClick={() => { navigator.clipboard.writeText(account.address); setCopied(true); setTimeout(() => setCopied(false), 1500); }}
-              className="flex-shrink-0 text-[11px] font-semibold px-2 py-1 rounded-md border border-white/10 text-zinc-300 hover:bg-white/[0.06] transition-colors">
-              {copied ? "Copied ✓" : "Copy"}
-            </button>
+          {/* Connected wallet context — address · network · balance · ready (P0-3) */}
+          <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2 space-y-1.5">
+            <div className="flex items-center justify-between gap-2">
+              <span className="font-mono text-[11px] text-zinc-400 break-all">{account.address}</span>
+              <button
+                onClick={() => { navigator.clipboard.writeText(account.address); setCopied(true); setTimeout(() => setCopied(false), 1500); }}
+                className="flex-shrink-0 text-[11px] font-semibold px-2 py-1 rounded-md border border-white/10 text-zinc-300 hover:bg-white/[0.06] transition-colors">
+                {copied ? "Copied ✓" : "Copy"}
+              </button>
+            </div>
+            <div className="flex items-center gap-2 text-[11px] font-mono">
+              <span className="text-cyan-400">{NETWORK === "testnet" ? "Testnet" : NETWORK}</span>
+              <span className="text-zinc-700">·</span>
+              <span className="text-zinc-300">{balance === null ? "… SUI" : `${(Number(balance) / 1e9).toFixed(3)} SUI`}</span>
+              <span className="text-zinc-700">·</span>
+              {balance !== null && balance > 0n
+                ? <span className="text-emerald-400">✓ ready to transact</span>
+                : <span className="text-amber-400">fund wallet to transact</span>}
+            </div>
           </div>
 
           {/* Step 1: Register */}
