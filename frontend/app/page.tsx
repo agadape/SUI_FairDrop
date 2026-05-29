@@ -135,10 +135,10 @@ const PRIMITIVES = [
 // ─── Explorer receipts ────────────────────────────────────────────────────────
 
 const RECEIPTS = [
-  { label: "Package contract", id: PACKAGE_ID, hint: "All auction logic on-chain · immutable" },
-  { label: "Live auction", id: AUCTION_ID, hint: "Current state · open to inspect" },
-  { label: "sui::random (0x8)", id: RANDOM_ID, hint: "Validator DKG randomness object" },
-  { label: "Clock (0x6)", id: "0x6", hint: "Timestamp source for phase gating" },
+  { label: "Package contract", id: PACKAGE_ID, hint: "auction + seal_policy Move source · immutable" },
+  { label: "Live auction object", id: AUCTION_ID, hint: "commitments, reveals & winners tables · live state" },
+  { label: "sui::random (0x8)", id: RANDOM_ID, hint: "validator DKG · consumed in every resolve tx" },
+  { label: "Clock (0x6)", id: "0x6", hint: "timestamp source for phase gating" },
 ];
 
 // ─── Components ───────────────────────────────────────────────────────────────
@@ -426,13 +426,13 @@ function VerifiabilitySection() {
       <div className="max-w-6xl mx-auto px-6">
         <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }}>
           <motion.p variants={fadeUp} className="text-[10px] text-zinc-600 font-mono uppercase tracking-[0.2em] mb-3">
-            Trustless by design
+            Verifiability
           </motion.p>
           <motion.h2 variants={fadeUp} className="text-3xl font-bold text-white mb-4">
-            Everything is publicly inspectable.
+            Don&apos;t trust us. Verify it yourself.
           </motion.h2>
           <motion.p variants={fadeUp} className="text-zinc-500 mb-8 max-w-xl leading-relaxed">
-            Every object, every transaction, every state change. Open on SuiScan right now.
+            Every object, transaction, and state change is on-chain. Open the live objects below on SuiScan, then trace any auction&apos;s artifacts — commitments, reveals, the resolve transaction, and winner certificates — straight from its history.
           </motion.p>
 
           <motion.div variants={stagger} className="flex flex-wrap gap-3 mb-10">
@@ -465,6 +465,24 @@ function VerifiabilitySection() {
                 <span className="text-zinc-700 group-hover:text-emerald-400 transition-colors text-lg flex-shrink-0 ml-4">↗</span>
               </motion.a>
             ))}
+          </motion.div>
+
+          {/* Lifecycle artifacts — what to look for on a live auction */}
+          <motion.div variants={fadeUp} className="mt-4 rounded-xl border border-white/[0.05] bg-white/[0.015] p-4">
+            <p className="text-[10px] text-zinc-600 font-mono uppercase tracking-[0.2em] mb-3">Trace any auction</p>
+            <div className="grid sm:grid-cols-2 gap-x-6 gap-y-2 font-mono text-[11px]">
+              {[
+                { k: "Commitment", v: "hash only — no amount on-chain until reveal", c: "text-amber-400" },
+                { k: "BidRevealed event", v: "amount appears here, in the reveal tx", c: "text-amber-300" },
+                { k: "Resolve tx", v: "consumes 0x8, settles winners + refunds atomically", c: "text-violet-400" },
+                { k: "WinnerCertificate", v: "minted on-chain to each winner", c: "text-emerald-400" },
+              ].map((a) => (
+                <div key={a.k} className="flex items-baseline gap-2">
+                  <span className={`${a.c} flex-shrink-0`}>{a.k}</span>
+                  <span className="text-zinc-600">{a.v}</span>
+                </div>
+              ))}
+            </div>
           </motion.div>
         </motion.div>
       </div>
