@@ -28,7 +28,7 @@ const stagger = {
 const FLOW_STEPS = [
   {
     num: 1, label: "Register",
-    detail: "zkLogin · unique nullifier stored on-chain · one per Google account",
+    detail: "zkLogin · Google-gated · per-registration nullifier on-chain",
     dot: "bg-blue-500", border: "border-blue-500/30", bg: "bg-blue-950/25",
     accent: "text-blue-400", glow: "rgba(59,130,246,0.3)", isRandom: false,
   },
@@ -85,8 +85,8 @@ const PROBLEMS = [
 
 const FAIRNESS = [
   {
-    title: "One Human = One Entry",
-    body: "zkLogin ties each Google account to a unique on-chain nullifier via sha3_256. Multi-wallet farming blocked at the protocol level — not policy.",
+    title: "Google-Gated Entry",
+    body: "zkLogin gates each entry behind a Google login, with a per-registration nullifier committed on-chain via sha3_256. This raises the cost of multi-wallet farming — it is not proof-of-personhood.",
     border: "border-blue-500/25", glow: "rgba(59,130,246,0.1)", accent: "text-blue-400",
     visual: (
       <div className="flex items-center gap-2 font-mono text-xs">
@@ -153,7 +153,7 @@ const STEPS = [
 // ─── Sui primitives ───────────────────────────────────────────────────────────
 
 const PRIMITIVES = [
-  { name: "zkLogin", by: "Deepak Maram", desc: "One Google account = one entry. No wallet required. Identity without compromise.", color: "text-blue-400", border: "border-blue-500/20", bg: "bg-blue-950/20" },
+  { name: "zkLogin", by: "Deepak Maram", desc: "Google login instead of a wallet — the same login re-derives the same wallet on any device. Raises Sybil cost; not proof-of-personhood.", color: "text-blue-400", border: "border-blue-500/20", bg: "bg-blue-950/20" },
   { name: "sui::random", by: "Andrew Schran", desc: "Validator DKG randomness at object 0x8. Unpredictable before the transaction. Unbiasable by any party.", color: "text-violet-400", border: "border-violet-500/20", bg: "bg-violet-950/20" },
   { name: "Seal", by: "Kostas Chalkias", desc: "Threshold encryption for nonce backup. Access policy enforced on-chain by Move. Key servers verify before releasing.", color: "text-pink-400", border: "border-pink-500/20", bg: "bg-pink-950/20" },
   { name: "Walrus", by: "Mysten Labs", desc: "Decentralized blob storage for encrypted nonces. Recoverable from any device, no backend needed.", color: "text-cyan-400", border: "border-cyan-500/20", bg: "bg-cyan-950/20" },
