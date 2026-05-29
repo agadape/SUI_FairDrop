@@ -178,7 +178,7 @@ function HeroSection() {
           <div className="space-y-7">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
               <p className="text-[10px] text-zinc-600 font-mono uppercase tracking-[0.2em] mb-5">
-                Seal + Walrus · Sui Overflow 2026 · Testnet
+                Sealed-Bid Fair-Launch Auction · Sui Overflow 2026 · Testnet
               </p>
               <h1 className="text-5xl lg:text-[3.75rem] font-bold tracking-tight leading-[1.05] text-white">
                 Lose your device.
