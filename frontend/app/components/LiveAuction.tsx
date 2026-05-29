@@ -321,15 +321,9 @@ export function LiveAuction() {
       if (totalBalance < amountMist) { setTxStatus(`Insufficient balance. Need ${Number(amountMist) / 1e9} SUI, have ${(Number(totalBalance) / 1e9).toFixed(4)} SUI.`); return; }
       setTxStatus("Submitting blind bid…");
       const tx = new Transaction();
-      const singleCoin = sortedCoins.find(c => BigInt(c.balance) >= amountMist);
-      let escrowCoin;
-      if (singleCoin) {
-        [escrowCoin] = tx.splitCoins(tx.object(singleCoin.coinObjectId), [tx.pure.u64(amountMist)]);
-      } else {
-        const [primary, ...rest] = sortedCoins;
-        if (rest.length > 0) tx.mergeCoins(tx.object(primary.coinObjectId), rest.map(c => tx.object(c.coinObjectId)));
-        [escrowCoin] = tx.splitCoins(tx.object(primary.coinObjectId), [tx.pure.u64(amountMist)]);
-      }
+      // Split escrow from the gas coin (self-pay path): splitting from an explicit coin
+      // object collided with gas selection on a single funded coin → "No valid gas coins found".
+      const [escrowCoin] = tx.splitCoins(tx.gas, [tx.pure.u64(amountMist)]);
       tx.moveCall({
         target: `${PACKAGE_ID}::auction::commit_bid`,
         arguments: [tx.object(AUCTION_ID), tx.object(entryId), tx.pure.vector("u8", Array.from(hash)), escrowCoin, tx.pure.option("vector<u8>", blobIdBytes ?? undefined), tx.object(CLOCK_ID)],
