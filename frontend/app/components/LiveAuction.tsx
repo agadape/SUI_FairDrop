@@ -95,6 +95,7 @@ export function LiveAuction() {
   const [countdown, setCountdown] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [revealedAmount, setRevealedAmount] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
   const sessionKeyRef = useRef<SessionKey | null>(null);
   const refreshObjects = () => setRefreshTick((t) => t + 1);
@@ -494,6 +495,16 @@ export function LiveAuction() {
 
       {account && (
         <div className="space-y-3">
+
+          {/* Connected address — full + copyable (funding / QA) */}
+          <div className="flex items-center justify-between gap-2 rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2">
+            <span className="font-mono text-[11px] text-zinc-400 break-all">{account.address}</span>
+            <button
+              onClick={() => { navigator.clipboard.writeText(account.address); setCopied(true); setTimeout(() => setCopied(false), 1500); }}
+              className="flex-shrink-0 text-[11px] font-semibold px-2 py-1 rounded-md border border-white/10 text-zinc-300 hover:bg-white/[0.06] transition-colors">
+              {copied ? "Copied ✓" : "Copy"}
+            </button>
+          </div>
 
           {/* Step 1: Register */}
           {!entryId && phase === "COMMIT" && (
