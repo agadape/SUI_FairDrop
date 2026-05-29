@@ -124,10 +124,10 @@ const STEPS = [
 // ─── Sui primitives ───────────────────────────────────────────────────────────
 
 const PRIMITIVES = [
+  { name: "Seal", by: "Kostas Chalkias", desc: "Threshold-encrypts your reveal secret. An on-chain Move policy (seal_approve) releases it only to you, only during reveal — no FairDrop server can decrypt it.", color: "text-pink-400", border: "border-pink-500/20", bg: "bg-pink-950/20" },
+  { name: "Walrus", by: "Mysten Labs", desc: "Decentralized blob storage for the encrypted secret. Recoverable from any device — no backend, no team custody.", color: "text-cyan-400", border: "border-cyan-500/20", bg: "bg-cyan-950/20" },
   { name: "zkLogin", by: "Deepak Maram", desc: "Google login instead of a wallet — the same login re-derives the same wallet on any device. Raises Sybil cost; not proof-of-personhood.", color: "text-blue-400", border: "border-blue-500/20", bg: "bg-blue-950/20" },
   { name: "sui::random", by: "Andrew Schran", desc: "Validator DKG randomness at object 0x8. Unpredictable before the transaction. Unbiasable by any party.", color: "text-violet-400", border: "border-violet-500/20", bg: "bg-violet-950/20" },
-  { name: "Seal", by: "Kostas Chalkias", desc: "Threshold encryption for nonce backup. Access policy enforced on-chain by Move. Key servers verify before releasing.", color: "text-pink-400", border: "border-pink-500/20", bg: "bg-pink-950/20" },
-  { name: "Walrus", by: "Mysten Labs", desc: "Decentralized blob storage for encrypted nonces. Recoverable from any device, no backend needed.", color: "text-cyan-400", border: "border-cyan-500/20", bg: "bg-cyan-950/20" },
   { name: "Enoki", by: "Mysten Labs", desc: "Sponsored transactions for registration. Zero gas friction for participants.", color: "text-orange-400", border: "border-orange-500/20", bg: "bg-orange-950/20" },
   { name: "PTBs", by: "Sui protocol", desc: "Programmable Transaction Blocks. Winners, refunds, proceeds — one atomic transaction, no partial states.", color: "text-emerald-400", border: "border-emerald-500/20", bg: "bg-emerald-950/20" },
 ];
