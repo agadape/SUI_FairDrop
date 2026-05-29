@@ -273,7 +273,7 @@ function ProblemSection() {
             Every launch you&apos;ve seen was gameable.
           </motion.h2>
           <motion.p variants={fadeUp} className="text-zinc-500 mb-12 max-w-xl leading-relaxed">
-            It looks fair from the outside. The mechanics tell a different story — one where bots, whales, and insiders have structural advantages before the first bid is placed.
+            Recovering your bid is the safety net. But a bid that survives still has to stay private and be allocated fairly — and that is exactly where most launches break. It looks fair from the outside; the mechanics tell a different story, one where bots, whales, and insiders have structural advantages before the first bid is placed.
           </motion.p>
 
           <motion.div variants={stagger} className="grid sm:grid-cols-3 gap-4">
@@ -304,10 +304,10 @@ function FairnessSection() {
       <div className="max-w-6xl mx-auto px-6">
         <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }}>
           <motion.p variants={fadeUp} className="text-[10px] text-zinc-600 font-mono uppercase tracking-[0.2em] mb-3">
-            How it&apos;s enforced
+            Privacy · Fairness · Verifiability
           </motion.p>
           <motion.h2 variants={fadeUp} className="text-3xl font-bold text-white mb-12">
-            Four guarantees, four primitives.
+            Private bids, a fair draw, verifiable settlement.
           </motion.h2>
 
           <motion.div variants={stagger} className="grid sm:grid-cols-2 gap-4">
@@ -472,43 +472,6 @@ function VerifiabilitySection() {
   );
 }
 
-function RecoverySection() {
-  return (
-    <motion.section
-      variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}
-      className="py-20 border-t border-white/[0.05]">
-      <div className="max-w-6xl mx-auto px-6">
-        <div className="max-w-2xl">
-          <p className="text-[10px] text-zinc-600 font-mono uppercase tracking-[0.2em] mb-3">Seal + Walrus</p>
-          <h2 className="text-3xl font-bold text-white mb-4">What if you close the tab mid-auction?</h2>
-          <p className="text-zinc-400 text-base leading-relaxed mb-8">
-            Your reveal secret is encrypted with Seal threshold encryption and stored on Walrus — a decentralized storage network. Even if you lose your device between commit and reveal, you can recover your nonce from any browser. Not even the FairDrop team can read your nonce.
-          </p>
-          <div className="flex flex-wrap items-center gap-2 text-sm font-mono">
-            <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-white/[0.08] bg-white/[0.03] text-xs">
-              <span className="text-zinc-600">1.</span>
-              <span className="text-white">localStorage</span>
-              <span className="text-zinc-600 text-[10px]">primary</span>
-            </div>
-            <span className="text-zinc-700">if cleared →</span>
-            <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-pink-500/20 bg-pink-950/20 text-xs">
-              <span className="text-zinc-600">2.</span>
-              <span className="text-pink-400">Seal</span>
-              <span className="text-zinc-600 text-[10px]">threshold enc</span>
-            </div>
-            <span className="text-zinc-700">+</span>
-            <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-cyan-500/20 bg-cyan-950/20 text-xs">
-              <span className="text-zinc-600">3.</span>
-              <span className="text-cyan-400">Walrus</span>
-              <span className="text-zinc-600 text-[10px]">decentralized</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </motion.section>
-  );
-}
-
 function FooterSection() {
   return (
     <footer className="border-t border-white/[0.05] py-12">
@@ -567,22 +530,20 @@ export default function Home() {
         </div>
       </section>
 
-      <RecoverySection />
-
       {/* Final CTA */}
       <section className="py-28 border-t border-white/[0.05]">
         <div className="max-w-6xl mx-auto px-6 text-center">
           <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }}>
             <motion.h2 variants={fadeUp} className="text-4xl lg:text-5xl font-bold text-white mb-6 leading-tight text-balance">
-              The primitive every fair launch
+              Lose your device.
               {" "}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-emerald-400">
-                should have been built on.
+                Keep your bid.
               </span>
             </motion.h2>
             <motion.p variants={fadeUp} className="text-zinc-400 text-lg mb-10 max-w-lg mx-auto leading-relaxed">
-              No backend. No admin keys. No trust assumptions beyond the Sui protocol itself.
-              This is what token launches look like when they&apos;re designed for users.
+              Blind bids, a verifiable draw, atomic settlement — and a sealed bid you can recover from
+              any device. No backend, no admin key, no trust beyond the Sui protocol itself.
             </motion.p>
             <motion.div variants={fadeUp} className="flex justify-center gap-4 flex-wrap">
               <a href="#auction"
