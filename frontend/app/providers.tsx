@@ -1,7 +1,7 @@
 "use client";
 
 import { SuiClientProvider, WalletProvider } from "@mysten/dapp-kit";
-import { getJsonRpcFullnodeUrl } from "@mysten/sui/jsonRpc";
+import { getJsonRpcFullnodeUrl, SuiJsonRpcClient } from "@mysten/sui/jsonRpc";
 import { createNetworkConfig } from "@mysten/dapp-kit";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactNode, useEffect, useState } from "react";
@@ -30,7 +30,9 @@ export function Providers({ children }: { children: ReactNode }) {
         },
       },
       network: "testnet",
-      client: { url: getJsonRpcFullnodeUrl("testnet") } as Parameters<typeof registerEnokiWallets>[0] extends { client: infer C } ? C : never,
+      // Enoki requires a real ClientWithCoreApi (has `.core`); a bare {url} object
+      // left client.core undefined → executor crashed on client.core.getCurrentSystemState().
+      client: new SuiJsonRpcClient({ url: getJsonRpcFullnodeUrl("testnet"), network: "testnet" }),
     });
     return unregister;
   }, []);
