@@ -9,7 +9,7 @@ import {
   useSignPersonalMessage,
 } from "@mysten/dapp-kit";
 import { ConnectButton } from "@mysten/dapp-kit";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { AUCTION_ID, PACKAGE_ID, CLOCK_ID, RANDOM_ID, MIST_PER_SUI, NETWORK } from "@/lib/constants";
 import { computeCommitmentHash, generateNonce, nonceToHex, hexToNonce } from "@/lib/hash";
@@ -35,6 +35,15 @@ type AuctionState = {
 };
 
 type StoredBid = { nonce: string; amount: string; blobId?: string };
+
+type UserSnapshot = {
+  entryId: string | null;
+  commitmentId: string | null;
+  commitmentBlobId: string | null;
+  certificateId: string | null;
+  creatorCapId: string | null;
+  revealedAmount: string | null;
+};
 
 const NONCE_KEY = `fairdrop_nonce_${AUCTION_ID}`;
 const SUISCAN = `https://suiscan.xyz/${NETWORK}`;
@@ -102,7 +111,7 @@ export function LiveAuction() {
 
   async function execWithFallback(
     tx: Transaction,
-    onSuccess: (sponsored: boolean, digest: string) => void,
+    onSuccess: (sponsored: boolean, digest: string) => void | Promise<void>,
   ): Promise<void> {
     if (!account) return;
     let result: { digest: string } | null;
@@ -116,14 +125,14 @@ export function LiveAuction() {
       result = null;
     }
     if (result !== null) {
-      onSuccess(true, result.digest);
+      await onSuccess(true, result.digest);
       return;
     }
     return new Promise((resolve) => {
       signAndExecute(
         { transaction: tx },
         {
-          onSuccess: (data) => { onSuccess(false, data.digest); resolve(); },
+          onSuccess: async (data) => { await onSuccess(false, data.digest); resolve(); },
           onError: (e) => { setTxStatus(`Error: ${e.message}`); resolve(); },
         },
       );
@@ -175,6 +184,63 @@ export function LiveAuction() {
     return () => clearInterval(id);
   }, [auction]);
 
+  // Live mirror of the connected address — lets an in-flight poll detect an account switch and abort.
+  const accountRef = useRef<string | undefined>(account?.address);
+  useEffect(() => { accountRef.current = account?.address; }, [account?.address]);
+
+  // Fetch the connected account's on-chain objects; sets state AND returns a snapshot.
+  const fetchUserObjects = useCallback(async (): Promise<UserSnapshot> => {
+    const snap: UserSnapshot = { entryId: null, commitmentId: null, commitmentBlobId: null, certificateId: null, creatorCapId: null, revealedAmount: null };
+    if (!account?.address || !PACKAGE_ID) return snap;
+    try {
+      const owned = await client.getOwnedObjects({
+        owner: account.address,
+        filter: { Package: PACKAGE_ID },
+        options: { showContent: true },
+      });
+      for (const obj of owned.data) {
+        if (!obj.data?.content || obj.data.content.dataType !== "moveObject") continue;
+        const content = obj.data.content as { type: string; fields: Record<string, unknown> };
+        if (content.type.includes("::auction::Entry")) { snap.entryId = obj.data.objectId; setEntryId(obj.data.objectId); }
+        if (content.type.includes("::auction::Commitment")) {
+          snap.commitmentId = obj.data.objectId; setCommitmentId(obj.data.objectId);
+          const blobIdField = content.fields.blob_id as { fields?: { vec?: string[] } } | null;
+          const blobIdB64 = blobIdField?.fields?.vec?.[0] ?? null;
+          if (blobIdB64) {
+            const decoded = new TextDecoder().decode(Uint8Array.from(atob(blobIdB64), (c) => c.charCodeAt(0)));
+            snap.commitmentBlobId = decoded; setCommitmentBlobId(decoded);
+          }
+        }
+        if (content.type.includes("::auction::WinnerCertificate")) { snap.certificateId = obj.data.objectId; setCertificateId(obj.data.objectId); }
+        if (content.type.includes("::auction::CreatorCap")) { snap.creatorCapId = obj.data.objectId; setCreatorCapId(obj.data.objectId); }
+      }
+      try {
+        const auctionObj = await client.getObject({ id: AUCTION_ID, options: { showContent: true } });
+        if (auctionObj.data?.content?.dataType === "moveObject") {
+          const f = (auctionObj.data.content as { dataType: "moveObject"; fields: Record<string, unknown> }).fields;
+          const contents = (f.reveals as { fields?: { contents?: { key: string; value: string }[] } })?.fields?.contents ?? [];
+          const myReveal = contents.find((r) => r.key === account.address);
+          if (myReveal) { snap.revealedAmount = myReveal.value; setRevealedAmount(myReveal.value); }
+        }
+      } catch { /* non-critical */ }
+    } catch (e) { console.error(e); }
+    return snap;
+  }, [client, account?.address]);
+
+  // Bounded poll after a tx: re-fetch until `predicate` is satisfied (object indexed) or ~10s elapses.
+  // Returns true if confirmed, false on timeout. Aborts if the account changes mid-poll.
+  const pollForState = useCallback(async (predicate: (s: UserSnapshot) => boolean): Promise<boolean> => {
+    const startedFor = account?.address;
+    for (let i = 0; i < 8; i++) {
+      const snap = await fetchUserObjects();
+      if (accountRef.current !== startedFor) return false;
+      if (predicate(snap)) return true;
+      await new Promise((r) => setTimeout(r, 1200));
+    }
+    return false;
+  }, [fetchUserObjects, account?.address]);
+
+  // Reset per-account state, then load objects (also re-runs on refreshObjects()/account change).
   useEffect(() => {
     setEntryId(null); setCommitmentId(null); setCommitmentBlobId(null);
     setCertificateId(null); setCreatorCapId(null); setHasLocalNonce(false);
@@ -182,44 +248,8 @@ export function LiveAuction() {
     sessionKeyRef.current = null;
     if (!account?.address || !PACKAGE_ID) return;
     setHasLocalNonce(!!getLocalBid());
-    async function fetchUserObjects() {
-      try {
-        const owned = await client.getOwnedObjects({
-          owner: account!.address,
-          filter: { Package: PACKAGE_ID },
-          options: { showContent: true },
-        });
-        for (const obj of owned.data) {
-          if (!obj.data?.content || obj.data.content.dataType !== "moveObject") continue;
-          const content = obj.data.content as { type: string; fields: Record<string, unknown> };
-          if (content.type.includes("::auction::Entry")) setEntryId(obj.data.objectId);
-          if (content.type.includes("::auction::Commitment")) {
-            setCommitmentId(obj.data.objectId);
-            const blobIdField = content.fields.blob_id as { fields?: { vec?: string[] } } | null;
-            const blobIdB64 = blobIdField?.fields?.vec?.[0] ?? null;
-            if (blobIdB64) {
-              const bytes = Uint8Array.from(atob(blobIdB64), (c) => c.charCodeAt(0));
-              setCommitmentBlobId(new TextDecoder().decode(bytes));
-            }
-          }
-          if (content.type.includes("::auction::WinnerCertificate")) setCertificateId(obj.data.objectId);
-          if (content.type.includes("::auction::CreatorCap")) setCreatorCapId(obj.data.objectId);
-        }
-        // Check if this account has already revealed (persists across refresh)
-        try {
-          const auctionObj = await client.getObject({ id: AUCTION_ID, options: { showContent: true } });
-          if (auctionObj.data?.content?.dataType === "moveObject") {
-            const f = (auctionObj.data.content as { dataType: "moveObject"; fields: Record<string, unknown> }).fields;
-            const contents = (f.reveals as { fields?: { contents?: { key: string; value: string }[] } })?.fields?.contents ?? [];
-            const myReveal = contents.find((r) => r.key === account!.address);
-            if (myReveal) setRevealedAmount(myReveal.value);
-          }
-        } catch { /* non-critical */ }
-      } catch (e) { console.error(e); }
-    }
     fetchUserObjects();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [account?.address, client, refreshTick]);
+  }, [account?.address, refreshTick, fetchUserObjects]);
 
   async function handleRegister() {
     if (isSubmitting || !account || !PACKAGE_ID || !AUCTION_ID) return;
@@ -232,10 +262,13 @@ export function LiveAuction() {
       const nullifier = sha3_256(pre);
       const tx = new Transaction();
       tx.moveCall({ target: `${PACKAGE_ID}::auction::register`, arguments: [tx.object(AUCTION_ID), tx.pure.vector("u8", Array.from(nullifier))] });
-      await execWithFallback(tx, (sponsored, digest) => {
+      await execWithFallback(tx, async (sponsored, digest) => {
         setLastTxDigest(digest);
-        setTxStatus(`Registered! Entry minted on-chain.${sponsored ? " Gas sponsored by Enoki." : ""}`);
-        refreshObjects();
+        setTxStatus("Registered — confirming on-chain…");
+        const ok = await pollForState((s) => !!s.entryId);
+        setTxStatus(ok
+          ? `Registered! Entry minted on-chain.${sponsored ? " Gas sponsored by Enoki." : ""}`
+          : "Registered on-chain — syncing… open the tx in Explorer; refresh if the step doesn't advance.");
       });
     } finally { setIsSubmitting(false); }
   }
@@ -287,10 +320,13 @@ export function LiveAuction() {
         arguments: [tx.object(AUCTION_ID), tx.object(entryId), tx.pure.vector("u8", Array.from(hash)), escrowCoin, tx.pure.option("vector<u8>", blobIdBytes ?? undefined), tx.object(CLOCK_ID)],
       });
       const blobNote = blobIdBytes ? " Nonce Seal-encrypted & backed up to Walrus." : "";
-      await execWithFallback(tx, (sponsored, digest) => {
+      await execWithFallback(tx, async (sponsored, digest) => {
         setLastTxDigest(digest);
-        setTxStatus(`Bid committed! Amount hidden until reveal.${blobNote}${sponsored ? " Gas sponsored by Enoki." : ""}`);
-        refreshObjects();
+        setTxStatus("Bid committed — confirming on-chain…");
+        const ok = await pollForState((s) => !!s.commitmentId);
+        setTxStatus(ok
+          ? `Bid committed! Amount hidden until reveal.${blobNote}${sponsored ? " Gas sponsored by Enoki." : ""}`
+          : "Bid committed on-chain — syncing… open the tx in Explorer; refresh if it doesn't update.");
       });
     } finally { setIsSubmitting(false); }
   }
