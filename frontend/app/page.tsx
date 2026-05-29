@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
 import { ConnectButton } from "@mysten/dapp-kit";
 import { LiveAuction } from "@/app/components/LiveAuction";
+import { RecoveryHero } from "@/app/components/RecoveryHero";
 import { PACKAGE_ID, AUCTION_ID, RANDOM_ID, NETWORK } from "@/lib/constants";
 
 // ─── Explorer helpers ─────────────────────────────────────────────────────────
@@ -25,38 +26,8 @@ const stagger = {
 
 // ─── Protocol flow data ───────────────────────────────────────────────────────
 
-const FLOW_STEPS = [
-  {
-    num: 1, label: "Register",
-    detail: "zkLogin · Google-gated · per-registration nullifier on-chain",
-    dot: "bg-blue-500", border: "border-blue-500/30", bg: "bg-blue-950/25",
-    accent: "text-blue-400", glow: "rgba(59,130,246,0.3)", isRandom: false,
-  },
-  {
-    num: 2, label: "Commit Blind Bid",
-    detail: "sha3_256(amount ‖ nonce) · amount invisible to everyone including validators",
-    dot: "bg-amber-500", border: "border-amber-500/30", bg: "bg-amber-950/25",
-    accent: "text-amber-400", glow: "rgba(245,158,11,0.3)", isRandom: false,
-  },
-  {
-    num: 3, label: "Reveal",
-    detail: "hash verified on-chain · bids become public · late reveals rejected",
-    dot: "bg-yellow-500", border: "border-yellow-500/25", bg: "bg-yellow-950/20",
-    accent: "text-yellow-400", glow: "rgba(234,179,8,0.25)", isRandom: false,
-  },
-  {
-    num: 4, label: "Resolve  ·  0x8",
-    detail: "Sui validator DKG · unpredictable before tx · unbiasable by any single party",
-    dot: "bg-violet-500", border: "border-violet-500/30", bg: "bg-violet-950/25",
-    accent: "text-violet-400", glow: "rgba(139,92,246,0.45)", isRandom: true,
-  },
-  {
-    num: 5, label: "Atomic Settlement",
-    detail: "1 PTB · winners get allocation + change · losers get full refund · no backend",
-    dot: "bg-emerald-500", border: "border-emerald-500/30", bg: "bg-emerald-950/25",
-    accent: "text-emerald-400", glow: "rgba(16,185,129,0.3)", isRandom: false,
-  },
-];
+// (FLOW_STEPS hero visual removed — replaced by RecoveryHero; the auction
+// lifecycle is documented by STEPS in the How-it-works section.)
 
 // ─── Problem data ─────────────────────────────────────────────────────────────
 
@@ -193,24 +164,6 @@ function NavBar() {
   );
 }
 
-function FlowConnector({ index }: { index: number }) {
-  return (
-    <motion.div
-      initial={{ scaleY: 0, opacity: 0 }}
-      animate={{ scaleY: 1, opacity: 1 }}
-      transition={{ delay: 0.25 + index * 0.3, duration: 0.22, ease: "linear" }}
-      style={{ originY: 0 }}
-      className="relative ml-[13px] w-0.5 h-5 bg-zinc-800 my-0.5"
-    >
-      <motion.div
-        className="absolute w-2 h-2 rounded-full bg-white/30 -left-[3px] top-0"
-        animate={{ y: [0, 20], opacity: [0, 0.9, 0.9, 0] }}
-        transition={{ delay: 0.5 + index * 0.3, duration: 0.65, repeat: Infinity, repeatDelay: 3.2, ease: "linear" }}
-      />
-    </motion.div>
-  );
-}
-
 function HeroSection() {
   return (
     <section className="relative overflow-hidden pt-16 pb-24 lg:pt-24 lg:pb-32">
@@ -225,13 +178,13 @@ function HeroSection() {
           <div className="space-y-7">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
               <p className="text-[10px] text-zinc-600 font-mono uppercase tracking-[0.2em] mb-5">
-                Sui Overflow 2026 · Testnet
+                Seal + Walrus · Sui Overflow 2026 · Testnet
               </p>
               <h1 className="text-5xl lg:text-[3.75rem] font-bold tracking-tight leading-[1.05] text-white">
-                Fair launches,
+                Lose your device.
                 <br />
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 via-violet-300 to-blue-400">
-                  finally.
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-emerald-400">
+                  Keep your bid.
                 </span>
               </h1>
             </motion.div>
@@ -242,8 +195,17 @@ function HeroSection() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.25, duration: 0.55 }}
             >
-              Bots can&apos;t front-run what they can&apos;t see. Whales can&apos;t shade blind bids.
-              Every winner chosen by on-chain randomness nobody controls.
+              One Google login, a blind bid only you can open. Lose this device and the bid lands
+              on the next one — held on Walrus, locked by Seal. No server, no FairDrop team, ever sees it.
+            </motion.p>
+
+            <motion.p
+              className="text-zinc-600 text-xs max-w-md"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.4, duration: 0.55 }}
+            >
+              zkLogin re-derives the same wallet on any device. Raises Sybil cost — not Sybil-proof.
             </motion.p>
 
             <motion.div
@@ -265,75 +227,32 @@ function HeroSection() {
             </motion.div>
 
             <motion.div
-              className="space-y-3 pt-1"
+              className="flex flex-wrap gap-x-4 gap-y-1 pt-1"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.7, duration: 0.6 }}
             >
-              <div className="flex flex-wrap gap-2">
-                {["zkLogin", "sui::random", "Seal", "Walrus", "Enoki", "Pyth"].map((s) => (
-                  <span key={s}
-                    className="text-[10px] text-zinc-700 border border-zinc-800 rounded-full px-2.5 py-0.5 font-mono">
-                    {s}
-                  </span>
-                ))}
-              </div>
-              <div className="flex flex-wrap gap-x-4 gap-y-1">
-                {[
-                  "No bots",
-                  "Bids hidden",
-                  "Randomness verifiable",
-                  "No backend",
-                  "No admin key",
-                ].map((t) => (
-                  <span key={t} className="text-[11px] text-zinc-500 flex items-center gap-1">
-                    <span className="text-emerald-600">✓</span> {t}
-                  </span>
-                ))}
-              </div>
+              {[
+                "Bids hidden until reveal",
+                "Recover from any device",
+                "No backend",
+                "No admin key",
+              ].map((t) => (
+                <span key={t} className="text-[11px] text-zinc-500 flex items-center gap-1">
+                  <span className="text-emerald-600">✓</span> {t}
+                </span>
+              ))}
             </motion.div>
           </div>
 
-          {/* Right — animated protocol flow */}
+          {/* Right — recovery handoff */}
           <motion.div
-            variants={stagger}
-            initial="hidden"
-            animate="visible"
-            className="max-w-sm mx-auto lg:mx-0 w-full"
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.35, duration: 0.6 }}
+            className="mx-auto lg:mx-0 w-full"
           >
-            {FLOW_STEPS.map((step, i) => (
-              <div key={step.num}>
-                <motion.div variants={fadeUp}>
-                  <div
-                    className={`flex items-start gap-3 px-4 py-3 rounded-2xl border ${step.border} ${step.bg}`}
-                    style={{ boxShadow: `0 0 24px ${step.glow}` }}
-                  >
-                    <div className="relative flex-shrink-0 mt-0.5">
-                      <div className={`w-7 h-7 rounded-full ${step.dot} flex items-center justify-center text-black text-xs font-bold`}>
-                        {step.num}
-                      </div>
-                      {step.isRandom && (
-                        <>
-                          {[0, 1, 2].map((j) => (
-                            <motion.div key={j} className="absolute inset-0 rounded-full"
-                              animate={{ rotate: 360 }}
-                              transition={{ duration: 2.2 + j * 0.9, repeat: Infinity, ease: "linear", delay: -(j * 0.85) }}>
-                              <div className="absolute -top-[3px] left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-violet-300"
-                                style={{ opacity: 0.65 - j * 0.12 }} />
-                            </motion.div>
-                          ))}
-                        </>
-                      )}
-                    </div>
-                    <div className="min-w-0">
-                      <p className={`text-sm font-semibold ${step.accent}`}>{step.label}</p>
-                      <p className="text-[11px] text-zinc-500 leading-relaxed mt-0.5">{step.detail}</p>
-                    </div>
-                  </div>
-                </motion.div>
-                {i < FLOW_STEPS.length - 1 && <FlowConnector index={i} />}
-              </div>
-            ))}
+            <RecoveryHero />
           </motion.div>
 
         </div>
