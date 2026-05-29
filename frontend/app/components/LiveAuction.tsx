@@ -425,7 +425,7 @@ export function LiveAuction() {
   }
 
   const formatUsd = (sui: number) => suiUsdPrice !== null ? ` ($${(sui * suiUsdPrice).toFixed(2)})` : "";
-  const minBidSui = auction ? Number(BigInt(auction.minBid) / MIST_PER_SUI) : 0;
+  const minBidSui = auction ? Number(auction.minBid) / Number(MIST_PER_SUI) : 0;
   const bidAmountUsd = bidAmount && suiUsdPrice ? formatUsd(parseFloat(bidAmount)) : "";
   const phaseIdx = PHASE_STEPS.indexOf(phase as AuctionPhase);
   const ps = PHASE_STYLE[phase] ?? PHASE_STYLE.LOADING;
@@ -439,49 +439,62 @@ export function LiveAuction() {
   }
 
   return (
-    <div className="space-y-4 max-w-lg">
+    <div className="grid gap-5 lg:grid-cols-3">
 
-      {/* Trust strip */}
-      <div className="flex flex-wrap gap-x-4 gap-y-1">
-        {["No backend", "No admin key", "100% on-chain", "Explorer verifiable"].map((t) => (
-          <span key={t} className="text-[10px] text-zinc-600 flex items-center gap-1 font-mono">
-            <span className="text-emerald-700">✓</span>{t}
-          </span>
-        ))}
-      </div>
+      {/* ───────────────── LEFT — THE AUCTION (live state) ───────────────── */}
+      <div className="lg:col-span-2 space-y-4">
 
-      {/* Phase timeline */}
-      {phase !== "LOADING" && (
-        <div className="flex items-center gap-1 text-xs select-none">
-          {PHASE_STEPS.map((p, i) => {
-            const isCurrent = phase === p;
-            const isPast = phaseIdx > i;
-            return (
-              <span key={p} className="flex items-center gap-1">
-                <span className={isCurrent ? "text-white font-semibold" : isPast ? "text-zinc-600" : "text-zinc-800"}>
-                  {isPast ? "✓" : isCurrent ? "●" : "○"} {p}
+        {/* Big phase + countdown */}
+        <div className={`rounded-2xl border px-5 py-4 ${ps.bg} ${ps.border}`}>
+          <div className="flex items-end justify-between gap-4 flex-wrap">
+            <div>
+              <p className="text-[10px] text-zinc-500 font-mono uppercase tracking-[0.2em] mb-1.5">The auction · live on testnet</p>
+              <div className="flex items-center gap-2">
+                <span className={`w-2.5 h-2.5 rounded-full ${phase === "LOADING" ? "bg-zinc-600" : "bg-current animate-pulse"} ${ps.label}`} />
+                <span className={`text-2xl font-bold tracking-tight ${ps.label}`}>{phase === "LOADING" ? "Loading…" : phase}</span>
+              </div>
+            </div>
+            {countdown && (
+              <div className="text-right">
+                <p className="text-[10px] text-zinc-500 font-mono uppercase tracking-widest">Closes in</p>
+                <p className="font-mono text-3xl font-bold text-white tabular-nums leading-none mt-1">{countdown.replace(/^Closes in\s*/i, "")}</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Phase stepper */}
+        {phase !== "LOADING" && (
+          <div className="flex flex-wrap items-center gap-1.5 text-xs select-none">
+            {PHASE_STEPS.map((p, i) => {
+              const isCurrent = phase === p;
+              const isPast = phaseIdx > i;
+              return (
+                <span key={p} className="flex items-center gap-1.5">
+                  <span className={`flex items-center gap-1 px-2 py-1 rounded-lg border ${isCurrent ? "border-white/20 bg-white/[0.06] text-white font-semibold" : isPast ? "border-emerald-500/20 text-emerald-500/80" : "border-white/[0.05] text-zinc-600"}`}>
+                    {isPast ? "✓" : isCurrent ? "●" : "○"} {p}
+                  </span>
+                  {i < PHASE_STEPS.length - 1 && <span className="text-zinc-700">→</span>}
                 </span>
-                {i < PHASE_STEPS.length - 1 && <span className="text-zinc-800 mx-0.5">→</span>}
-              </span>
-            );
-          })}
-        </div>
-      )}
+              );
+            })}
+          </div>
+        )}
 
-      {/* Phase banner */}
-      <div className={`px-4 py-3 rounded-xl border ${ps.bg} ${ps.border}`}>
-        <div className="flex items-center justify-between">
-          <span className={`text-sm font-semibold ${ps.label}`}>{phase}</span>
-          {countdown && <span className="text-xs text-zinc-500">{countdown}</span>}
+        {/* Live stats — the alive signal */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {[
+            { k: "Supply", v: auction ? String(auction.supply) : "…" },
+            { k: "Min bid", v: auction ? `${minBidSui} SUI` : "…" },
+            { k: "Committed", v: auction ? String(auction.commitCount) : "…" },
+            { k: "Revealed", v: auction ? String(auction.revealCount) : "…" },
+          ].map((s) => (
+            <div key={s.k} className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-3">
+              <p className="text-[10px] text-zinc-500 font-mono uppercase tracking-widest mb-1">{s.k}</p>
+              <p className="text-xl font-bold text-zinc-100 tabular-nums">{s.v}</p>
+            </div>
+          ))}
         </div>
-        <div className="text-xs text-zinc-500 mt-1 flex flex-wrap gap-x-3">
-          <span>Supply: {auction?.supply ?? "…"}</span>
-          <span>Min bid: {minBidSui} SUI{formatUsd(minBidSui)}</span>
-          {auction && auction.commitCount > 0 && <span>{auction.commitCount} committed</span>}
-          {auction && auction.revealCount > 0 && <span>{auction.revealCount} revealed</span>}
-        </div>
-        {suiUsdPrice && <p className="text-[10px] text-zinc-700 mt-1 font-mono">1 SUI = ${suiUsdPrice.toFixed(3)}</p>}
-      </div>
 
       {/* Resolve verifiability banner */}
       {resolveDigest && (
@@ -497,45 +510,28 @@ export function LiveAuction() {
         </div>
       )}
 
-      {/* Transaction status — state-aware, loud (P0-2) */}
-      {txStatus && (() => {
-        const pending = isSubmitting;
-        const success = !pending && /(registered!|committed!|revealed!|resolved|claimed|recovered|syncing)/i.test(txStatus);
-        const error = !pending && /(error|failed|cancelled|insufficient|no sui|below min|not found)/i.test(txStatus);
-        const tone = pending
-          ? "border-amber-500/40 bg-amber-950/30 text-amber-200"
-          : success ? "border-emerald-500/40 bg-emerald-950/30 text-emerald-200"
-          : error ? "border-red-500/40 bg-red-950/30 text-red-200"
-          : "border-white/10 bg-white/[0.03] text-zinc-300";
-        return (
-          <motion.div key={`${pending}-${success}-${error}`} initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }}
-            className={`flex items-center gap-2.5 rounded-xl border px-4 py-3 text-sm font-medium ${tone}`}>
-            {pending && <Spinner />}
-            {success && <span className="text-emerald-400 text-base leading-none">✓</span>}
-            <span>{txStatus}</span>
-          </motion.div>
-        );
-      })()}
-
-      {/* Last tx link */}
-      {lastTxDigest && (
-        <div className="flex items-center gap-3 text-xs text-zinc-600 font-mono">
-          <span>{lastTxDigest.slice(0, 20)}…</span>
-          <a href={txUrl(lastTxDigest)} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline whitespace-nowrap">
-            View on SuiScan ↗
-          </a>
-          <button onClick={() => navigator.clipboard.writeText(lastTxDigest)} className="hover:text-zinc-400">copy</button>
+        {/* Verify on-chain footer */}
+        <div className="rounded-xl border border-white/[0.05] bg-white/[0.015] px-4 py-3 space-y-2">
+          <p className="text-[10px] text-zinc-600 font-mono uppercase tracking-[0.2em]">Verify on-chain</p>
+          <div className="flex flex-wrap gap-x-4 gap-y-1">
+            {["No backend", "No admin key", "100% on-chain", "Explorer verifiable"].map((t) => (
+              <span key={t} className="text-[10px] text-zinc-600 flex items-center gap-1 font-mono"><span className="text-emerald-700">✓</span>{t}</span>
+            ))}
+          </div>
+          {(entryId || commitmentId || certificateId) && (
+            <div className="flex flex-wrap gap-3 text-xs">
+              {entryId && <a href={objUrl(entryId)} target="_blank" rel="noopener noreferrer" className="text-zinc-600 hover:text-zinc-300 font-mono">Entry ↗</a>}
+              {commitmentId && <a href={objUrl(commitmentId)} target="_blank" rel="noopener noreferrer" className="text-zinc-600 hover:text-zinc-300 font-mono">Commitment ↗</a>}
+              {certificateId && <a href={objUrl(certificateId)} target="_blank" rel="noopener noreferrer" className="text-emerald-700 hover:text-emerald-400 font-mono">WinnerCertificate ↗</a>}
+            </div>
+          )}
+          {suiUsdPrice && <p className="text-[10px] text-zinc-700 font-mono">1 SUI = ${suiUsdPrice.toFixed(3)}</p>}
         </div>
-      )}
+      </div>
 
-      {/* Object links */}
-      {(entryId || commitmentId || certificateId) && (
-        <div className="flex flex-wrap gap-3 text-xs">
-          {entryId && <a href={objUrl(entryId)} target="_blank" rel="noopener noreferrer" className="text-zinc-600 hover:text-zinc-300 font-mono">Entry ↗</a>}
-          {commitmentId && <a href={objUrl(commitmentId)} target="_blank" rel="noopener noreferrer" className="text-zinc-600 hover:text-zinc-300 font-mono">Commitment ↗</a>}
-          {certificateId && <a href={objUrl(certificateId)} target="_blank" rel="noopener noreferrer" className="text-emerald-700 hover:text-emerald-400 font-mono">WinnerCertificate ↗</a>}
-        </div>
-      )}
+      {/* ───────────────── RIGHT — YOUR PARTICIPATION ───────────────── */}
+      <div className="lg:col-span-1 space-y-3 lg:sticky lg:top-20 self-start">
+        <p className="text-[10px] text-zinc-500 font-mono uppercase tracking-[0.2em]">Your participation</p>
 
       {/* zkLogin hint */}
       {account && !isZkLoginWallet && phase === "COMMIT" && !entryId && (
@@ -573,6 +569,17 @@ export function LiveAuction() {
                 ? <span className="text-emerald-400">✓ ready to transact</span>
                 : <span className="text-amber-400">fund wallet to transact</span>}
             </div>
+          </div>
+
+          {/* Progress checklist — what you've done */}
+          <div className="flex flex-wrap gap-x-3 gap-y-1 text-[11px] font-mono">
+            {[
+              { k: "Registered", done: !!entryId },
+              { k: "Committed", done: !!commitmentId || !!revealedAmount },
+              { k: "Revealed", done: !!revealedAmount },
+            ].map((s) => (
+              <span key={s.k} className={s.done ? "text-emerald-400" : "text-zinc-600"}>{s.done ? "✓" : "○"} {s.k}</span>
+            ))}
           </div>
 
           {/* Step 1: Register */}
@@ -742,6 +749,35 @@ export function LiveAuction() {
 
         </div>
       )}
+
+      {/* Transaction status — state-aware, loud (P0-2) */}
+      {txStatus && (() => {
+        const pending = isSubmitting;
+        const success = !pending && /(registered!|committed!|revealed!|resolved|claimed|recovered|syncing)/i.test(txStatus);
+        const error = !pending && /(error|failed|cancelled|insufficient|no sui|below min|not found)/i.test(txStatus);
+        const tone = pending
+          ? "border-amber-500/40 bg-amber-950/30 text-amber-200"
+          : success ? "border-emerald-500/40 bg-emerald-950/30 text-emerald-200"
+          : error ? "border-red-500/40 bg-red-950/30 text-red-200"
+          : "border-white/10 bg-white/[0.03] text-zinc-300";
+        return (
+          <motion.div key={`${pending}-${success}-${error}`} initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }}
+            className={`flex items-center gap-2.5 rounded-xl border px-4 py-3 text-sm font-medium ${tone}`}>
+            {pending && <Spinner />}
+            {success && <span className="text-emerald-400 text-base leading-none">✓</span>}
+            <span>{txStatus}</span>
+          </motion.div>
+        );
+      })()}
+
+      {lastTxDigest && (
+        <div className="flex items-center gap-2 text-xs text-zinc-600 font-mono flex-wrap">
+          <a href={txUrl(lastTxDigest)} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline whitespace-nowrap">View tx on SuiScan ↗</a>
+          <button onClick={() => navigator.clipboard.writeText(lastTxDigest)} className="hover:text-zinc-400">copy digest</button>
+        </div>
+      )}
+
+      </div>
     </div>
   );
 }
