@@ -56,6 +56,37 @@ function Spinner() {
   return <span className="inline-block w-3.5 h-3.5 rounded-full border-2 border-current border-t-transparent animate-spin" aria-hidden />;
 }
 
+// Recovery centerpiece — device-loss → Walrus → Seal → restored.
+type RecoveryStage = "idle" | "wiped" | "session" | "walrus" | "seal" | "restored" | "error";
+type NodeState = "idle" | "active" | "done";
+
+function RailNode({ label, color, state }: { label: string; color: string; state: NodeState }) {
+  return (
+    <div className="flex items-center gap-1.5">
+      <span className={`w-4 h-4 flex items-center justify-center rounded-full text-[9px] ${state === "idle" ? "text-zinc-700" : color}`}>
+        {state === "done" ? "✓" : state === "active" ? <Spinner /> : "○"}
+      </span>
+      <span className={`text-[11px] font-mono ${state === "idle" ? "text-zinc-600" : color}`}>{label}</span>
+    </div>
+  );
+}
+
+function RecoveryRail({ stage }: { stage: RecoveryStage }) {
+  const idx = ["session", "walrus", "seal", "restored"].indexOf(stage);
+  const walrus: NodeState = idx >= 2 ? "done" : idx >= 0 ? "active" : "idle";
+  const seal: NodeState = idx >= 3 ? "done" : idx === 2 ? "active" : "idle";
+  const restored: NodeState = idx >= 3 ? "done" : "idle";
+  return (
+    <div className="flex items-center gap-2">
+      <RailNode label="Walrus" color="text-cyan-400" state={walrus} />
+      <span className="text-zinc-700 text-xs">→</span>
+      <RailNode label="Seal" color="text-pink-400" state={seal} />
+      <span className="text-zinc-700 text-xs">→</span>
+      <RailNode label="Restored" color="text-emerald-400" state={restored} />
+    </div>
+  );
+}
+
 function getLocalBid(): StoredBid | null {
   try {
     const raw = localStorage.getItem(NONCE_KEY);
@@ -110,6 +141,9 @@ export function LiveAuction() {
   const [revealedAmount, setRevealedAmount] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [balance, setBalance] = useState<bigint | null>(null);
+  const [recoveryStage, setRecoveryStage] = useState<RecoveryStage>("idle");
+  const [recoveryError, setRecoveryError] = useState<string | null>(null);
+  const [recoveredAmount, setRecoveredAmount] = useState<string | null>(null);
 
   const sessionKeyRef = useRef<SessionKey | null>(null);
   const refreshObjects = () => setRefreshTick((t) => t + 1);
@@ -250,6 +284,7 @@ export function LiveAuction() {
     setEntryId(null); setCommitmentId(null); setCommitmentBlobId(null);
     setCertificateId(null); setCreatorCapId(null); setHasLocalNonce(false);
     setLastTxDigest(null); setResolveDigest(null); setRevealedAmount(null);
+    setRecoveryStage("idle"); setRecoveredAmount(null); setRecoveryError(null);
     sessionKeyRef.current = null;
     if (!account?.address || !PACKAGE_ID) return;
     setHasLocalNonce(!!getLocalBid());
@@ -340,29 +375,68 @@ export function LiveAuction() {
     } finally { setIsSubmitting(false); }
   }
 
+  // Shared Walrus + Seal recovery: re-derive the nonce from the on-chain blob,
+  // gated by seal_approve to the Entry owner. Used by both the reveal flow and
+  // the device-loss recovery centerpiece.
+  async function recoverNonceFromChain(onStep: (s: "session" | "walrus" | "seal") => void): Promise<StoredBid> {
+    if (!account || !PACKAGE_ID || !commitmentBlobId || !entryId) {
+      throw new Error("No on-chain backup found for this bid.");
+    }
+    onStep("session");
+    if (!sessionKeyRef.current || sessionKeyRef.current.isExpired()) {
+      const sk = await SessionKey.create({ address: account.address, packageId: PACKAGE_ID, ttlMin: 10, suiClient: client as SealCompatibleClient });
+      const { signature } = await signPersonalMessage({ message: sk.getPersonalMessage() });
+      await sk.setPersonalMessageSignature(signature);
+      sessionKeyRef.current = sk;
+    }
+    onStep("walrus");
+    const encrypted = await walrusRead(commitmentBlobId);
+    onStep("seal");
+    const txBytes = await buildSealApproveTx(entryId, client as ClientWithCoreApi, account.address);
+    const decrypted = await sealDecrypt(makeSealClient(client as SealCompatibleClient), encrypted, sessionKeyRef.current, txBytes);
+    const { nonce, amount } = JSON.parse(new TextDecoder().decode(decrypted)) as StoredBid;
+    const bid: StoredBid = { nonce, amount };
+    localStorage.setItem(NONCE_KEY, JSON.stringify(bid));
+    setHasLocalNonce(true);
+    return bid;
+  }
+
+  // Centerpiece: wipe the local nonce so this device can no longer open the bid.
+  function simulateDeviceLoss() {
+    localStorage.removeItem(NONCE_KEY);
+    setHasLocalNonce(false);
+    sessionKeyRef.current = null;
+    setRecoveredAmount(null);
+    setRecoveryError(null);
+    setRecoveryStage("wiped");
+  }
+
+  // Centerpiece: pull the sealed bid back from Walrus + Seal, driving the rail.
+  async function handleRecover() {
+    setRecoveryError(null);
+    try {
+      const bid = await recoverNonceFromChain((s) => setRecoveryStage(s));
+      setRecoveredAmount(bid.amount);
+      setRecoveryStage("restored");
+    } catch (e) {
+      setRecoveryError(e instanceof Error ? e.message : String(e));
+      setRecoveryStage("error");
+    }
+  }
+
   async function handleReveal() {
     if (isSubmitting || !account || !PACKAGE_ID || !AUCTION_ID || !commitmentId) return;
     setIsSubmitting(true); setLastTxDigest(null);
     let storedBid: StoredBid | null = getLocalBid();
     if (!storedBid && commitmentBlobId && entryId) {
       try {
-        setTxStatus("Recovering nonce via Seal + Walrus…");
-        if (!sessionKeyRef.current || sessionKeyRef.current.isExpired()) {
-          const sk = await SessionKey.create({ address: account.address, packageId: PACKAGE_ID, ttlMin: 10, suiClient: client as SealCompatibleClient });
-          setTxStatus("Sign the Seal session key in your wallet…");
-          const { signature } = await signPersonalMessage({ message: sk.getPersonalMessage() });
-          await sk.setPersonalMessageSignature(signature);
-          sessionKeyRef.current = sk;
-        }
-        setTxStatus("Fetching encrypted nonce from Walrus…");
-        const encrypted = await walrusRead(commitmentBlobId);
-        setTxStatus("Decrypting with Seal threshold encryption…");
-        const txBytes = await buildSealApproveTx(entryId, client as ClientWithCoreApi, account.address);
-        const decrypted = await sealDecrypt(makeSealClient(client as SealCompatibleClient), encrypted, sessionKeyRef.current, txBytes);
-        const { nonce, amount } = JSON.parse(new TextDecoder().decode(decrypted)) as StoredBid;
-        storedBid = { nonce, amount };
-        localStorage.setItem(NONCE_KEY, JSON.stringify(storedBid));
-        setHasLocalNonce(true);
+        storedBid = await recoverNonceFromChain((s) => {
+          setTxStatus(
+            s === "session" ? "Sign the Seal session key in your wallet…"
+              : s === "walrus" ? "Fetching encrypted nonce from Walrus…"
+              : "Decrypting with Seal threshold encryption…",
+          );
+        });
       } catch (e) {
         setTxStatus(`Seal/Walrus recovery failed: ${e instanceof Error ? e.message : String(e)}`);
         setIsSubmitting(false); return;
@@ -620,6 +694,62 @@ export function LiveAuction() {
               </div>
               <div className="font-mono text-2xl font-bold text-amber-500/60 tracking-[0.15em]">???  SUI</div>
               <p className="text-[11px] text-zinc-600 mt-1.5">Amount hidden from validators, MEV bots, and other bidders. Reveal phase opens soon.</p>
+
+              {/* Recovery centerpiece — reachable at the earliest stake, co-present with the countdown */}
+              {commitmentBlobId ? (
+                <div className="mt-3 pt-3 border-t border-amber-500/15 space-y-2">
+                  {recoveryStage === "idle" && (
+                    <>
+                      <div className="flex items-center gap-1.5 text-[11px]">
+                        <span className="text-cyan-400">●</span>
+                        <span className="text-zinc-300 font-semibold">This bid is recoverable</span>
+                        <span className="text-zinc-600">— nonce on Walrus, locked by Seal to your Entry.</span>
+                      </div>
+                      <button onClick={simulateDeviceLoss}
+                        className="w-full py-2 rounded-lg text-xs font-semibold border border-white/10 bg-white/[0.03] hover:bg-white/[0.07] text-zinc-300 transition-colors">
+                        Simulate device loss →
+                      </button>
+                    </>
+                  )}
+                  {recoveryStage === "wiped" && (
+                    <>
+                      <p className="text-[11px] text-red-300">Local key wiped. This device can no longer open the bid.</p>
+                      <button onClick={handleRecover}
+                        className="w-full py-2 rounded-lg text-xs font-semibold text-white bg-gradient-to-r from-cyan-600 to-pink-600 hover:from-cyan-500 hover:to-pink-500 transition-colors">
+                        Recover from Walrus + Seal →
+                      </button>
+                    </>
+                  )}
+                  {(recoveryStage === "session" || recoveryStage === "walrus" || recoveryStage === "seal") && (
+                    <div className="space-y-1.5">
+                      <RecoveryRail stage={recoveryStage} />
+                      {recoveryStage === "session" && <p className="text-[10px] text-zinc-500">Sign in your wallet to authorize Seal…</p>}
+                    </div>
+                  )}
+                  {recoveryStage === "restored" && (
+                    <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="space-y-1.5">
+                      <RecoveryRail stage="restored" />
+                      <p className="text-[11px] text-emerald-300 font-semibold">
+                        Bid recovered{recoveredAmount ? ` — ${(Number(BigInt(recoveredAmount)) / 1e9).toFixed(3)} SUI` : ""}. No server ever saw it.
+                      </p>
+                      <button onClick={() => setRecoveryStage("idle")} className="text-[10px] text-zinc-500 hover:text-zinc-300">reset demo</button>
+                    </motion.div>
+                  )}
+                  {recoveryStage === "error" && (
+                    <div className="space-y-1.5">
+                      <p className="text-[11px] text-red-300">Recovery failed: {recoveryError}</p>
+                      <button onClick={handleRecover}
+                        className="w-full py-2 rounded-lg text-xs font-semibold border border-red-500/30 bg-red-950/20 hover:bg-red-950/30 text-red-200 transition-colors">
+                        Retry recovery →
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <p className="mt-3 pt-3 border-t border-amber-500/15 text-[11px] text-zinc-600">
+                  No Walrus backup for this bid — keep this device to reveal.
+                </p>
+              )}
             </div>
           )}
 
