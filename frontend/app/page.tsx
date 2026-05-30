@@ -128,7 +128,7 @@ const PRIMITIVES = [
   { name: "Walrus", by: "Mysten Labs", desc: "Decentralized blob storage for the encrypted secret. Recoverable from any device — no backend, no team custody.", color: "text-cyan-400", border: "border-cyan-500/20", bg: "bg-cyan-950/20" },
   { name: "zkLogin", by: "Deepak Maram", desc: "Google login instead of a wallet — the same login re-derives the same wallet on any device. Raises Sybil cost; not proof-of-personhood.", color: "text-blue-400", border: "border-blue-500/20", bg: "bg-blue-950/20" },
   { name: "sui::random", by: "Andrew Schran", desc: "Validator DKG randomness at object 0x8. Unpredictable before the transaction. Unbiasable by any party.", color: "text-violet-400", border: "border-violet-500/20", bg: "bg-violet-950/20" },
-  { name: "Enoki", by: "Mysten Labs", desc: "Sponsored transactions for registration. Zero gas friction for participants.", color: "text-orange-400", border: "border-orange-500/20", bg: "bg-orange-950/20" },
+  { name: "Enoki", by: "Mysten Labs", desc: "The zkLogin auth flow behind the Google button — onboards users with no seed phrase and no extension. Gas is self-paid on testnet (no sponsorship).", color: "text-orange-400", border: "border-orange-500/20", bg: "bg-orange-950/20" },
   { name: "PTBs", by: "Sui protocol", desc: "Programmable Transaction Blocks. Winners, refunds, proceeds — one atomic transaction, no partial states.", color: "text-emerald-400", border: "border-emerald-500/20", bg: "bg-emerald-950/20" },
 ];
 
@@ -253,6 +253,13 @@ function HeroSection() {
             className="mx-auto lg:mx-0 w-full"
           >
             <RecoveryHero />
+            <a
+              href="#auction"
+              className="group mt-4 flex items-center justify-center gap-2 rounded-xl border border-emerald-500/25 bg-emerald-950/20 px-4 py-2.5 text-sm font-semibold text-emerald-300 transition-colors hover:border-emerald-400/40 hover:bg-emerald-950/35"
+            >
+              Try it on a live bid
+              <span className="transition-transform group-hover:translate-y-0.5">↓</span>
+            </a>
           </motion.div>
 
         </div>
@@ -437,7 +444,7 @@ function VerifiabilitySection() {
 
           <motion.div variants={stagger} className="flex flex-wrap gap-3 mb-10">
             {[
-              { label: "zkLogin verified", color: "text-blue-400 border-blue-500/20 bg-blue-950/20" },
+              { label: "Google-gated entry", color: "text-blue-400 border-blue-500/20 bg-blue-950/20" },
               { label: "No backend", color: "text-emerald-400 border-emerald-500/20 bg-emerald-950/20" },
               { label: "No admin key", color: "text-emerald-400 border-emerald-500/20 bg-emerald-950/20" },
               { label: "One PTB settlement", color: "text-violet-400 border-violet-500/20 bg-violet-950/20" },
