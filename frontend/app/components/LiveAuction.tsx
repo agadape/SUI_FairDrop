@@ -686,30 +686,68 @@ export function LiveAuction() {
             </section>
           )}
 
-          {commitmentId && phase === "COMMIT" && (
-            <div className="rounded-xl border border-amber-500/20 bg-amber-950/10 px-4 py-4">
+          {commitmentId && phase === "COMMIT" && (() => {
+            // Change A — the owner sees their own stake; the chain still stores only the hash.
+            const heldBid = getLocalBid();
+            const heldAmountMist = recoveredAmount ?? heldBid?.amount ?? null;
+            const heldAmountSui = heldAmountMist ? (Number(BigInt(heldAmountMist)) / 1e9).toFixed(3) : null;
+            const keyFp = heldBid?.nonce ? `${heldBid.nonce.slice(0, 6)}…${heldBid.nonce.slice(-4)}` : null;
+            return (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.97 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ type: "spring", damping: 20, stiffness: 240 }}
+              className="rounded-xl border border-amber-500/20 bg-amber-950/10 px-4 py-4"
+            >
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs text-zinc-500 uppercase tracking-widest">Sealed bid</span>
-                <span className="text-amber-500 text-base">🔒</span>
+                <span className="text-xs text-zinc-500 uppercase tracking-widest">You hold the only key</span>
+                <span className="text-amber-500 text-base">🔑</span>
               </div>
-              <div className="font-mono text-2xl font-bold text-amber-500/60 tracking-[0.15em]">???  SUI</div>
-              <p className="text-[11px] text-zinc-600 mt-1.5">Amount hidden from validators, MEV bots, and other bidders. Reveal phase opens soon.</p>
 
-              {/* Recovery centerpiece — reachable at the earliest stake, co-present with the countdown */}
+              {/* Change A — owner sees the real stake; everyone else sees ??? */}
+              {heldAmountSui ? (
+                <>
+                  <div className="font-mono text-2xl font-bold text-amber-300 tracking-tight">
+                    {heldAmountSui} SUI <span className="text-amber-500/40 text-sm font-normal">in escrow</span>
+                  </div>
+                  <p className="text-[11px] text-zinc-500 mt-1">
+                    <span className="text-amber-500/70">??? to validators, MEV bots, every rival</span> — only you can see this.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <div className="font-mono text-2xl font-bold text-red-400/70 tracking-[0.15em]">???  SUI</div>
+                  <p className="text-[11px] text-red-300/80 mt-1">The only key to this bid is gone from this device.</p>
+                </>
+              )}
+
+              {/* Change B — the three stakes that genuinely exist */}
+              <div className="mt-3 space-y-1 text-[11px] leading-relaxed">
+                <div className="flex items-baseline gap-1.5">
+                  <span className="text-amber-400 flex-shrink-0">●</span>
+                  <span className="text-zinc-400">
+                    <span className="text-zinc-200 font-semibold">One 32-byte key</span> opens this bid
+                    {keyFp ? <> — <span className="font-mono text-amber-300">{keyFp}</span>, the only copy that can.</> : <>. The only copy that can.</>}
+                  </span>
+                </div>
+                <div className="flex items-baseline gap-1.5">
+                  <span className="text-pink-400 flex-shrink-0">●</span>
+                  <span className="text-zinc-400">No server, no FairDrop team can open it for you. <span className="text-zinc-200">Not even to help.</span></span>
+                </div>
+                <div className="flex items-baseline gap-1.5">
+                  <span className="text-zinc-500 flex-shrink-0">●</span>
+                  <span className="text-zinc-400">One entry, one bid. <span className="text-zinc-200">Miss reveal and the escrow locks forever.</span></span>
+                </div>
+              </div>
+
+              {/* Recovery — resting-state spoiler removed; the rescue lives behind the loss */}
               {commitmentBlobId ? (
                 <div className="mt-3 pt-3 border-t border-amber-500/15 space-y-2">
                   {recoveryStage === "idle" && (
-                    <>
-                      <div className="flex items-center gap-1.5 text-[11px]">
-                        <span className="text-cyan-400">●</span>
-                        <span className="text-zinc-300 font-semibold">This bid is recoverable</span>
-                        <span className="text-zinc-600">— nonce on Walrus, locked by Seal to your Entry.</span>
-                      </div>
-                      <button onClick={simulateDeviceLoss}
-                        className="w-full py-2 rounded-lg text-xs font-semibold border border-white/10 bg-white/[0.03] hover:bg-white/[0.07] text-zinc-300 transition-colors">
-                        Simulate device loss →
-                      </button>
-                    </>
+                    <button onClick={simulateDeviceLoss}
+                      className="w-full py-2 rounded-lg text-xs font-semibold border border-white/10 bg-white/[0.03] hover:bg-white/[0.07] text-zinc-300 transition-colors">
+                      Simulate device loss →
+                    </button>
                   )}
                   {recoveryStage === "wiped" && (
                     <>
@@ -750,8 +788,9 @@ export function LiveAuction() {
                   No Walrus backup for this bid — keep this device to reveal.
                 </p>
               )}
-            </div>
-          )}
+            </motion.div>
+            );
+          })()}
 
           {/* Step 3: Reveal */}
           {commitmentId && phase === "REVEAL" && (
