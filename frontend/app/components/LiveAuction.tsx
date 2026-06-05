@@ -96,6 +96,26 @@ function getLocalBid(): StoredBid | null {
   }
 }
 
+// Move Option<vector<u8>> arrives in several shapes depending on RPC/SDK serialization:
+// flat bytes [n,...], wrapper {vec:[...]} / {fields:{vec:[...]}}, a base64 string, or empty = None.
+// The fullnode serializes the Some payload as a flat byte array, which the old
+// {fields:{vec:[...]}} reader missed — so every backed-up bid showed "No Walrus backup".
+function decodeBlobId(raw: unknown): string | null {
+  if (raw == null) return null;
+  let v: unknown = raw;
+  if (!Array.isArray(v) && typeof v === "object") {
+    const o = v as { vec?: unknown; fields?: { vec?: unknown } };
+    v = o.vec ?? o.fields?.vec ?? v;
+  }
+  if (!Array.isArray(v) || v.length === 0) return null; // None
+  const b: unknown = Array.isArray(v[0]) ? v[0] : (typeof v[0] === "string" ? v[0] : v);
+  try {
+    if (typeof b === "string") return new TextDecoder().decode(Uint8Array.from(atob(b), (c) => c.charCodeAt(0)));
+    if (Array.isArray(b)) return new TextDecoder().decode(Uint8Array.from(b as number[]));
+  } catch { return null; }
+  return null;
+}
+
 function formatCountdown(ms: number): string {
   if (ms <= 0) return "ended";
   const s = Math.floor(ms / 1000);
@@ -243,12 +263,8 @@ export function LiveAuction() {
         if (content.type.includes("::auction::Entry")) { snap.entryId = obj.data.objectId; setEntryId(obj.data.objectId); }
         if (content.type.includes("::auction::Commitment")) {
           snap.commitmentId = obj.data.objectId; setCommitmentId(obj.data.objectId);
-          const blobIdField = content.fields.blob_id as { fields?: { vec?: string[] } } | null;
-          const blobIdB64 = blobIdField?.fields?.vec?.[0] ?? null;
-          if (blobIdB64) {
-            const decoded = new TextDecoder().decode(Uint8Array.from(atob(blobIdB64), (c) => c.charCodeAt(0)));
-            snap.commitmentBlobId = decoded; setCommitmentBlobId(decoded);
-          }
+          const decoded = decodeBlobId(content.fields.blob_id);
+          if (decoded) { snap.commitmentBlobId = decoded; setCommitmentBlobId(decoded); }
         }
         if (content.type.includes("::auction::WinnerCertificate")) { snap.certificateId = obj.data.objectId; setCertificateId(obj.data.objectId); }
         if (content.type.includes("::auction::CreatorCap")) { snap.creatorCapId = obj.data.objectId; setCreatorCapId(obj.data.objectId); }
