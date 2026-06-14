@@ -6,6 +6,7 @@ import { createNetworkConfig } from "@mysten/dapp-kit";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactNode, useEffect, useState } from "react";
 import { registerEnokiWallets } from "@mysten/enoki";
+import { ToastProvider } from "@/app/components/Toast";
 
 const ENOKI_API_KEY = process.env.NEXT_PUBLIC_ENOKI_API_KEY ?? "";
 const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ?? "";
@@ -40,7 +41,9 @@ export function Providers({ children }: { children: ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
       <SuiClientProvider networks={networkConfig} defaultNetwork="testnet">
-        <WalletProvider autoConnect>{children}</WalletProvider>
+        <WalletProvider autoConnect>
+          <ToastProvider>{children}</ToastProvider>
+        </WalletProvider>
       </SuiClientProvider>
     </QueryClientProvider>
   );

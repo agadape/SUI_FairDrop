@@ -14,6 +14,7 @@ import { generateNonce, nonceToHex } from "@/lib/hash";
 import { makeSealClient, sealEncrypt } from "@/lib/seal";
 import { walrusStore } from "@/lib/walrus";
 import { MevShieldCard } from "@/app/components/MevShieldCard";
+import { useToast } from "@/app/components/Toast";
 import {
   UMBRA_PACKAGE_ID,
   UMBRA_POOL_ID,
@@ -23,6 +24,9 @@ import {
   buildRevealOrderTx,
   buildSettleTx,
   buildClaimFillTx,
+  buildReclaimUnsettledTx,
+  classifyError,
+  withRetry,
   parseUmbraPool,
   type UmbraPool,
 } from "@/lib/umbra";
@@ -119,9 +123,11 @@ export function UmbraTerminal() {
   const account = useCurrentAccount();
   const client = useSuiClient();
   const { mutate: signAndExecute } = useSignAndExecuteTransaction();
+  const toast = useToast();
 
   const [pool, setPool] = useState<UmbraPool | null>(null);
   const [phase, setPhase] = useState<Phase>("LOADING");
+  const [loadError, setLoadError] = useState(false);
   const [qty, setQty] = useState("10");
   const [price, setPrice] = useState("0.002"); // SUI per UMB unit
   const [stage, setStage] = useState<SubmitStage>("idle");
@@ -140,15 +146,19 @@ export function UmbraTerminal() {
     let stop = false;
     async function load() {
       try {
-        const obj = await client.getObject({ id: UMBRA_POOL_ID, options: { showContent: true } });
-        if (obj.data?.content?.dataType !== "moveObject") return;
+        const obj = await withRetry(() => client.getObject({ id: UMBRA_POOL_ID, options: { showContent: true } }));
+        if (obj.data?.content?.dataType !== "moveObject") { if (!stop) setLoadError(true); return; }
         const f = (obj.data.content as { fields: Record<string, unknown> }).fields;
         const p = parseUmbraPool(f);
         if (stop) return;
+        setLoadError(false);
         setPool(p);
         const now = Date.now();
         setPhase(p.settled ? "SETTLED" : now < p.commitEndMs ? "COMMIT" : now < p.revealEndMs ? "REVEAL" : "ENDED");
-      } catch (e) { console.error(e); }
+      } catch (e) {
+        console.error(e);
+        if (!stop) setLoadError(true); // the 10s interval keeps retrying
+      }
     }
     load();
     const id = setInterval(load, 10_000);
@@ -204,14 +214,32 @@ export function UmbraTerminal() {
 
   // ── Submit a blind order (the live hero moment) ─────────────────────────────
   async function handleSubmit() {
-    if (!account || stage === "hashing" || stage === "sealing" || stage === "walrus" || stage === "submitting") return;
-    const priceMist = BigInt(Math.floor((parseFloat(price) || 0) * 1e9));
-    const qtyUnits = BigInt(Math.floor(parseFloat(qty) || 0));
-    if (priceMist <= 0n || qtyUnits <= 0n) { setStatusMsg("Enter a price and quantity."); return; }
-    const escrowMist = priceMist * qtyUnits;
+    const busy = stage === "hashing" || stage === "sealing" || stage === "walrus" || stage === "submitting";
+    if (!account || busy) return;
 
-    setStage("hashing"); setOrderHash(null); setLastDigest(null);
-    setStatusMsg("Sealing your order…");
+    // Validate input (guard against NaN / negative / non-finite BigInt throws).
+    const priceF = parseFloat(price), qtyF = parseFloat(qty);
+    if (!isFinite(priceF) || !isFinite(qtyF) || priceF <= 0 || qtyF <= 0) {
+      toast.push({ kind: "error", title: "Enter a valid price and quantity." }); return;
+    }
+    const priceMist = BigInt(Math.floor(priceF * 1e9));
+    const qtyUnits = BigInt(Math.floor(qtyF));
+    const escrowMist = priceMist * qtyUnits;
+    if (pool && priceMist < BigInt(pool.minPrice)) {
+      toast.push({ kind: "error", title: "Price below the pool floor.", detail: `Min ${Number(pool.minPrice) / 1e9} SUI/unit.` }); return;
+    }
+
+    // Pre-flight balance check — escrow + gas headroom — so we never hit a cryptic gas error.
+    try {
+      const bal = BigInt((await withRetry(() => client.getBalance({ owner: account.address }))).totalBalance);
+      if (bal < escrowMist + 30_000_000n) {
+        toast.push({ kind: "error", title: "Not enough SUI.", detail: `Need ~${(Number(escrowMist) / 1e9 + 0.03).toFixed(3)} SUI (escrow + gas), have ${(Number(bal) / 1e9).toFixed(3)}.` });
+        return;
+      }
+    } catch { /* balance read failed — let the tx itself surface any real shortfall */ }
+
+    const tid = toast.push({ kind: "pending", title: "Sealing your order…" });
+    setStage("hashing"); setOrderHash(null); setLastDigest(null); setStatusMsg(null);
     const nonce = generateNonce();
     const hash = computeOrderHash(priceMist, qtyUnits, nonce);
     setOrderHash(bytesToHex(hash));
@@ -219,41 +247,67 @@ export function UmbraTerminal() {
     const stored = { nonce: nonceToHex(nonce), price: priceMist.toString(), qty: qtyUnits.toString() };
     localStorage.setItem(ORDER_KEY, JSON.stringify(stored));
 
-    // Seal-encrypt the nonce → Walrus (recovery backup); failure is non-fatal.
+    // Seal → Walrus backup; non-fatal (localStorage still holds the nonce for reveal).
     let blobIdBytes: number[] | null = null;
     try {
-      setStage("sealing");
+      setStage("sealing"); toast.update(tid, { title: "Encrypting with Seal, backing up to Walrus…" });
       const sealClient = makeSealClient(client as SealCompatibleClient);
       const payload = new TextEncoder().encode(JSON.stringify(stored));
       const encrypted = await sealEncrypt(sealClient, payload, UMBRA_PACKAGE_ID, UMBRA_POOL_ID);
       setStage("walrus");
       const blobId = await walrusStore(encrypted);
       blobIdBytes = Array.from(new TextEncoder().encode(blobId));
-    } catch (e) { console.warn("Umbra Seal/Walrus backup failed:", e); }
+    } catch (e) {
+      console.warn("Umbra Seal/Walrus backup failed:", e);
+      toast.push({ kind: "info", title: "Cloud backup unavailable.", detail: "Order still submits — keep this device to reveal." });
+    }
 
-    setStage("submitting");
-    setStatusMsg("Broadcasting — but there's nothing to see…");
+    setStage("submitting"); toast.update(tid, { title: "Broadcasting — nothing for the mempool to see…" });
     const tx = buildSubmitOrderTx(hash, escrowMist, blobIdBytes);
     signAndExecute({ transaction: tx }, {
-      onSuccess: (data) => { setStage("done"); setLastDigest(data.digest); setStatusMsg("Order live on-chain. The mempool saw a 32-byte shadow."); refresh(); },
-      onError: (e) => { setStage("error"); setStatusMsg(`Error: ${e.message}`); },
+      onSuccess: (data) => {
+        setStage("done"); setLastDigest(data.digest);
+        toast.update(tid, { kind: "success", title: "Order live — the mempool saw a 32-byte shadow.", href: txUrl(data.digest) });
+        refresh();
+      },
+      onError: (e) => {
+        setStage("error");
+        const { kind, msg } = classifyError(e);
+        toast.update(tid, { kind: kind === "rejected" ? "info" : "error", title: kind === "rejected" ? "Cancelled in wallet." : "Order failed.", detail: msg });
+      },
     });
   }
 
   function runTx(build: () => ReturnType<typeof buildSettleTx>, pending: string, ok: string) {
-    setStatusMsg(pending);
+    const tid = toast.push({ kind: "pending", title: pending });
     signAndExecute({ transaction: build() }, {
-      onSuccess: (data) => { setLastDigest(data.digest); setStatusMsg(ok); refresh(); },
-      onError: (e) => { setStatusMsg(`Error: ${e.message}`); },
+      onSuccess: (data) => { setLastDigest(data.digest); toast.update(tid, { kind: "success", title: ok, href: txUrl(data.digest) }); refresh(); },
+      onError: (e) => {
+        const { kind, msg } = classifyError(e);
+        toast.update(tid, { kind: kind === "rejected" ? "info" : "error", title: kind === "rejected" ? "Cancelled in wallet." : "Transaction failed.", detail: msg });
+      },
     });
   }
 
   function handleReveal() {
+    if (!orderId) { toast.push({ kind: "error", title: "No order to reveal." }); return; }
     const raw = localStorage.getItem(ORDER_KEY);
-    if (!raw || !orderId) { setStatusMsg("No local order nonce to reveal."); return; }
-    const { nonce, price: p, qty: q } = JSON.parse(raw) as { nonce: string; price: string; qty: string };
-    const nb = Uint8Array.from(nonce.match(/.{2}/g)!.map((h) => parseInt(h, 16)));
-    runTx(() => buildRevealOrderTx(orderId, BigInt(p), BigInt(q), nb), "Revealing order…", "Order revealed. Entered into the fair clear.");
+    if (!raw) {
+      toast.push({ kind: "error", title: "Order nonce isn't on this device.", detail: "Reveal from the device you submitted on." });
+      return;
+    }
+    let p: string, q: string, nb: Uint8Array;
+    try {
+      const parsed = JSON.parse(raw) as { nonce: string; price: string; qty: string };
+      p = parsed.price; q = parsed.qty;
+      nb = Uint8Array.from(parsed.nonce.match(/.{2}/g)!.map((h) => parseInt(h, 16)));
+    } catch { toast.push({ kind: "error", title: "Stored order is unreadable." }); return; }
+    runTx(() => buildRevealOrderTx(orderId, BigInt(p), BigInt(q), nb), "Revealing order…", "Order revealed — entered into the fair clear.");
+  }
+
+  function handleReclaim() {
+    if (!orderId) return;
+    runTx(() => buildReclaimUnsettledTx(orderId), "Reclaiming escrow…", "Escrow returned — the pool was never settled.");
   }
 
   const submitting = stage === "hashing" || stage === "sealing" || stage === "walrus" || stage === "submitting";
@@ -337,6 +391,12 @@ export function UmbraTerminal() {
                 Settle (sui::random 0x8) →
               </button>
             )}
+            {phase === "ENDED" && !pool?.settled && orderId && (
+              <button onClick={handleReclaim}
+                className="w-full py-2.5 rounded-xl text-xs font-semibold border border-white/10 bg-white/[0.03] hover:bg-white/[0.06] transition-colors">
+                Reclaim escrow (escape hatch, if never settled) →
+              </button>
+            )}
             {phase === "SETTLED" && orderId && (
               <button onClick={() => runTx(() => buildClaimFillTx(orderId, nftId), "Claiming fill…", "Filled. MEV-Shield NFT minted.")}
                 className="w-full py-3 rounded-xl text-sm font-semibold bg-emerald-600 hover:bg-emerald-500 transition-colors">
@@ -370,6 +430,12 @@ export function UmbraTerminal() {
           They can&apos;t sandwich what they can&apos;t <span className="text-cyan-400">see</span>.
         </h2>
       </div>
+      {loadError && !pool && (
+        <div className="rounded-xl border border-amber-500/30 bg-amber-950/20 px-4 py-2.5 text-[12px] text-amber-200 flex items-center gap-2">
+          <span className="inline-block w-3 h-3 rounded-full border-2 border-current border-t-transparent animate-spin" />
+          Reconnecting to the Sui RPC… the pool will load automatically.
+        </div>
+      )}
       <div className="grid gap-5 lg:grid-cols-2">
         <RektPanel />
         <ShieldPanel />
