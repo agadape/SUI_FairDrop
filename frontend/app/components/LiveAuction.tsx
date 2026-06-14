@@ -17,6 +17,7 @@ import { walrusStore, walrusRead } from "@/lib/walrus";
 import { useSuiUsdPrice } from "@/lib/pyth";
 import { trySponsorTransaction, UserCancelledError } from "@/lib/enoki";
 import { makeSealClient, sealEncrypt, sealDecrypt, buildSealApproveTx, SessionKey } from "@/lib/seal";
+import { PolicySeam } from "@/app/components/PolicySeam";
 import { Transaction } from "@mysten/sui/transactions";
 import { sha3_256 } from "@noble/hashes/sha3.js";
 import type { SealCompatibleClient } from "@mysten/seal";
@@ -548,6 +549,7 @@ export function LiveAuction() {
   }
 
   return (
+    <div className="space-y-5">
     <div className="grid gap-5 lg:grid-cols-3">
 
       {/* ───────────────── LEFT — THE AUCTION (live state) ───────────────── */}
@@ -982,6 +984,10 @@ export function LiveAuction() {
       )}
 
       </div>
+    </div>
+
+      {/* Option B seam — the primitive reveal, surfaced at the recovery moment */}
+      {recoveryStage === "restored" && <PolicySeam />}
     </div>
   );
 }
