@@ -53,6 +53,13 @@ const objUrl = (id: string) => `${SUISCAN}/object/${id}`;
 
 const PHASE_STEPS: AuctionPhase[] = ["COMMIT", "REVEAL", "ENDED", "RESOLVED"];
 
+// Enoki sponsorship needs a private key + server proxy (the public-key client
+// path 403s), so it never succeeds in the no-backend MVP. Attempting it anyway
+// added a dead API round-trip (~hundreds of ms) to every register/commit before
+// falling back to self-pay. Skip it. Flip to true only once a server-side
+// sponsor endpoint exists.
+const SPONSOR_ENABLED = false;
+
 function Spinner() {
   return <span className="inline-block w-3.5 h-3.5 rounded-full border-2 border-current border-t-transparent animate-spin" aria-hidden />;
 }
@@ -174,15 +181,17 @@ export function LiveAuction() {
     onSuccess: (sponsored: boolean, digest: string) => void | Promise<void>,
   ): Promise<void> {
     if (!account) return;
-    let result: { digest: string } | null;
-    try {
-      result = await trySponsorTransaction(tx, account.address, client as ClientWithCoreApi, signTx);
-    } catch (err) {
-      if (err instanceof UserCancelledError) {
-        setTxStatus("Transaction cancelled.");
-        return;
+    let result: { digest: string } | null = null;
+    if (SPONSOR_ENABLED) {
+      try {
+        result = await trySponsorTransaction(tx, account.address, client as ClientWithCoreApi, signTx);
+      } catch (err) {
+        if (err instanceof UserCancelledError) {
+          setTxStatus("Transaction cancelled.");
+          return;
+        }
+        result = null;
       }
-      result = null;
     }
     if (result !== null) {
       await onSuccess(true, result.digest);
@@ -481,13 +490,21 @@ export function LiveAuction() {
     if (!storedBid) { setTxStatus("Nonce not found. localStorage cleared and no Walrus backup."); setIsSubmitting(false); return; }
     const nonce = hexToNonce(storedBid.nonce);
     const amountMist = BigInt(storedBid.amount);
-    setTxStatus("Revealing bid…");
-    const tx = new Transaction();
-    tx.moveCall({ target: `${PACKAGE_ID}::auction::reveal_bid`, arguments: [tx.object(AUCTION_ID), tx.object(commitmentId), tx.pure.u64(amountMist), tx.pure.vector("u8", Array.from(nonce)), tx.object(CLOCK_ID)] });
-    signAndExecute({ transaction: tx }, {
-      onSuccess: (data) => { setIsSubmitting(false); setLastTxDigest(data.digest); setTxStatus("Bid revealed!"); setRevealedAmount(amountMist.toString()); localStorage.removeItem(NONCE_KEY); setHasLocalNonce(false); refreshObjects(); },
-      onError: (e) => { setIsSubmitting(false); setTxStatus(`Error: ${e.message}`); },
-    });
+    try {
+      setTxStatus("Revealing bid…");
+      const tx = new Transaction();
+      tx.moveCall({ target: `${PACKAGE_ID}::auction::reveal_bid`, arguments: [tx.object(AUCTION_ID), tx.object(commitmentId), tx.pure.u64(amountMist), tx.pure.vector("u8", Array.from(nonce)), tx.object(CLOCK_ID)] });
+      await execWithFallback(tx, async (_sponsored, digest) => {
+        setLastTxDigest(digest);
+        setTxStatus("Bid revealed — confirming on-chain…");
+        setRevealedAmount(amountMist.toString());            // optimistic focal flip
+        localStorage.removeItem(NONCE_KEY); setHasLocalNonce(false);
+        const ok = await pollForState((s) => !!s.revealedAmount);
+        setTxStatus(ok
+          ? "Bid revealed! Entered into winner selection."
+          : "Bid revealed on-chain — syncing… open the tx in Explorer; refresh if it doesn't update.");
+      });
+    } finally { setIsSubmitting(false); }
   }
 
   async function handleResolve() {
@@ -504,12 +521,19 @@ export function LiveAuction() {
   async function handleClaim() {
     if (isSubmitting || !account || !PACKAGE_ID || !AUCTION_ID || !certificateId || !commitmentId) return;
     setIsSubmitting(true); setLastTxDigest(null); setTxStatus("Claiming allocation…");
-    const tx = new Transaction();
-    tx.moveCall({ target: `${PACKAGE_ID}::auction::claim`, arguments: [tx.object(AUCTION_ID), tx.object(certificateId), tx.object(commitmentId)] });
-    signAndExecute({ transaction: tx }, {
-      onSuccess: (data) => { setIsSubmitting(false); setLastTxDigest(data.digest); setTxStatus("Claimed! Allocation confirmed."); setCertificateId(null); setCommitmentId(null); refreshObjects(); },
-      onError: (e) => { setIsSubmitting(false); setTxStatus(`Error: ${e.message}`); },
-    });
+    try {
+      const tx = new Transaction();
+      tx.moveCall({ target: `${PACKAGE_ID}::auction::claim`, arguments: [tx.object(AUCTION_ID), tx.object(certificateId), tx.object(commitmentId)] });
+      await execWithFallback(tx, async (_sponsored, digest) => {
+        setLastTxDigest(digest);
+        setTxStatus("Claimed — confirming on-chain…");
+        setCertificateId(null); setCommitmentId(null);       // optimistic
+        const ok = await pollForState((s) => !s.certificateId);
+        setTxStatus(ok
+          ? "Claimed! Allocation confirmed."
+          : "Claim submitted on-chain — syncing… open the tx in Explorer; refresh if it doesn't update.");
+      });
+    } finally { setIsSubmitting(false); }
   }
 
   async function handleReclaimEscrow() {
