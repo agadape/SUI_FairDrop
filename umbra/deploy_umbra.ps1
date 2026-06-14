@@ -10,7 +10,8 @@ param(
     [int]$CommitWindowMinutes = 0,     # if >0, overrides the day windows (live-demo pools)
     [int]$RevealWindowMinutes = 0,     # absolute from now; must be > CommitWindowMinutes
     [long]$SupplyUnits = 100,          # UMB units the maker lists
-    [long]$MinPriceMist = 1000000,     # 0.001 SUI per UMB unit (floor)
+    [long]$MinPriceMist = 1000000,     # 0.001 SUI per UMB unit (reveal floor)
+    [long]$MinBidMist = 1000000,       # 0.001 SUI min escrow per order (anti-spam)
     [long]$InventoryMint = 100         # UMB raw units to mint as inventory (>= SupplyUnits)
 )
 
@@ -56,7 +57,7 @@ if ($CommitWindowMinutes -gt 0) {
 
 Write-Host "Creating pool: supply=$SupplyUnits min_price=$MinPriceMist MIST/unit" -ForegroundColor Cyan
 $poolJson = sui client call --package $packageId --module umbra_swap --function create_pool `
-    --args $umbCoin $SupplyUnits $MinPriceMist $commitEndMs $revealEndMs `
+    --args $umbCoin $SupplyUnits $MinPriceMist $MinBidMist $commitEndMs $revealEndMs `
     --gas-budget 30000000 --json | Out-String
 $pool = $poolJson | ConvertFrom-Json
 $poolId = ($pool.objectChanges | Where-Object {

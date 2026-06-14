@@ -12,7 +12,8 @@ param(
     [int]$CommitWindowMinutes = 2,
     [int]$RevealWindowMinutes = 3,     # absolute from now; must be > CommitWindowMinutes
     [long]$SupplyUnits = 100,
-    [long]$MinPriceMist = 1000000,     # 0.001 SUI per UMB unit
+    [long]$MinPriceMist = 1000000,     # 0.001 SUI per UMB unit (reveal floor)
+    [long]$MinBidMist = 1000000,       # 0.001 SUI min escrow per order (anti-spam)
     [long]$InventoryMint = 100
 )
 
@@ -37,7 +38,7 @@ $revealEndMs = $nowMs + ($RevealWindowMinutes * 60L * 1000)
 Write-Host "Pool windows: COMMIT $CommitWindowMinutes min, REVEAL ends $RevealWindowMinutes min from now" -ForegroundColor Yellow
 
 $poolJson = sui client call --package $PackageId --module umbra_swap --function create_pool `
-    --args $umbCoin $SupplyUnits $MinPriceMist $commitEndMs $revealEndMs `
+    --args $umbCoin $SupplyUnits $MinPriceMist $MinBidMist $commitEndMs $revealEndMs `
     --gas-budget 30000000 --json | Out-String
 $pool = $poolJson | ConvertFrom-Json
 $poolId = ($pool.objectChanges | Where-Object {

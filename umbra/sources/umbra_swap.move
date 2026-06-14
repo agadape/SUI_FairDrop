@@ -2,10 +2,10 @@
 ///
 /// A maker lists `Coin<UMB>` inventory; takers submit BLIND orders
 /// (`sha3_256(price ‖ qty ‖ nonce)`) escrowing SUI; after the reveal window the
-/// batch clears at one uniform price, with the marginal slots assigned by
-/// `sui::random`. Nothing is observable during commit → nothing to sandwich.
-/// Each winning fill mints/evolves a `MevShieldNFT` recording the on-chain
-/// price-improvement it shielded.
+/// batch clears at one uniform price, the marginal slots assigned by
+/// `sui::random`, with a single partial fill so supply is fully utilized.
+/// Nothing is observable during commit → nothing to sandwich. Each winning fill
+/// mints/evolves a `MevShieldNFT` recording the on-chain price-improvement.
 #[allow(lint(self_transfer))]
 module umbra::umbra_swap {
     use sui::coin::{Self, Coin};
@@ -32,6 +32,20 @@ module umbra::umbra_swap {
     const EUnauthorized:       u64 = 8;
     const EAlreadyOrdered:     u64 = 9;
     const EBelowMinPrice:      u64 = 10;
+    const EBelowMinEscrow:     u64 = 11;   // submit escrow < min_bid (anti-spam)
+    const ETooManyOrders:      u64 = 12;   // reveals at MAX_ORDERS (anti-OOG)
+    const EQtyOutOfRange:      u64 = 13;   // qty == 0 or > MAX_QTY
+    const EPriceTooHigh:       u64 = 14;   // price > MAX_PRICE (overflow guard)
+    const EBadParams:          u64 = 15;   // create_pool sanity
+    const ENotEligible:        u64 = 16;   // reclaim_unsettled preconditions
+
+    // ── Hard bounds ──────────────────────────────────────────────────────────
+    // MAX_PRICE * MAX_QTY = 1e12 * 1e6 = 1e18 < u64::MAX (~1.8e19) — price*qty
+    // and clearing*qty can never overflow.
+    const MAX_ORDERS: u64 = 256;                  // bounds settle's O(n^2) work
+    const MAX_PRICE:  u64 = 1_000_000_000_000;    // 1,000 SUI per unit (in MIST)
+    const MAX_QTY:    u64 = 1_000_000;            // 1e6 units
+    const RECLAIM_GRACE_MS: u64 = 3_600_000;      // 1h after reveal_end before unsettled reclaim
 
     // ── One-time witness for the Display Publisher ───────────────────────────
     public struct UMBRA_SWAP has drop {}
@@ -45,13 +59,15 @@ module umbra::umbra_swap {
         maker: address,
         inventory: Balance<UMB>,
         supply_units: u64,
-        min_price: u64,
+        min_price: u64,                             // per-unit floor (reveal)
+        min_bid: u64,                               // min escrow per order (submit; anti-spam)
         commit_end_ms: u64,
         reveal_end_ms: u64,
-        commitments: Table<address, vector<u8>>,   // sender → hash (dedup + blind)
+        commitments: Table<address, vector<u8>>,    // sender → hash (dedup + blind)
         reveals: VecMap<address, Order>,            // populated in reveal phase
-        winners: Table<address, u64>,               // winner → filled qty (set by settle)
+        winners: Table<address, u64>,               // winner → FILLED qty (set by settle)
         clearing_price: u64,
+        unsold: u64,                                // UMB not reserved for winners (set by settle)
         proceeds: Balance<SUI>,
         settled: bool,
     }
@@ -65,7 +81,7 @@ module umbra::umbra_swap {
         taker: address,
         commitment_hash: vector<u8>,
         escrow: Balance<SUI>,
-        blob_id: Option<vector<u8>>,   // Walrus blob of the Seal-encrypted nonce
+        blob_id: Option<vector<u8>>,
     }
 
     // ── Dynamic "MEV Saved" receipt (evolves per trade) ──────────────────────
@@ -73,17 +89,17 @@ module umbra::umbra_swap {
         id: UID,
         owner: address,
         trades: u64,
-        total_saved: u64,   // cumulative MIST of price-improvement shielded
+        total_saved: u64,
         last_saved: u64,
         image_url: String,
     }
 
     // ── Events ───────────────────────────────────────────────────────────────
-    public struct PoolCreated   has copy, drop { pool_id: ID, maker: address, supply_units: u64 }
-    public struct OrderSubmitted has copy, drop { pool_id: ID, taker: address }   // no price — blind
-    public struct OrderRevealed has copy, drop { pool_id: ID, taker: address, price: u64, qty: u64 }
-    public struct PoolSettled   has copy, drop { pool_id: ID, clearing_price: u64, winner_count: u64, filled: u64 }
-    public struct MevShielded   has copy, drop { taker: address, saved: u64, total_saved: u64 }
+    public struct PoolCreated    has copy, drop { pool_id: ID, maker: address, supply_units: u64 }
+    public struct OrderSubmitted has copy, drop { pool_id: ID, taker: address }
+    public struct OrderRevealed  has copy, drop { pool_id: ID, taker: address, price: u64, qty: u64 }
+    public struct PoolSettled    has copy, drop { pool_id: ID, clearing_price: u64, winner_count: u64, filled: u64 }
+    public struct MevShielded    has copy, drop { taker: address, saved: u64, total_saved: u64 }
 
     // ── Display setup ────────────────────────────────────────────────────────
     fun init(otw: UMBRA_SWAP, ctx: &mut TxContext) {
@@ -106,11 +122,18 @@ module umbra::umbra_swap {
         inventory: Coin<UMB>,
         supply_units: u64,
         min_price: u64,
+        min_bid: u64,
         commit_end_ms: u64,
         reveal_end_ms: u64,
         ctx: &mut TxContext,
     ) {
-        assert!(reveal_end_ms > commit_end_ms, EPhaseEnded);
+        assert!(reveal_end_ms > commit_end_ms, EBadParams);
+        assert!(supply_units > 0, EBadParams);
+        assert!(min_price > 0 && min_price <= MAX_PRICE, EBadParams);
+        assert!(min_bid > 0, EBadParams);
+        // Inventory must cover a full clear, else winners couldn't be delivered.
+        assert!(coin::value(&inventory) >= supply_units, EBadParams);
+
         let uid = object::new(ctx);
         let pool_id = object::uid_to_inner(&uid);
         let pool = SwapPool {
@@ -119,12 +142,14 @@ module umbra::umbra_swap {
             inventory: coin::into_balance(inventory),
             supply_units,
             min_price,
+            min_bid,
             commit_end_ms,
             reveal_end_ms,
             commitments: table::new(ctx),
             reveals: vec_map::empty(),
             winners: table::new(ctx),
             clearing_price: 0,
+            unsold: 0,
             proceeds: balance::zero(),
             settled: false,
         };
@@ -135,7 +160,6 @@ module umbra::umbra_swap {
     }
 
     // ── Taker submits a blind order ──────────────────────────────────────────
-    // commitment_hash = sha3_256(price_le ‖ qty_le ‖ nonce); blob_id = Walrus blob
     public fun submit_order(
         pool: &mut SwapPool,
         commitment_hash: vector<u8>,
@@ -145,6 +169,7 @@ module umbra::umbra_swap {
         ctx: &mut TxContext,
     ) {
         assert!(clock::timestamp_ms(clock) < pool.commit_end_ms, EPhaseEnded);
+        assert!(coin::value(&escrow) >= pool.min_bid, EBelowMinEscrow); // anti-spam floor
         assert!(!table::contains(&pool.commitments, ctx.sender()), EAlreadyOrdered);
         table::add(&mut pool.commitments, ctx.sender(), commitment_hash);
         let order = SealedOrder {
@@ -174,7 +199,11 @@ module umbra::umbra_swap {
         let now = clock::timestamp_ms(clock);
         assert!(now >= pool.commit_end_ms, ETooEarly);
         assert!(now < pool.reveal_end_ms, EPhaseEnded);
+        // Bounds — make price*qty overflow-impossible and cap the batch size.
+        assert!(qty > 0 && qty <= MAX_QTY, EQtyOutOfRange);
         assert!(price >= pool.min_price, EBelowMinPrice);
+        assert!(price <= MAX_PRICE, EPriceTooHigh);
+        assert!(vec_map::length(&pool.reveals) < MAX_ORDERS, ETooManyOrders);
         assert!(balance::value(&order.escrow) >= price * qty, EInsufficientEscrow);
 
         let mut preimage = std::bcs::to_bytes(&price);
@@ -187,7 +216,7 @@ module umbra::umbra_swap {
         event::emit(OrderRevealed { pool_id: object::id(pool), taker: ctx.sender(), price, qty });
     }
 
-    // ── Settle the batch — uniform price, random margin ──────────────────────
+    // ── Settle the batch — uniform price, random margin, single partial fill ──
     #[allow(lint(public_random))]
     public fun settle(pool: &mut SwapPool, rand: &Random, clock: &Clock, ctx: &mut TxContext) {
         assert!(!pool.settled, EAlreadySettled);
@@ -195,7 +224,9 @@ module umbra::umbra_swap {
         pool.settled = true;
 
         let n = vec_map::length(&pool.reveals);
+        let inv0 = balance::value(&pool.inventory);
         if (n == 0) {
+            pool.unsold = inv0;
             event::emit(PoolSettled { pool_id: object::id(pool), clearing_price: 0, winner_count: 0, filled: 0 });
             return
         };
@@ -213,7 +244,7 @@ module umbra::umbra_swap {
             i = i + 1;
         };
 
-        // Insertion sort descending by price, carrying addrs + qtys
+        // Insertion sort descending by price (bounded by MAX_ORDERS)
         let len = vector::length(&prices);
         let mut j = 1;
         while (j < len) {
@@ -229,13 +260,11 @@ module umbra::umbra_swap {
             j = j + 1;
         };
 
-        // total revealed qty
         let mut total_qty = 0;
         let mut t = 0;
         while (t < len) { total_qty = total_qty + *vector::borrow(&qtys, t); t = t + 1; };
         let supply = pool.supply_units;
 
-        // clearing price
         let clearing_price = if (total_qty <= supply) {
             *vector::borrow(&prices, len - 1)               // all fill; lowest price clears
         } else {
@@ -256,16 +285,15 @@ module umbra::umbra_swap {
         let mut w = 0;
         while (w < len) {
             if (*vector::borrow(&prices, w) > clearing_price) {
-                let addr = *vector::borrow(&addrs, w);
-                let q = *vector::borrow(&qtys, w);
-                table::add(&mut pool.winners, addr, q);
-                filled = filled + q;
+                table::add(&mut pool.winners, *vector::borrow(&addrs, w), *vector::borrow(&qtys, w));
+                filled = filled + *vector::borrow(&qtys, w);
                 winner_count = winner_count + 1;
             };
             w = w + 1;
         };
 
-        // Marginal orders (== clearing) compete for the remainder, shuffled by randomness
+        // Marginal orders (== clearing) shuffled, filled whole until the LAST one
+        // takes a partial of whatever remains. Supply is fully utilized.
         let remaining = if (supply > filled) { supply - filled } else { 0 };
         let mut m_addr: vector<address> = vector[];
         let mut m_qty: vector<u64> = vector[];
@@ -288,16 +316,18 @@ module umbra::umbra_swap {
         let mut rem = remaining;
         let mut p = 0;
         let mlen = vector::length(&m_addr);
-        while (p < mlen) {
+        while (p < mlen && rem > 0) {
             let q = *vector::borrow(&m_qty, p);
-            if (q <= rem) {
-                table::add(&mut pool.winners, *vector::borrow(&m_addr, p), q);
-                rem = rem - q;
-                filled = filled + q;
-                winner_count = winner_count + 1;
-            };
+            let fill = if (q <= rem) { q } else { rem };   // single partial at the tail
+            table::add(&mut pool.winners, *vector::borrow(&m_addr, p), fill);
+            rem = rem - fill;
+            filled = filled + fill;
+            winner_count = winner_count + 1;
             p = p + 1;
         };
+
+        // Reserve filled inventory for winners; the rest is the maker's to withdraw.
+        pool.unsold = if (inv0 > filled) { inv0 - filled } else { 0 };
 
         event::emit(PoolSettled { pool_id: object::id(pool), clearing_price, winner_count, filled });
     }
@@ -320,14 +350,13 @@ module umbra::umbra_swap {
         let mut esc_coin = coin::from_balance(escrow, ctx);
 
         if (table::contains(&pool.winners, sender)) {
-            let qty = *table::borrow(&pool.winners, sender);
+            let fill = *table::borrow(&pool.winners, sender);    // FILLED qty (may be partial)
             let clearing = pool.clearing_price;
-            let cost = clearing * qty;
+            let cost = clearing * fill;
 
-            // Pay clearing × qty into proceeds; refund the rest of the escrow
             let payment = coin::split(&mut esc_coin, cost, ctx);
             balance::join(&mut pool.proceeds, coin::into_balance(payment));
-            let umb_out = balance::split(&mut pool.inventory, qty);
+            let umb_out = balance::split(&mut pool.inventory, fill);
             transfer::public_transfer(coin::from_balance(umb_out, ctx), sender);
             if (coin::value(&esc_coin) > 0) {
                 transfer::public_transfer(esc_coin, sender);
@@ -335,16 +364,15 @@ module umbra::umbra_swap {
                 coin::destroy_zero(esc_coin);
             };
 
-            // Honest on-chain saving = uniform-price improvement
             let my_price = vec_map::get(&pool.reveals, &sender).price;
-            let saved = (my_price - clearing) * qty;
+            let saved = (my_price - clearing) * fill;
 
             let nft = if (option::is_some(&maybe_nft)) {
-                let mut n = option::extract(&mut maybe_nft);
-                n.trades = n.trades + 1;
-                n.total_saved = n.total_saved + saved;
-                n.last_saved = saved;
-                n
+                let mut nn = option::extract(&mut maybe_nft);
+                nn.trades = nn.trades + 1;
+                nn.total_saved = nn.total_saved + saved;
+                nn.last_saved = saved;
+                nn
             } else {
                 MevShieldNFT {
                     id: object::new(ctx),
@@ -358,7 +386,6 @@ module umbra::umbra_swap {
             event::emit(MevShielded { taker: sender, saved, total_saved: nft.total_saved });
             transfer::public_transfer(nft, sender);
         } else {
-            // Loser → full refund; hand back any NFT passed in
             transfer::public_transfer(esc_coin, sender);
             if (option::is_some(&maybe_nft)) {
                 transfer::public_transfer(option::extract(&mut maybe_nft), sender);
@@ -367,17 +394,39 @@ module umbra::umbra_swap {
         option::destroy_none(maybe_nft);
     }
 
-    // ── Maker withdraws proceeds + unsold inventory ──────────────────────────
+    // ── Escape hatch: never let escrow be stranded ───────────────────────────
+    // If the batch is past reveal_end + grace and was never settled (e.g. settle
+    // could not run), any taker can pull their own escrow back.
+    public fun reclaim_unsettled(
+        pool: &mut SwapPool,
+        order: SealedOrder,
+        clock: &Clock,
+        ctx: &mut TxContext,
+    ) {
+        assert!(order.pool_id == object::id(pool), EWrongPool);
+        assert!(order.taker == ctx.sender(), EUnauthorized);
+        assert!(!pool.settled, ENotEligible);                                  // settled → use claim_fill
+        assert!(clock::timestamp_ms(clock) >= pool.reveal_end_ms + RECLAIM_GRACE_MS, ETooEarly);
+
+        let SealedOrder { id, pool_id: _, taker: _, commitment_hash: _, escrow, blob_id: _ } = order;
+        object::delete(id);
+        transfer::public_transfer(coin::from_balance(escrow, ctx), ctx.sender());
+    }
+
+    // ── Maker withdraws SUI proceeds (repeatable) + unsold UMB (once) ─────────
     public fun withdraw_proceeds(pool: &mut SwapPool, cap: &MakerCap, ctx: &mut TxContext) {
         assert!(cap.pool_id == object::id(pool), EUnauthorized);
         assert!(pool.settled, ENotSettled);
+
         let amt = balance::value(&pool.proceeds);
         if (amt > 0) {
             transfer::public_transfer(coin::from_balance(balance::split(&mut pool.proceeds, amt), ctx), pool.maker);
         };
-        let inv = balance::value(&pool.inventory);
-        if (inv > 0) {
-            transfer::public_transfer(coin::from_balance(balance::split(&mut pool.inventory, inv), ctx), pool.maker);
+        // Only the UNSOLD inventory — never the UMB reserved for winners' claims.
+        if (pool.unsold > 0) {
+            let take = pool.unsold;
+            pool.unsold = 0;
+            transfer::public_transfer(coin::from_balance(balance::split(&mut pool.inventory, take), ctx), pool.maker);
         };
     }
 
@@ -388,10 +437,13 @@ module umbra::umbra_swap {
     public fun commit_end_ms(p: &SwapPool): u64 { p.commit_end_ms }
     public fun supply_units(p: &SwapPool): u64 { p.supply_units }
     public fun min_price(p: &SwapPool): u64 { p.min_price }
+    public fun min_bid(p: &SwapPool): u64 { p.min_bid }
     public fun clearing_price(p: &SwapPool): u64 { p.clearing_price }
+    public fun unsold(p: &SwapPool): u64 { p.unsold }
     public fun is_settled(p: &SwapPool): bool { p.settled }
     public fun reveal_count(p: &SwapPool): u64 { vec_map::length(&p.reveals) }
     public fun is_winner(p: &SwapPool, addr: address): bool { table::contains(&p.winners, addr) }
+    public fun winner_fill(p: &SwapPool, addr: address): u64 { *table::borrow(&p.winners, addr) }
     public fun nft_trades(n: &MevShieldNFT): u64 { n.trades }
     public fun nft_total_saved(n: &MevShieldNFT): u64 { n.total_saved }
 }

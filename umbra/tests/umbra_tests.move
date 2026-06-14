@@ -15,7 +15,9 @@ module umbra::umbra_tests {
     const COMMIT_END: u64 = 1_000;
     const REVEAL_END: u64 = 2_000;
     const MIN_PRICE:  u64 = 100;
-    const SUPPLY:     u64 = 10;   // UMB units available
+    const MIN_BID:    u64 = 100;   // min escrow per order (anti-spam)
+    const SUPPLY:     u64 = 10;    // UMB units available
+    const GRACE_MS:   u64 = 3_600_000; // RECLAIM_GRACE_MS
 
     const MAKER: address = @0xE;
     const ALICE: address = @0xA;
@@ -36,7 +38,7 @@ module umbra::umbra_tests {
 
         ts::next_tx(s, MAKER);
         let inventory = coin::mint_for_testing<UMB>(supply, ts::ctx(s));
-        umbra_swap::create_pool(inventory, supply, MIN_PRICE, COMMIT_END, REVEAL_END, ts::ctx(s));
+        umbra_swap::create_pool(inventory, supply, MIN_PRICE, MIN_BID, COMMIT_END, REVEAL_END, ts::ctx(s));
     }
 
     fun submit(s: &mut Scenario, taker: address, hash: vector<u8>, escrow_amt: u64) {
@@ -203,7 +205,7 @@ module umbra::umbra_tests {
         // Spin up a SECOND pool; reveal Alice's (pool A) order against pool B.
         ts::next_tx(&mut s, MAKER);
         let inv2 = coin::mint_for_testing<UMB>(SUPPLY, ts::ctx(&mut s));
-        umbra_swap::create_pool(inv2, SUPPLY, MIN_PRICE, COMMIT_END, REVEAL_END, ts::ctx(&mut s));
+        umbra_swap::create_pool(inv2, SUPPLY, MIN_PRICE, MIN_BID, COMMIT_END, REVEAL_END, ts::ctx(&mut s));
 
         advance_clock_to(&mut s, COMMIT_END + 1);
         ts::next_tx(&mut s, ALICE);
@@ -273,13 +275,15 @@ module umbra::umbra_tests {
         advance_clock_to(&mut s, REVEAL_END + 1);
         do_settle(&mut s, 0);
 
-        // clearing = 150; Bob+Alice fill (8 ≤ 10), Carol marginal can't fit (4 > 2)
+        // clearing = 150; Bob+Alice fill fully (8 of 10), Carol marginal takes the
+        // remaining 2 as a PARTIAL fill → supply fully utilized.
         ts::next_tx(&mut s, MAKER);
         let pool = ts::take_shared<SwapPool>(&s);
         assert!(umbra_swap::clearing_price(&pool) == 150, 0);
-        assert!(umbra_swap::is_winner(&pool, BOB), 1);
-        assert!(umbra_swap::is_winner(&pool, ALICE), 2);
-        assert!(!umbra_swap::is_winner(&pool, CAROL), 3);
+        assert!(umbra_swap::winner_fill(&pool, BOB) == 4, 1);
+        assert!(umbra_swap::winner_fill(&pool, ALICE) == 4, 2);
+        assert!(umbra_swap::winner_fill(&pool, CAROL) == 2, 3); // partial
+        assert!(umbra_swap::unsold(&pool) == 0, 14);
         ts::return_shared(pool);
 
         // Bob claims: 4 UMB, pays 150*4=600, refund 1200-600=600, saved (300-150)*4=600
@@ -309,14 +313,19 @@ module umbra::umbra_tests {
         assert!(umbra_swap::nft_total_saved(&nft_alice) == 200, 10);
         ts::return_to_sender(&s, nft_alice);
 
-        // Carol (loser) claims: full 600 refund, no UMB, no NFT
+        // Carol partial winner (2 of 4): 2 UMB, pays 150*2=300, refund 600-300=300,
+        // saved (150-150)*2 = 0 → NFT still minted.
         claim(&mut s, CAROL);
         ts::next_tx(&mut s, CAROL);
-        assert!(!ts::has_most_recent_for_sender<Coin<UMB>>(&s), 11);
-        assert!(!ts::has_most_recent_for_sender<MevShieldNFT>(&s), 12);
+        let umb_carol = ts::take_from_sender<Coin<UMB>>(&s);
+        assert!(coin::value(&umb_carol) == 2, 11);
+        ts::return_to_sender(&s, umb_carol);
         let refund_carol = ts::take_from_sender<Coin<SUI>>(&s);
-        assert!(coin::value(&refund_carol) == 600, 13);
+        assert!(coin::value(&refund_carol) == 300, 13);
         ts::return_to_sender(&s, refund_carol);
+        let nft_carol = ts::take_from_sender<MevShieldNFT>(&s);
+        assert!(umbra_swap::nft_total_saved(&nft_carol) == 0, 15);
+        ts::return_to_sender(&s, nft_carol);
         ts::end(s);
     }
 
@@ -380,7 +389,7 @@ module umbra::umbra_tests {
         // Pool 2 (fresh): Alice wins again, passes the existing NFT to evolve it.
         ts::next_tx(&mut s, MAKER);
         let inv2 = coin::mint_for_testing<UMB>(SUPPLY, ts::ctx(&mut s));
-        umbra_swap::create_pool(inv2, SUPPLY, MIN_PRICE, COMMIT_END + 10_000, REVEAL_END + 10_000, ts::ctx(&mut s));
+        umbra_swap::create_pool(inv2, SUPPLY, MIN_PRICE, MIN_BID, COMMIT_END + 10_000, REVEAL_END + 10_000, ts::ctx(&mut s));
 
         // submit into pool 2 (clock currently REVEAL_END+1 < COMMIT_END+10_000 → COMMIT open)
         ts::next_tx(&mut s, ALICE);
@@ -507,6 +516,183 @@ module umbra::umbra_tests {
         let leftover = ts::take_from_sender<Coin<UMB>>(&s);
         assert!(coin::value(&leftover) == 6, 1);
         ts::return_to_sender(&s, leftover);
+        ts::end(s);
+    }
+
+    // ── Hardening: anti-spam / bounds ────────────────────────────────────────────
+
+    #[test, expected_failure(abort_code = umbra::umbra_swap::EBelowMinEscrow)]
+    fun test_submit_below_min_escrow_fails() {
+        let mut s = ts::begin(MAKER);
+        setup(&mut s, SUPPLY);
+        submit(&mut s, ALICE, make_hash(200, 4, 1), 50); // escrow 50 < MIN_BID 100
+        ts::end(s);
+    }
+
+    #[test, expected_failure(abort_code = umbra::umbra_swap::EQtyOutOfRange)]
+    fun test_reveal_qty_zero_fails() {
+        let mut s = ts::begin(MAKER);
+        setup(&mut s, SUPPLY);
+        submit(&mut s, ALICE, make_hash(200, 0, 1), 800);
+        advance_clock_to(&mut s, COMMIT_END + 1);
+        reveal(&mut s, ALICE, 200, 0, make_nonce(1)); // qty 0
+        ts::end(s);
+    }
+
+    #[test, expected_failure(abort_code = umbra::umbra_swap::EPriceTooHigh)]
+    fun test_reveal_price_too_high_fails() {
+        let mut s = ts::begin(MAKER);
+        setup(&mut s, SUPPLY);
+        submit(&mut s, ALICE, make_hash(2_000_000_000_000, 1, 1), 800); // price > MAX_PRICE
+        advance_clock_to(&mut s, COMMIT_END + 1);
+        reveal(&mut s, ALICE, 2_000_000_000_000, 1, make_nonce(1));
+        ts::end(s);
+    }
+
+    #[test, expected_failure(abort_code = umbra::umbra_swap::EBadParams)]
+    fun test_create_pool_inventory_too_small_fails() {
+        let mut s = ts::begin(MAKER);
+        ts::next_tx(&mut s, MAKER);
+        let inv = coin::mint_for_testing<UMB>(5, ts::ctx(&mut s)); // 5 < supply 10
+        umbra_swap::create_pool(inv, 10, MIN_PRICE, MIN_BID, COMMIT_END, REVEAL_END, ts::ctx(&mut s));
+        ts::end(s);
+    }
+
+    // ── Hardening: partial fill is airtight ──────────────────────────────────────
+
+    #[test]
+    fun test_partial_fill_at_margin() {
+        let mut s = ts::begin(MAKER);
+        setup(&mut s, 6); // supply 6
+
+        // Alice 300×4 (above), Bob 200×4 (marginal) → clearing 200, Alice fills 4,
+        // remaining 2 → Bob gets a PARTIAL fill of 2. Supply fully utilized.
+        submit(&mut s, ALICE, make_hash(300, 4, 1), 1200);
+        submit(&mut s, BOB,   make_hash(200, 4, 2), 800);
+        advance_clock_to(&mut s, COMMIT_END + 1);
+        reveal(&mut s, ALICE, 300, 4, make_nonce(1));
+        reveal(&mut s, BOB,   200, 4, make_nonce(2));
+        advance_clock_to(&mut s, REVEAL_END + 1);
+        do_settle(&mut s, 0);
+
+        ts::next_tx(&mut s, MAKER);
+        let pool = ts::take_shared<SwapPool>(&s);
+        assert!(umbra_swap::clearing_price(&pool) == 200, 0);
+        assert!(umbra_swap::winner_fill(&pool, ALICE) == 4, 1);
+        assert!(umbra_swap::winner_fill(&pool, BOB) == 2, 2);   // partial
+        assert!(umbra_swap::unsold(&pool) == 0, 3);             // supply fully used
+        ts::return_shared(pool);
+
+        // Bob claims his partial: 2 UMB, pays 200*2=400, refund 800-400=400
+        claim(&mut s, BOB);
+        ts::next_tx(&mut s, BOB);
+        let umb = ts::take_from_sender<Coin<UMB>>(&s);
+        assert!(coin::value(&umb) == 2, 4);
+        ts::return_to_sender(&s, umb);
+        let refund = ts::take_from_sender<Coin<SUI>>(&s);
+        assert!(coin::value(&refund) == 400, 5);
+        ts::return_to_sender(&s, refund);
+        ts::end(s);
+    }
+
+    // ── Hardening: maker withdraw never strands a winner ─────────────────────────
+
+    #[test]
+    fun test_withdraw_does_not_strand_winner() {
+        let mut s = ts::begin(MAKER);
+        setup(&mut s, SUPPLY); // inventory 10
+
+        submit(&mut s, ALICE, make_hash(200, 4, 1), 800);
+        advance_clock_to(&mut s, COMMIT_END + 1);
+        reveal(&mut s, ALICE, 200, 4, make_nonce(1));
+        advance_clock_to(&mut s, REVEAL_END + 1);
+        do_settle(&mut s, 0); // filled 4, unsold 6
+
+        // Maker withdraws BEFORE Alice claims — must only take the 6 unsold UMB.
+        ts::next_tx(&mut s, MAKER);
+        let mut pool = ts::take_shared<SwapPool>(&s);
+        let cap = ts::take_from_sender<MakerCap>(&s);
+        umbra_swap::withdraw_proceeds(&mut pool, &cap, ts::ctx(&mut s));
+        ts::return_shared(pool);
+        ts::return_to_sender(&s, cap);
+
+        ts::next_tx(&mut s, MAKER);
+        let leftover = ts::take_from_sender<Coin<UMB>>(&s);
+        assert!(coin::value(&leftover) == 6, 0);
+        ts::return_to_sender(&s, leftover);
+
+        // Alice can STILL claim her 4 reserved UMB.
+        claim(&mut s, ALICE);
+        ts::next_tx(&mut s, ALICE);
+        let umb = ts::take_from_sender<Coin<UMB>>(&s);
+        assert!(coin::value(&umb) == 4, 1);
+        ts::return_to_sender(&s, umb);
+        ts::end(s);
+    }
+
+    // ── Hardening: unsettled escape hatch (no permanent lock) ─────────────────────
+
+    #[test]
+    fun test_reclaim_unsettled_after_grace() {
+        let mut s = ts::begin(MAKER);
+        setup(&mut s, SUPPLY);
+        submit(&mut s, ALICE, make_hash(200, 4, 1), 800);
+        advance_clock_to(&mut s, COMMIT_END + 1);
+        reveal(&mut s, ALICE, 200, 4, make_nonce(1));
+
+        // Past reveal_end + grace, never settled → Alice pulls her escrow back.
+        advance_clock_to(&mut s, REVEAL_END + GRACE_MS + 1);
+        ts::next_tx(&mut s, ALICE);
+        let mut pool = ts::take_shared<SwapPool>(&s);
+        let order = ts::take_from_sender<SealedOrder>(&s);
+        let clock = ts::take_shared<Clock>(&s);
+        umbra_swap::reclaim_unsettled(&mut pool, order, &clock, ts::ctx(&mut s));
+        ts::return_shared(pool);
+        ts::return_shared(clock);
+
+        ts::next_tx(&mut s, ALICE);
+        let refund = ts::take_from_sender<Coin<SUI>>(&s);
+        assert!(coin::value(&refund) == 800, 0);
+        ts::return_to_sender(&s, refund);
+        ts::end(s);
+    }
+
+    #[test, expected_failure(abort_code = umbra::umbra_swap::ETooEarly)]
+    fun test_reclaim_unsettled_before_grace_fails() {
+        let mut s = ts::begin(MAKER);
+        setup(&mut s, SUPPLY);
+        submit(&mut s, ALICE, make_hash(200, 4, 1), 800);
+        advance_clock_to(&mut s, COMMIT_END + 1);
+        reveal(&mut s, ALICE, 200, 4, make_nonce(1));
+
+        advance_clock_to(&mut s, REVEAL_END + 1); // past reveal_end but before grace
+        ts::next_tx(&mut s, ALICE);
+        let mut pool = ts::take_shared<SwapPool>(&s);
+        let order = ts::take_from_sender<SealedOrder>(&s);
+        let clock = ts::take_shared<Clock>(&s);
+        umbra_swap::reclaim_unsettled(&mut pool, order, &clock, ts::ctx(&mut s));
+        ts::return_shared(pool);
+        ts::return_shared(clock);
+        ts::end(s);
+    }
+
+    #[test, expected_failure(abort_code = umbra::umbra_swap::ENotEligible)]
+    fun test_reclaim_unsettled_after_settle_fails() {
+        let mut s = ts::begin(MAKER);
+        setup(&mut s, SUPPLY);
+        submit(&mut s, ALICE, make_hash(200, 4, 1), 800);
+        advance_clock_to(&mut s, COMMIT_END + 1);
+        reveal(&mut s, ALICE, 200, 4, make_nonce(1));
+        advance_clock_to(&mut s, REVEAL_END + GRACE_MS + 1);
+        do_settle(&mut s, 0); // settled → reclaim_unsettled must abort
+
+        ts::next_tx(&mut s, ALICE);
+        let mut pool = ts::take_shared<SwapPool>(&s);
+        let order = ts::take_from_sender<SealedOrder>(&s);
+        let clock = ts::take_shared<Clock>(&s);
+        umbra_swap::reclaim_unsettled(&mut pool, order, &clock, ts::ctx(&mut s));
+        ts::return_shared(pool);
+        ts::return_shared(clock);
         ts::end(s);
     }
 }
