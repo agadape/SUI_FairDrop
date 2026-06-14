@@ -7,6 +7,9 @@ module fairdrop::auction {
     use sui::vec_map::{Self, VecMap};
     use sui::clock::{Self, Clock};
     use sui::event;
+    use sui::display;
+    use sui::package;
+    use std::string;
 
     // ── Error codes ──────────────────────────────────────────────────────────
     const EAlreadyRegistered:   u64 = 1;
@@ -108,6 +111,31 @@ module fairdrop::auction {
         winner_count: u64,
         clearing_price: u64,
         total_proceeds: u64,
+    }
+
+    // ── Display: render WinnerCertificate as a true on-chain NFT ──────────────
+    // One-time witness — must match the module name uppercased.
+    public struct AUCTION has drop {}
+
+    fun init(otw: AUCTION, ctx: &mut TxContext) {
+        let publisher = package::claim(otw, ctx);
+        let mut disp = display::new<WinnerCertificate>(&publisher, ctx);
+        display::add(&mut disp, string::utf8(b"name"), string::utf8(b"FairDrop Winner"));
+        display::add(
+            &mut disp,
+            string::utf8(b"description"),
+            string::utf8(b"A verifiably-random allocation won in a FairDrop sealed-bid auction. Clearing price: {clearing_price} MIST. Winner selected by Sui validator DKG randomness."),
+        );
+        // Fully on-chain SVG — no image host, no backend (the trust story stays intact).
+        display::add(
+            &mut disp,
+            string::utf8(b"image_url"),
+            string::utf8(b"data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='400'><rect width='400' height='400' fill='%23030712'/><text x='200' y='180' fill='%2334d399' font-family='monospace' font-size='44' text-anchor='middle'>FairDrop</text><text x='200' y='232' fill='%23a78bfa' font-family='monospace' font-size='26' text-anchor='middle' letter-spacing='6'>WINNER</text><text x='200' y='300' fill='%23475569' font-family='monospace' font-size='13' text-anchor='middle'>sealed-bid - verifiably random</text></svg>"),
+        );
+        display::add(&mut disp, string::utf8(b"project_url"), string::utf8(b"https://fairdrop.app"));
+        display::update_version(&mut disp);
+        transfer::public_transfer(publisher, ctx.sender());
+        transfer::public_transfer(disp, ctx.sender());
     }
 
     // ── F-1: Auction creation ─────────────────────────────────────────────────
