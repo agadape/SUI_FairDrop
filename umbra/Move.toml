@@ -1,0 +1,9 @@
+[package]
+name = "umbra"
+edition = "2024.beta"
+
+[dependencies]
+# Sui framework auto-added by CLI — no explicit dep needed
+
+[addresses]
+umbra = "0x0"
