@@ -15,6 +15,7 @@ module fairdrop::auction_tests {
     const REVEAL_END: u64 = 2_000;
     const MIN_BID:    u64 = 100;
     const SUPPLY:     u64 = 2;
+    const GRACE_MS:   u64 = 3_600_000; // RECLAIM_GRACE_MS
 
     const CREATOR: address = @0xC;
     const ALICE:   address = @0xA;
@@ -510,6 +511,45 @@ module fairdrop::auction_tests {
         let comm = ts::take_from_sender<Commitment>(&s);
         let clock = ts::take_shared<Clock>(&s);
         auction::reclaim_escrow(&auction, comm, &clock, ts::ctx(&mut s));
+        ts::return_shared(auction);
+        ts::return_shared(clock);
+        ts::end(s);
+    }
+
+    // ── Hardening: overflow guard ────────────────────────────────────────────────
+
+    // Revealing an amount above MAX_AMOUNT is rejected (keeps clearing_price *
+    // winner_count from overflowing u64 in resolve).
+    #[test, expected_failure(abort_code = fairdrop::auction::EAmountTooLarge)]
+    fun test_reveal_amount_too_large_fails() {
+        let mut s = ts::begin(CREATOR);
+        setup(&mut s);
+        register_bidder(&mut s, ALICE, b"alice_null");
+        // escrow covers the amount; the cap (not escrow) is what rejects it.
+        commit(&mut s, ALICE, make_hash(1_000_000_000_000_001, 1), 1_000_000_000_000_001);
+        advance_clock_to(&mut s, CREATOR, COMMIT_END + 1);
+        reveal(&mut s, ALICE, 1_000_000_000_000_001, make_nonce(1));
+        ts::end(s);
+    }
+
+    // ── Hardening: revealer escape hatch (no permanent lock if resolve never runs) ─
+
+    #[test]
+    fun test_revealer_reclaim_after_grace_when_unresolved() {
+        let mut s = ts::begin(CREATOR);
+        setup(&mut s);
+        register_bidder(&mut s, ALICE, b"alice_null");
+        commit(&mut s, ALICE, make_hash(200, 1), 200);
+        advance_clock_to(&mut s, CREATOR, COMMIT_END + 1);
+        reveal(&mut s, ALICE, 200, make_nonce(1));
+
+        // Past reveal_end + grace, resolve never called → Alice still gets her escrow.
+        advance_clock_to(&mut s, CREATOR, REVEAL_END + GRACE_MS + 1);
+        ts::next_tx(&mut s, ALICE);
+        let auction = ts::take_shared<Auction>(&s);
+        let c = ts::take_from_sender<Commitment>(&s);
+        let clock = ts::take_shared<Clock>(&s);
+        auction::reclaim_escrow(&auction, c, &clock, ts::ctx(&mut s));
         ts::return_shared(auction);
         ts::return_shared(clock);
         ts::end(s);

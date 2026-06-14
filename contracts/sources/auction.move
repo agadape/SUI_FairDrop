@@ -21,6 +21,13 @@ module fairdrop::auction {
     const EWrongAuction:        u64 = 10;
     const EInsufficientEscrow:  u64 = 11;
     const EWinnerCannotReclaim: u64 = 12;
+    const ETooManyReveals:      u64 = 13;   // reveals at MAX_REVEALS (anti-OOG)
+    const EAmountTooLarge:      u64 = 14;   // revealed amount > MAX_AMOUNT (overflow guard)
+
+    // ── Hard bounds (resolve OOG + overflow guards) ──────────────────────────
+    const MAX_REVEALS: u64 = 256;                    // bounds resolve's O(n^2) sort + cert minting
+    const MAX_AMOUNT:  u64 = 1_000_000_000_000_000;  // 1e15 MIST = 1M SUI per bid; MAX_AMOUNT*MAX_REVEALS < u64::MAX
+    const RECLAIM_GRACE_MS: u64 = 3_600_000;         // 1h past reveal_end before an unresolved reclaim
 
     // ── Shared state ─────────────────────────────────────────────────────────
     #[allow(lint(coin_field))]
@@ -217,6 +224,10 @@ module fairdrop::auction {
         assert!(now >= auction.commit_end_ms, ETooEarly);
         assert!(now < auction.reveal_end_ms, EPhaseEnded);
         assert!(coin::value(&commitment.escrow) >= amount, EInsufficientEscrow);
+        // Bounds: cap the batch so resolve fits one PTB, and cap the amount so
+        // clearing_price * winner_count can never overflow u64 in resolve.
+        assert!(amount <= MAX_AMOUNT, EAmountTooLarge);
+        assert!(vec_map::length(&auction.reveals) < MAX_REVEALS, ETooManyReveals);
 
         // Verify sha3_256(amount_le_bytes || nonce) matches stored commitment
         let mut preimage = std::bcs::to_bytes(&amount);
@@ -432,8 +443,14 @@ module fairdrop::auction {
         // Post-resolve: winners are blocked; losers may reclaim.
         let sender = ctx.sender();
         if (vec_map::contains(&auction.reveals, &sender)) {
-            assert!(auction.resolved, ETooEarly);
-            assert!(!table::contains(&auction.winners, sender), EWinnerCannotReclaim);
+            // A revealer normally waits for resolve (outcome unknown until then). But if
+            // resolve never ran — griefed or abandoned — allow reclaim after a grace
+            // period so escrow can NEVER be permanently stranded.
+            let post_grace = clock::timestamp_ms(clock) >= auction.reveal_end_ms + RECLAIM_GRACE_MS;
+            assert!(auction.resolved || post_grace, ETooEarly);
+            if (auction.resolved) {
+                assert!(!table::contains(&auction.winners, sender), EWinnerCannotReclaim);
+            };
         };
 
         let Commitment { id, auction_id: _, bidder: _, commitment_hash: _, escrow, blob_id: _ } = commitment;
