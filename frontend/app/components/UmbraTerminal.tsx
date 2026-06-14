@@ -4,15 +4,17 @@ import {
   useCurrentAccount,
   useSuiClient,
   useSignAndExecuteTransaction,
+  useSignPersonalMessage,
   ConnectButton,
 } from "@mysten/dapp-kit";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { SealCompatibleClient } from "@mysten/seal";
+import type { ClientWithCoreApi } from "@mysten/sui/client";
 import { NETWORK, MIST_PER_SUI } from "@/lib/constants";
 import { generateNonce, nonceToHex } from "@/lib/hash";
-import { makeSealClient, sealEncrypt } from "@/lib/seal";
-import { walrusStore } from "@/lib/walrus";
+import { makeSealClient, sealEncrypt, sealDecrypt, SessionKey } from "@/lib/seal";
+import { walrusStore, walrusRead } from "@/lib/walrus";
 import { MevShieldCard } from "@/app/components/MevShieldCard";
 import { useToast } from "@/app/components/Toast";
 import {
@@ -25,6 +27,8 @@ import {
   buildSettleTx,
   buildClaimFillTx,
   buildReclaimUnsettledTx,
+  buildUmbraSealApproveTx,
+  decodeBlobId,
   classifyError,
   withRetry,
   parseUmbraPool,
@@ -55,6 +59,38 @@ type SubmitStage = "idle" | "hashing" | "sealing" | "walrus" | "submitting" | "d
 
 function Spinner() {
   return <span className="inline-block w-3.5 h-3.5 rounded-full border-2 border-current border-t-transparent animate-spin" aria-hidden />;
+}
+
+// Recovery rail — Walrus → Seal → Restored. Mirrors the FairDrop auction beat.
+type RecoveryStage = "idle" | "wiped" | "session" | "walrus" | "seal" | "restored" | "error";
+type NodeState = "idle" | "active" | "done";
+type StoredOrder = { nonce: string; price: string; qty: string };
+
+function RailNode({ label, color, state }: { label: string; color: string; state: NodeState }) {
+  return (
+    <div className="flex items-center gap-1.5">
+      <span className={`w-4 h-4 flex items-center justify-center rounded-full text-[9px] ${state === "idle" ? "text-zinc-700" : color}`}>
+        {state === "done" ? "✓" : state === "active" ? <Spinner /> : "○"}
+      </span>
+      <span className={`text-[11px] font-mono ${state === "idle" ? "text-zinc-600" : color}`}>{label}</span>
+    </div>
+  );
+}
+
+function RecoveryRail({ stage }: { stage: RecoveryStage }) {
+  const idx = ["session", "walrus", "seal", "restored"].indexOf(stage);
+  const walrus: NodeState = idx >= 2 ? "done" : idx >= 0 ? "active" : "idle";
+  const seal: NodeState = idx >= 3 ? "done" : idx === 2 ? "active" : "idle";
+  const restored: NodeState = idx >= 3 ? "done" : "idle";
+  return (
+    <div className="flex items-center gap-2">
+      <RailNode label="Walrus" color="text-cyan-400" state={walrus} />
+      <span className="text-zinc-700 text-xs">→</span>
+      <RailNode label="Seal" color="text-pink-400" state={seal} />
+      <span className="text-zinc-700 text-xs">→</span>
+      <RailNode label="Restored" color="text-emerald-400" state={restored} />
+    </div>
+  );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -123,11 +159,15 @@ export function UmbraTerminal() {
   const account = useCurrentAccount();
   const client = useSuiClient();
   const { mutate: signAndExecute } = useSignAndExecuteTransaction();
+  const { mutateAsync: signPersonalMessage } = useSignPersonalMessage();
   const toast = useToast();
 
   const [pool, setPool] = useState<UmbraPool | null>(null);
   const [phase, setPhase] = useState<Phase>("LOADING");
   const [loadError, setLoadError] = useState(false);
+  const [orderBlobId, setOrderBlobId] = useState<string | null>(null);
+  const [recoveryStage, setRecoveryStage] = useState<RecoveryStage>("idle");
+  const sessionKeyRef = useRef<SessionKey | null>(null);
   const [qty, setQty] = useState("10");
   const [price, setPrice] = useState("0.002"); // SUI per UMB unit
   const [stage, setStage] = useState<SubmitStage>("idle");
@@ -186,12 +226,17 @@ export function UmbraTerminal() {
       } while (cursor);
 
       let foundOrder: string | null = null;
+      let foundBlob: string | null = null;
       let foundNft: string | null = null;
       let foundStats: { trades: number; totalSaved: string; lastSaved: string } | null = null;
       for (const o of all) {
         if (o.data?.content?.dataType !== "moveObject") continue;
         const c = o.data.content as { type: string; fields: Record<string, unknown> };
-        if (c.type.includes("::umbra_swap::SealedOrder") && norm(c.fields.pool_id) === wantPool) foundOrder = o.data.objectId;
+        if (c.type.includes("::umbra_swap::SealedOrder") && norm(c.fields.pool_id) === wantPool) {
+          foundOrder = o.data.objectId;
+          const b = decodeBlobId(c.fields.blob_id);
+          if (b) foundBlob = b;
+        }
         if (c.type.includes("::umbra_swap::MevShieldNFT")) {
           foundNft = o.data.objectId;
           foundStats = {
@@ -202,12 +247,17 @@ export function UmbraTerminal() {
         }
       }
       setOrderId(foundOrder);
+      setOrderBlobId(foundBlob);
       setNftId(foundNft);
       setNftStats(foundStats);
     } catch (e) { console.error(e); }
   }, [client, account?.address]);
 
-  useEffect(() => { setOrderId(null); setNftId(null); setNftStats(null); fetchUserObjects(); }, [account?.address, refreshTick, fetchUserObjects]);
+  useEffect(() => {
+    setOrderId(null); setOrderBlobId(null); setNftId(null); setNftStats(null);
+    setRecoveryStage("idle"); sessionKeyRef.current = null;
+    fetchUserObjects();
+  }, [account?.address, refreshTick, fetchUserObjects]);
 
   const minPriceSui = pool ? Number(pool.minPrice) / Number(MIST_PER_SUI) : 0;
   const escrowSui = (parseFloat(price) || 0) * (parseFloat(qty) || 0);
@@ -289,16 +339,70 @@ export function UmbraTerminal() {
     });
   }
 
-  function handleReveal() {
-    if (!orderId) { toast.push({ kind: "error", title: "No order to reveal." }); return; }
-    const raw = localStorage.getItem(ORDER_KEY);
-    if (!raw) {
-      toast.push({ kind: "error", title: "Order nonce isn't on this device.", detail: "Reveal from the device you submitted on." });
-      return;
+  // Shared Walrus + Seal recovery: re-derive the order nonce from the on-chain
+  // blob, gated by umbra_policy::seal_approve to the order owner.
+  const recoverOrderFromChain = useCallback(async (onStep: (s: "session" | "walrus" | "seal") => void): Promise<StoredOrder> => {
+    if (!account || !orderBlobId || !orderId) throw new Error("No on-chain backup found for this order.");
+    onStep("session");
+    if (!sessionKeyRef.current || sessionKeyRef.current.isExpired()) {
+      const sk = await SessionKey.create({ address: account.address, packageId: UMBRA_PACKAGE_ID, ttlMin: 10, suiClient: client as SealCompatibleClient });
+      const { signature } = await signPersonalMessage({ message: sk.getPersonalMessage() });
+      await sk.setPersonalMessageSignature(signature);
+      sessionKeyRef.current = sk;
     }
+    onStep("walrus");
+    const encrypted = await walrusRead(orderBlobId);
+    onStep("seal");
+    const txBytes = await buildUmbraSealApproveTx(orderId, client as ClientWithCoreApi, account.address);
+    const decrypted = await sealDecrypt(makeSealClient(client as SealCompatibleClient), encrypted, sessionKeyRef.current, txBytes);
+    const parsed = JSON.parse(new TextDecoder().decode(decrypted)) as StoredOrder;
+    const order: StoredOrder = { nonce: parsed.nonce, price: parsed.price, qty: parsed.qty };
+    localStorage.setItem(ORDER_KEY, JSON.stringify(order));
+    return order;
+  }, [account, client, orderBlobId, orderId, signPersonalMessage]);
+
+  function simulateDeviceLoss() {
+    localStorage.removeItem(ORDER_KEY);
+    sessionKeyRef.current = null;
+    setRecoveryStage("wiped");
+    toast.push({ kind: "info", title: "Local order key wiped.", detail: "This device can no longer open your order." });
+  }
+
+  async function handleRecover() {
+    const tid = toast.push({ kind: "pending", title: "Recovering from Walrus + Seal…" });
+    try {
+      await recoverOrderFromChain((s) => setRecoveryStage(s));
+      setRecoveryStage("restored");
+      toast.update(tid, { kind: "success", title: "Order recovered — no server ever saw it." });
+    } catch (e) {
+      setRecoveryStage("error");
+      toast.update(tid, { kind: "error", title: "Recovery failed.", detail: classifyError(e).msg });
+    }
+  }
+
+  async function handleReveal() {
+    if (!orderId) { toast.push({ kind: "error", title: "No order to reveal." }); return; }
+    let raw = localStorage.getItem(ORDER_KEY);
+    if (!raw) {
+      if (!orderBlobId) {
+        toast.push({ kind: "error", title: "Order nonce isn't on this device.", detail: "No Walrus backup found for this order." });
+        return;
+      }
+      const tid = toast.push({ kind: "pending", title: "Nonce missing — recovering from Walrus + Seal…" });
+      try {
+        await recoverOrderFromChain((s) => setRecoveryStage(s));
+        setRecoveryStage("restored");
+        raw = localStorage.getItem(ORDER_KEY);
+        toast.update(tid, { kind: "success", title: "Recovered — revealing…" });
+      } catch (e) {
+        toast.update(tid, { kind: "error", title: "Recovery failed.", detail: classifyError(e).msg });
+        return;
+      }
+    }
+    if (!raw) { toast.push({ kind: "error", title: "Order nonce unavailable." }); return; }
     let p: string, q: string, nb: Uint8Array;
     try {
-      const parsed = JSON.parse(raw) as { nonce: string; price: string; qty: string };
+      const parsed = JSON.parse(raw) as StoredOrder;
       p = parsed.price; q = parsed.qty;
       nb = Uint8Array.from(parsed.nonce.match(/.{2}/g)!.map((h) => parseInt(h, 16)));
     } catch { toast.push({ kind: "error", title: "Stored order is unreadable." }); return; }
@@ -377,6 +481,50 @@ export function UmbraTerminal() {
               <div className="rounded-lg border border-white/10 bg-white/[0.02] px-3 py-2 text-[11px] text-zinc-400">
                 Order sealed & escrowed. Reveal opens when the commit window closes.
                 <a href={objUrl(orderId)} target="_blank" rel="noopener noreferrer" className="block mt-1 text-cyan-400 hover:underline font-mono">Your SealedOrder ↗</a>
+              </div>
+            )}
+
+            {/* Lose your device, keep your order — Walrus + Seal recovery */}
+            {orderId && phase === "COMMIT" && orderBlobId && (
+              <div className="rounded-xl border border-pink-500/20 bg-pink-950/10 px-3 py-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-mono uppercase tracking-widest text-zinc-500">Lose your device, keep your order</span>
+                  <span className="text-pink-400 text-sm">🔑</span>
+                </div>
+                {recoveryStage === "idle" && (
+                  <button onClick={simulateDeviceLoss}
+                    className="w-full py-2 rounded-lg text-xs font-semibold border border-white/10 bg-white/[0.03] hover:bg-white/[0.07] text-zinc-300 transition-colors">
+                    Simulate device loss →
+                  </button>
+                )}
+                {recoveryStage === "wiped" && (
+                  <>
+                    <p className="text-[11px] text-red-300">Local key wiped. This device can no longer open the order.</p>
+                    <button onClick={handleRecover}
+                      className="w-full py-2 rounded-lg text-xs font-semibold text-white bg-gradient-to-r from-cyan-600 to-pink-600 hover:from-cyan-500 hover:to-pink-500 transition-colors">
+                      Recover from Walrus + Seal →
+                    </button>
+                  </>
+                )}
+                {(recoveryStage === "session" || recoveryStage === "walrus" || recoveryStage === "seal") && (
+                  <div className="space-y-1.5">
+                    <RecoveryRail stage={recoveryStage} />
+                    {recoveryStage === "session" && <p className="text-[10px] text-zinc-500">Sign in your wallet to authorize Seal…</p>}
+                  </div>
+                )}
+                {recoveryStage === "restored" && (
+                  <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="space-y-1.5">
+                    <RecoveryRail stage="restored" />
+                    <p className="text-[11px] text-emerald-300 font-semibold">Order recovered. No server ever saw it.</p>
+                    <button onClick={() => setRecoveryStage("idle")} className="text-[10px] text-zinc-500 hover:text-zinc-300">reset demo</button>
+                  </motion.div>
+                )}
+                {recoveryStage === "error" && (
+                  <button onClick={handleRecover}
+                    className="w-full py-2 rounded-lg text-xs font-semibold border border-red-500/30 bg-red-950/20 hover:bg-red-950/30 text-red-200 transition-colors">
+                    Retry recovery →
+                  </button>
+                )}
               </div>
             )}
             {orderId && phase === "REVEAL" && (

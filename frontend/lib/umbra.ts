@@ -1,4 +1,5 @@
 import { Transaction } from "@mysten/sui/transactions";
+import type { ClientWithCoreApi } from "@mysten/sui/client";
 import { sha3_256 } from "@noble/hashes/sha3.js";
 import { CLOCK_ID, RANDOM_ID } from "./constants";
 
@@ -104,6 +105,45 @@ export function buildClaimFillTx(orderId: string, nftId: string | null): Transac
     ],
   });
   return tx;
+}
+
+// Build the umbra_policy::seal_approve dry-run tx the Seal key servers run to
+// gate decryption of an order nonce. Bound to this pool + the caller's order.
+export async function buildUmbraSealApproveTx(
+  orderId: string,
+  suiClient: ClientWithCoreApi,
+  senderAddress: string,
+): Promise<Uint8Array> {
+  if (!UMBRA_PACKAGE_ID || !UMBRA_POOL_ID) throw new Error("Umbra package/pool not configured.");
+  const poolHex = UMBRA_POOL_ID.replace(/^0x/, "").padStart(64, "0");
+  const poolIdBytes = Array.from(
+    Uint8Array.from({ length: 32 }, (_, i) => parseInt(poolHex.slice(i * 2, i * 2 + 2), 16)),
+  );
+  const tx = new Transaction();
+  tx.setSender(senderAddress);
+  tx.moveCall({
+    target: `${UMBRA_PACKAGE_ID}::umbra_policy::seal_approve`,
+    arguments: [tx.pure.vector("u8", poolIdBytes), tx.object(orderId), tx.object(UMBRA_POOL_ID), tx.object(CLOCK_ID)],
+  });
+  return await tx.build({ client: suiClient });
+}
+
+// Move Option<vector<u8>> arrives in several RPC/SDK shapes (flat bytes, {vec},
+// {fields:{vec}}, base64 string, or empty = None) — same decoder as the auction.
+export function decodeBlobId(raw: unknown): string | null {
+  if (raw == null) return null;
+  let v: unknown = raw;
+  if (!Array.isArray(v) && typeof v === "object") {
+    const o = v as { vec?: unknown; fields?: { vec?: unknown } };
+    v = o.vec ?? o.fields?.vec ?? v;
+  }
+  if (!Array.isArray(v) || v.length === 0) return null;
+  const b: unknown = Array.isArray(v[0]) ? v[0] : (typeof v[0] === "string" ? v[0] : v);
+  try {
+    if (typeof b === "string") return new TextDecoder().decode(Uint8Array.from(atob(b), (c) => c.charCodeAt(0)));
+    if (Array.isArray(b)) return new TextDecoder().decode(Uint8Array.from(b as number[]));
+  } catch { return null; }
+  return null;
 }
 
 // ── Error classification + read retry ───────────────────────────────────────────
