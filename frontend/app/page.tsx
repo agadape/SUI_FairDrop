@@ -118,7 +118,7 @@ const STEPS = [
   { num: "02", label: "Seal your bid", desc: "You choose an amount and submit sha3_256(amount ‖ nonce). The hash commits you to the bid without revealing it. Miners, validators, and every other bidder see only a 32-byte hash until reveal. Front-running requires seeing the bid. You made that impossible." },
   { num: "03", label: "Reveal when the phase opens", desc: "After the commit window closes, you send your actual amount and nonce. The contract recomputes the hash and verifies it matches exactly. Reveal a different amount: rejected. Reveal late: rejected. No flexibility, by design." },
   { num: "04", label: "Anyone calls resolve", desc: "No admin required. Anyone calls resolve and the contract does the work: sort bids, find the clearing price, break ties using sui::random at 0x8. Validator DKG randomness — no single party can predict or bias it. The outcome is on-chain and permanent." },
-  { num: "05", label: "Settle atomically", desc: "Winners receive their allocation and escrow change. Losers receive full refunds. Creator receives proceeds. All of this happens in one Programmable Transaction Block. Everything settles or nothing settles. No second transactions. No admin intervention." },
+  { num: "05", label: "Settle, then claim", desc: "resolve runs once: it sorts bids, finds the clearing price, breaks ties with sui::random, and mints a WinnerCertificate to every winner — all in one PTB. Settlement is then pull-based: winners claim (pay the clearing price, take their change), losers reclaim their full escrow, the creator withdraws proceeds. Each is a separate permissionless call. No admin can seize or block funds; no failed batch can strand anyone." },
 ];
 
 // ─── Sui primitives ───────────────────────────────────────────────────────────
@@ -129,7 +129,7 @@ const PRIMITIVES = [
   { name: "zkLogin", by: "Deepak Maram", desc: "Google login instead of a wallet — the same login re-derives the same wallet on any device. Raises Sybil cost; not proof-of-personhood.", color: "text-blue-400", border: "border-blue-500/20", bg: "bg-blue-950/20" },
   { name: "sui::random", by: "Andrew Schran", desc: "Validator DKG randomness at object 0x8. Unpredictable before the transaction. Unbiasable by any party.", color: "text-violet-400", border: "border-violet-500/20", bg: "bg-violet-950/20" },
   { name: "Enoki", by: "Mysten Labs", desc: "The zkLogin auth flow behind the Google button — onboards users with no seed phrase and no extension. Gas is self-paid on testnet (no sponsorship).", color: "text-orange-400", border: "border-orange-500/20", bg: "bg-orange-950/20" },
-  { name: "PTBs", by: "Sui protocol", desc: "Programmable Transaction Blocks. Winners, refunds, proceeds — one atomic transaction, no partial states.", color: "text-emerald-400", border: "border-emerald-500/20", bg: "bg-emerald-950/20" },
+  { name: "PTBs", by: "Sui protocol", desc: "Programmable Transaction Blocks compose many Move calls into one atomic transaction — resolve mints every WinnerCertificate in a single PTB. Final settlement is pull-based (claim, reclaim, withdraw), so no party can be stranded by another's failure.", color: "text-emerald-400", border: "border-emerald-500/20", bg: "bg-emerald-950/20" },
 ];
 
 // ─── Explorer receipts ────────────────────────────────────────────────────────

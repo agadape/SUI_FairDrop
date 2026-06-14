@@ -7,6 +7,8 @@
 param(
     [int]$CommitWindowDays = 30,
     [int]$RevealWindowDays = 37,
+    [int]$CommitWindowMinutes = 0,     # if >0, overrides the day windows (live-demo pools)
+    [int]$RevealWindowMinutes = 0,     # absolute from now; must be > CommitWindowMinutes
     [long]$SupplyUnits = 100,          # UMB units the maker lists
     [long]$MinPriceMist = 1000000,     # 0.001 SUI per UMB unit (floor)
     [long]$InventoryMint = 100         # UMB raw units to mint as inventory (>= SupplyUnits)
@@ -43,8 +45,14 @@ Write-Host "UMB inventory coin: $umbCoin" -ForegroundColor Green
 
 # ── 3. Stage a demo pool (long COMMIT window) ─────────────────────────────────
 $nowMs = [long]([DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds())
-$commitEndMs = $nowMs + ($CommitWindowDays * 24L * 60 * 60 * 1000)
-$revealEndMs = $nowMs + ($RevealWindowDays * 24L * 60 * 60 * 1000)
+if ($CommitWindowMinutes -gt 0) {
+    $commitEndMs = $nowMs + ($CommitWindowMinutes * 60L * 1000)
+    $revealEndMs = $nowMs + ($RevealWindowMinutes * 60L * 1000)
+    Write-Host "Live-demo windows: COMMIT $CommitWindowMinutes min, REVEAL ends at $RevealWindowMinutes min" -ForegroundColor Yellow
+} else {
+    $commitEndMs = $nowMs + ($CommitWindowDays * 24L * 60 * 60 * 1000)
+    $revealEndMs = $nowMs + ($RevealWindowDays * 24L * 60 * 60 * 1000)
+}
 
 Write-Host "Creating pool: supply=$SupplyUnits min_price=$MinPriceMist MIST/unit" -ForegroundColor Cyan
 $poolJson = sui client call --package $packageId --module umbra_swap --function create_pool `

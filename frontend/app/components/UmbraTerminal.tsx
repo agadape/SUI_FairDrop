@@ -13,6 +13,7 @@ import { NETWORK, MIST_PER_SUI } from "@/lib/constants";
 import { generateNonce, nonceToHex } from "@/lib/hash";
 import { makeSealClient, sealEncrypt } from "@/lib/seal";
 import { walrusStore } from "@/lib/walrus";
+import { MevShieldCard } from "@/app/components/MevShieldCard";
 import {
   UMBRA_PACKAGE_ID,
   UMBRA_POOL_ID,
@@ -129,6 +130,7 @@ export function UmbraTerminal() {
   const [lastDigest, setLastDigest] = useState<string | null>(null);
   const [orderId, setOrderId] = useState<string | null>(null);
   const [nftId, setNftId] = useState<string | null>(null);
+  const [nftStats, setNftStats] = useState<{ trades: number; totalSaved: string; lastSaved: string } | null>(null);
   const [refreshTick, setRefreshTick] = useState(0);
   const refresh = () => setRefreshTick((t) => t + 1);
 
@@ -175,18 +177,27 @@ export function UmbraTerminal() {
 
       let foundOrder: string | null = null;
       let foundNft: string | null = null;
+      let foundStats: { trades: number; totalSaved: string; lastSaved: string } | null = null;
       for (const o of all) {
         if (o.data?.content?.dataType !== "moveObject") continue;
         const c = o.data.content as { type: string; fields: Record<string, unknown> };
         if (c.type.includes("::umbra_swap::SealedOrder") && norm(c.fields.pool_id) === wantPool) foundOrder = o.data.objectId;
-        if (c.type.includes("::umbra_swap::MevShieldNFT")) foundNft = o.data.objectId;
+        if (c.type.includes("::umbra_swap::MevShieldNFT")) {
+          foundNft = o.data.objectId;
+          foundStats = {
+            trades: Number(c.fields.trades ?? 0),
+            totalSaved: String(c.fields.total_saved ?? "0"),
+            lastSaved: String(c.fields.last_saved ?? "0"),
+          };
+        }
       }
       setOrderId(foundOrder);
       setNftId(foundNft);
+      setNftStats(foundStats);
     } catch (e) { console.error(e); }
   }, [client, account?.address]);
 
-  useEffect(() => { setOrderId(null); setNftId(null); fetchUserObjects(); }, [account?.address, refreshTick, fetchUserObjects]);
+  useEffect(() => { setOrderId(null); setNftId(null); setNftStats(null); fetchUserObjects(); }, [account?.address, refreshTick, fetchUserObjects]);
 
   const minPriceSui = pool ? Number(pool.minPrice) / Number(MIST_PER_SUI) : 0;
   const escrowSui = (parseFloat(price) || 0) * (parseFloat(qty) || 0);
@@ -332,11 +343,8 @@ export function UmbraTerminal() {
                 Claim Fill + MEV-Shield NFT →
               </button>
             )}
-            {nftId && (
-              <a href={objUrl(nftId)} target="_blank" rel="noopener noreferrer"
-                className="block rounded-lg border border-cyan-500/20 bg-cyan-950/20 px-3 py-2 text-[11px] text-cyan-300 hover:bg-cyan-950/30 font-mono">
-                🛡️ Your MEV-Shield NFT ↗
-              </a>
+            {nftId && nftStats && (
+              <MevShieldCard nftId={nftId} trades={nftStats.trades} totalSavedMist={nftStats.totalSaved} lastSavedMist={nftStats.lastSaved} />
             )}
 
             {statusMsg && (
