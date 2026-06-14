@@ -17,7 +17,7 @@ import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 
 const PACKAGE_ID = process.env.NEXT_PUBLIC_UMBRA_PACKAGE_ID
-  || "0xd3196fdf9cc6696ac7f5fcfa80252227b2504721860a7cf414150a6541b9ece0";
+  || "0xe515f10377693b0d1b44434783ab7d2e5ed58dd33415bd46b34ed61f4faf5886";
 const CLOCK_ID = "0x6";
 const KEY_FILE = join(dirname(fileURLToPath(import.meta.url)), ".umbra_floor_key");
 

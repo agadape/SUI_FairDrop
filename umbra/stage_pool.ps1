@@ -7,8 +7,8 @@
 # Defaults to the package + UMB TreasuryCap published 2026-06-14.
 
 param(
-    [string]$PackageId   = "0xd3196fdf9cc6696ac7f5fcfa80252227b2504721860a7cf414150a6541b9ece0",
-    [string]$TreasuryCap = "0xbe4c53350b28f4982c05ecd37a11df16013bd26c2b63cd7188b2eaf8d0db4bb0",
+    [string]$PackageId   = "0xe515f10377693b0d1b44434783ab7d2e5ed58dd33415bd46b34ed61f4faf5886",
+    [string]$TreasuryCap = "0x7fec7346af12c680084b7ac90df11b2a9d907475acb7f97f57f59c76bbfbc018",
     [int]$CommitWindowMinutes = 2,
     [int]$RevealWindowMinutes = 3,     # absolute from now; must be > CommitWindowMinutes
     [long]$SupplyUnits = 100,

@@ -20,7 +20,9 @@ $env:PATH += ";C:\Users\Advan\AppData\Local\bin;C:\Users\Advan\AppData\Local\sui
 
 # ── 1. Publish ────────────────────────────────────────────────────────────────
 Write-Host "Publishing Umbra to testnet..." -ForegroundColor Cyan
-$publishJson = sui client publish "umbra" --gas-budget 300000000 --json | Out-String
+# NOTE: a fresh publish requires removing umbra/Published.toml first (Sui blocks
+# re-publishing an already-published package). $PSScriptRoot keeps this cwd-independent.
+$publishJson = sui client publish "$PSScriptRoot" --gas-budget 300000000 --json | Out-String
 $publish = $publishJson | ConvertFrom-Json
 
 $packageId = ($publish.objectChanges | Where-Object { $_.type -eq "published" } | Select-Object -First 1).packageId
