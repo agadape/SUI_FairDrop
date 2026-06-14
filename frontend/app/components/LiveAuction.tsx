@@ -22,6 +22,8 @@ import { Transaction } from "@mysten/sui/transactions";
 import { sha3_256 } from "@noble/hashes/sha3.js";
 import type { SealCompatibleClient } from "@mysten/seal";
 import type { ClientWithCoreApi } from "@mysten/sui/client";
+import { useToast } from "@/app/components/Toast";
+import { classifyError } from "@/lib/errors";
 
 type AuctionPhase = "LOADING" | "COMMIT" | "REVEAL" | "ENDED" | "RESOLVED" | "NOT_CONFIGURED";
 
@@ -150,6 +152,7 @@ export function LiveAuction() {
   const { mutateAsync: signTx } = useSignTransaction();
   const { mutateAsync: signPersonalMessage } = useSignPersonalMessage();
   const suiUsdPrice = useSuiUsdPrice();
+  const toast = useToast();
 
   const [auction, setAuction] = useState<AuctionState | null>(null);
   const [phase, setPhase] = useState<AuctionPhase>("LOADING");
@@ -187,7 +190,8 @@ export function LiveAuction() {
         result = await trySponsorTransaction(tx, account.address, client as ClientWithCoreApi, signTx);
       } catch (err) {
         if (err instanceof UserCancelledError) {
-          setTxStatus("Transaction cancelled.");
+          setTxStatus(null);
+          toast.push({ kind: "info", title: "Cancelled in wallet." });
           return;
         }
         result = null;
@@ -202,7 +206,12 @@ export function LiveAuction() {
         { transaction: tx },
         {
           onSuccess: async (data) => { await onSuccess(false, data.digest); resolve(); },
-          onError: (e) => { setTxStatus(`Error: ${e.message}`); resolve(); },
+          onError: (e) => {
+            setTxStatus(null);
+            const { kind, msg } = classifyError(e);
+            toast.push({ kind: kind === "rejected" ? "info" : "error", title: kind === "rejected" ? "Cancelled in wallet." : "Transaction failed.", detail: msg });
+            resolve();
+          },
         },
       );
     });
@@ -364,6 +373,7 @@ export function LiveAuction() {
         setTxStatus(ok
           ? `Registered! Entry minted on-chain.${sponsored ? " Gas sponsored by Enoki." : ""}`
           : "Registered on-chain — syncing… open the tx in Explorer; refresh if the step doesn't advance.");
+        toast.push({ kind: "success", title: ok ? "Registered — Entry minted." : "Registered — syncing on-chain…", href: txUrl(digest) });
       });
     } finally { setIsSubmitting(false); }
   }
@@ -373,9 +383,9 @@ export function LiveAuction() {
     setIsSubmitting(true); setLastTxDigest(null);
     try {
       const amountSui = parseFloat(bidAmount);
-      if (isNaN(amountSui) || amountSui <= 0) { setTxStatus("Enter a valid bid amount."); return; }
+      if (isNaN(amountSui) || amountSui <= 0) { toast.push({ kind: "error", title: "Enter a valid bid amount." }); return; }
       const amountMist = BigInt(Math.floor(amountSui * 1e9));
-      if (amountMist < BigInt(auction.minBid)) { setTxStatus(`Bid below minimum (${Number(BigInt(auction.minBid)) / 1e9} SUI).`); return; }
+      if (amountMist < BigInt(auction.minBid)) { toast.push({ kind: "error", title: "Bid below the minimum.", detail: `Min ${Number(BigInt(auction.minBid)) / 1e9} SUI.` }); return; }
       setTxStatus("Computing commitment hash…");
       const nonce = generateNonce();
       const hash = computeCommitmentHash(amountMist, nonce);
@@ -392,13 +402,16 @@ export function LiveAuction() {
         stored.blobId = blobId;
         localStorage.setItem(NONCE_KEY, JSON.stringify(stored));
         blobIdBytes = Array.from(new TextEncoder().encode(blobId));
-      } catch (e) { console.warn("Seal/Walrus backup failed:", e); }
+      } catch (e) {
+        console.warn("Seal/Walrus backup failed:", e);
+        toast.push({ kind: "info", title: "Cloud backup unavailable.", detail: "Bid still commits — keep this device to reveal." });
+      }
       setTxStatus("Fetching coins for escrow…");
       const coinsResult = await client.getCoins({ owner: account.address, coinType: "0x2::sui::SUI" });
-      if (!coinsResult.data.length) { setTxStatus("No SUI coins found in wallet."); return; }
+      if (!coinsResult.data.length) { setTxStatus(null); toast.push({ kind: "error", title: "No SUI in this wallet.", detail: "Fund it from the faucet first." }); return; }
       const sortedCoins = [...coinsResult.data].sort((a, b) => BigInt(b.balance) > BigInt(a.balance) ? 1 : -1);
       const totalBalance = sortedCoins.reduce((s, c) => s + BigInt(c.balance), 0n);
-      if (totalBalance < amountMist) { setTxStatus(`Insufficient balance. Need ${Number(amountMist) / 1e9} SUI, have ${(Number(totalBalance) / 1e9).toFixed(4)} SUI.`); return; }
+      if (totalBalance < amountMist) { setTxStatus(null); toast.push({ kind: "error", title: "Not enough SUI.", detail: `Need ${Number(amountMist) / 1e9} SUI, have ${(Number(totalBalance) / 1e9).toFixed(4)}.` }); return; }
       setTxStatus("Submitting blind bid…");
       const tx = new Transaction();
       // Split escrow from the gas coin (self-pay path): splitting from an explicit coin
@@ -416,6 +429,7 @@ export function LiveAuction() {
         setTxStatus(ok
           ? `Bid committed! Amount hidden until reveal.${blobNote}${sponsored ? " Gas sponsored by Enoki." : ""}`
           : "Bid committed on-chain — syncing… open the tx in Explorer; refresh if it doesn't update.");
+        toast.push({ kind: "success", title: ok ? "Bid committed — hidden until reveal." : "Bid committed — syncing on-chain…", href: txUrl(digest) });
       });
     } finally { setIsSubmitting(false); }
   }
@@ -459,13 +473,16 @@ export function LiveAuction() {
   // Centerpiece: pull the sealed bid back from Walrus + Seal, driving the rail.
   async function handleRecover() {
     setRecoveryError(null);
+    const tid = toast.push({ kind: "pending", title: "Recovering from Walrus + Seal…" });
     try {
       const bid = await recoverNonceFromChain((s) => setRecoveryStage(s));
       setRecoveredAmount(bid.amount);
       setRecoveryStage("restored");
+      toast.update(tid, { kind: "success", title: "Bid recovered — no server ever saw it." });
     } catch (e) {
       setRecoveryError(e instanceof Error ? e.message : String(e));
       setRecoveryStage("error");
+      toast.update(tid, { kind: "error", title: "Recovery failed.", detail: classifyError(e).msg });
     }
   }
 
@@ -483,11 +500,15 @@ export function LiveAuction() {
           );
         });
       } catch (e) {
-        setTxStatus(`Seal/Walrus recovery failed: ${e instanceof Error ? e.message : String(e)}`);
+        setTxStatus(null);
+        toast.push({ kind: "error", title: "Seal/Walrus recovery failed.", detail: classifyError(e).msg });
         setIsSubmitting(false); return;
       }
     }
-    if (!storedBid) { setTxStatus("Nonce not found. localStorage cleared and no Walrus backup."); setIsSubmitting(false); return; }
+    if (!storedBid) {
+      toast.push({ kind: "error", title: "Bid nonce unavailable.", detail: "localStorage cleared and no Walrus backup for this bid." });
+      setIsSubmitting(false); return;
+    }
     const nonce = hexToNonce(storedBid.nonce);
     const amountMist = BigInt(storedBid.amount);
     try {
@@ -503,6 +524,7 @@ export function LiveAuction() {
         setTxStatus(ok
           ? "Bid revealed! Entered into winner selection."
           : "Bid revealed on-chain — syncing… open the tx in Explorer; refresh if it doesn't update.");
+        toast.push({ kind: "success", title: ok ? "Bid revealed — entered into the draw." : "Bid revealed — syncing on-chain…", href: txUrl(digest) });
       });
     } finally { setIsSubmitting(false); }
   }
@@ -510,11 +532,12 @@ export function LiveAuction() {
   async function handleResolve() {
     if (isSubmitting || !account || !PACKAGE_ID || !AUCTION_ID) return;
     setIsSubmitting(true); setLastTxDigest(null); setTxStatus("Resolving with Sui DKG randomness…");
+    const tid = toast.push({ kind: "pending", title: "Resolving via Sui DKG randomness…" });
     const tx = new Transaction();
     tx.moveCall({ target: `${PACKAGE_ID}::auction::resolve`, arguments: [tx.object(AUCTION_ID), tx.object(RANDOM_ID), tx.object(CLOCK_ID)] });
     signAndExecute({ transaction: tx }, {
-      onSuccess: (data) => { setIsSubmitting(false); setLastTxDigest(data.digest); setResolveDigest(data.digest); setTxStatus("Resolved. Winners selected via Sui DKG."); refreshObjects(); },
-      onError: (e) => { setIsSubmitting(false); setTxStatus(`Error: ${e.message}`); },
+      onSuccess: (data) => { setIsSubmitting(false); setLastTxDigest(data.digest); setResolveDigest(data.digest); setTxStatus(null); toast.update(tid, { kind: "success", title: "Resolved — winners selected via Sui DKG.", href: txUrl(data.digest) }); refreshObjects(); },
+      onError: (e) => { setIsSubmitting(false); setTxStatus(null); const { kind, msg } = classifyError(e); toast.update(tid, { kind: kind === "rejected" ? "info" : "error", title: kind === "rejected" ? "Cancelled in wallet." : "Resolve failed.", detail: msg }); },
     });
   }
 
@@ -532,6 +555,7 @@ export function LiveAuction() {
         setTxStatus(ok
           ? "Claimed! Allocation confirmed."
           : "Claim submitted on-chain — syncing… open the tx in Explorer; refresh if it doesn't update.");
+        toast.push({ kind: "success", title: ok ? "Claimed — allocation confirmed." : "Claim submitted — syncing on-chain…", href: txUrl(digest) });
       });
     } finally { setIsSubmitting(false); }
   }
@@ -539,22 +563,24 @@ export function LiveAuction() {
   async function handleReclaimEscrow() {
     if (isSubmitting || !account || !PACKAGE_ID || !AUCTION_ID || !commitmentId) return;
     setIsSubmitting(true); setLastTxDigest(null); setTxStatus("Reclaiming escrow…");
+    const tid = toast.push({ kind: "pending", title: "Reclaiming escrow…" });
     const tx = new Transaction();
     tx.moveCall({ target: `${PACKAGE_ID}::auction::reclaim_escrow`, arguments: [tx.object(AUCTION_ID), tx.object(commitmentId), tx.object(CLOCK_ID)] });
     signAndExecute({ transaction: tx }, {
-      onSuccess: (data) => { setIsSubmitting(false); setLastTxDigest(data.digest); setTxStatus("Escrow returned to wallet."); setCommitmentId(null); refreshObjects(); },
-      onError: (e) => { setIsSubmitting(false); setTxStatus(`Error: ${e.message}`); },
+      onSuccess: (data) => { setIsSubmitting(false); setLastTxDigest(data.digest); setTxStatus(null); toast.update(tid, { kind: "success", title: "Escrow returned to your wallet.", href: txUrl(data.digest) }); setCommitmentId(null); refreshObjects(); },
+      onError: (e) => { setIsSubmitting(false); setTxStatus(null); const { kind, msg } = classifyError(e); toast.update(tid, { kind: kind === "rejected" ? "info" : "error", title: kind === "rejected" ? "Cancelled in wallet." : "Reclaim failed.", detail: msg }); },
     });
   }
 
   async function handleWithdrawProceeds() {
     if (isSubmitting || !account || !PACKAGE_ID || !AUCTION_ID || !creatorCapId) return;
     setIsSubmitting(true); setLastTxDigest(null); setTxStatus("Withdrawing proceeds…");
+    const tid = toast.push({ kind: "pending", title: "Withdrawing proceeds…" });
     const tx = new Transaction();
     tx.moveCall({ target: `${PACKAGE_ID}::auction::withdraw_proceeds`, arguments: [tx.object(AUCTION_ID), tx.object(creatorCapId)] });
     signAndExecute({ transaction: tx }, {
-      onSuccess: (data) => { setIsSubmitting(false); setLastTxDigest(data.digest); setTxStatus("Proceeds withdrawn."); },
-      onError: (e) => { setIsSubmitting(false); setTxStatus(`Error: ${e.message}`); },
+      onSuccess: (data) => { setIsSubmitting(false); setLastTxDigest(data.digest); setTxStatus(null); toast.update(tid, { kind: "success", title: "Proceeds withdrawn.", href: txUrl(data.digest) }); },
+      onError: (e) => { setIsSubmitting(false); setTxStatus(null); const { kind, msg } = classifyError(e); toast.update(tid, { kind: kind === "rejected" ? "info" : "error", title: kind === "rejected" ? "Cancelled in wallet." : "Withdraw failed.", detail: msg }); },
     });
   }
 
