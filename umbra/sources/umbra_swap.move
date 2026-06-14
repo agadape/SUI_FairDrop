@@ -391,4 +391,7 @@ module umbra::umbra_swap {
     public fun clearing_price(p: &SwapPool): u64 { p.clearing_price }
     public fun is_settled(p: &SwapPool): bool { p.settled }
     public fun reveal_count(p: &SwapPool): u64 { vec_map::length(&p.reveals) }
+    public fun is_winner(p: &SwapPool, addr: address): bool { table::contains(&p.winners, addr) }
+    public fun nft_trades(n: &MevShieldNFT): u64 { n.trades }
+    public fun nft_total_saved(n: &MevShieldNFT): u64 { n.total_saved }
 }

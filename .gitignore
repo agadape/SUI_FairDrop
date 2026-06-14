@@ -4,6 +4,7 @@ client_secret_*.json
 
 # Move build artifacts
 contracts/build/
+umbra/build/
 
 # Claude AI config
 .claude/

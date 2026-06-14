@@ -21,8 +21,8 @@ module umbra::umb {
         transfer::public_transfer(treasury, ctx.sender());
     }
 
-    /// Mint demo inventory (maker/test convenience).
-    public fun mint(treasury: &mut TreasuryCap<UMB>, amount: u64, ctx: &mut TxContext): coin::Coin<UMB> {
-        coin::mint(treasury, amount, ctx)
+    /// Mint demo inventory straight to the caller (CLI-friendly: no return value).
+    public fun mint(treasury: &mut TreasuryCap<UMB>, amount: u64, ctx: &mut TxContext) {
+        transfer::public_transfer(coin::mint(treasury, amount, ctx), ctx.sender());
     }
 }
