@@ -57,11 +57,11 @@ const PROBLEMS = [
 const FAIRNESS = [
   {
     title: "Google-Gated Entry",
-    body: "zkLogin gates each entry behind a Google login, with a per-registration nullifier committed on-chain via sha3_256. This raises the cost of multi-wallet farming — it is not proof-of-personhood.",
+    body: "OAuth-gated entry, raising Sybil attack costs. A Google login is required to register, and each address registers exactly once — a per-registration nullifier is committed on-chain via sha3_256. This makes multi-wallet farming expensive. Not proof-of-personhood.",
     border: "border-blue-500/25", glow: "rgba(59,130,246,0.1)", accent: "text-blue-400",
     visual: (
       <div className="flex items-center gap-2 font-mono text-xs">
-        <span className="text-zinc-500 bg-zinc-900 px-2 py-0.5 rounded text-[10px]">Google sub</span>
+        <span className="text-zinc-500 bg-zinc-900 px-2 py-0.5 rounded text-[10px]">Wallet addr</span>
         <span className="text-zinc-700">→</span>
         <span className="text-blue-500 text-[10px]">sha3_256</span>
         <span className="text-zinc-700">→</span>
@@ -98,8 +98,8 @@ const FAIRNESS = [
     ),
   },
   {
-    title: "Atomic Settlement",
-    body: "Winners, refunds, and proceeds all settle in a single PTB. Everything or nothing. No second transactions. No admin intervention possible.",
+    title: "Trustless Settlement",
+    body: "Trustless pull-settlement pattern: winners claim, losers reclaim, the creator withdraws — each a permissionless on-chain call. No admin can seize or block funds, and no batch failure can strand anyone. The contract holds no override key.",
     border: "border-emerald-500/25", glow: "rgba(16,185,129,0.1)", accent: "text-emerald-400",
     visual: (
       <div className="font-mono text-[10px] space-y-1">
@@ -114,7 +114,7 @@ const FAIRNESS = [
 // ─── How it works ─────────────────────────────────────────────────────────────
 
 const STEPS = [
-  { num: "01", label: "Register with Google", desc: "Your Google login generates a zero-knowledge proof on your device. The proof produces a nullifier — a unique on-chain fingerprint — without revealing your identity. Second registration from any address or nullifier: rejected." },
+  { num: "01", label: "Register with Google", desc: "OAuth-gated entry, raising Sybil attack costs. A Google login is required to register, and each address registers exactly once: a per-registration nullifier is committed on-chain, and a second registration from the same address or nullifier is rejected. This raises the cost of multi-wallet farming — not proof-of-personhood." },
   { num: "02", label: "Seal your bid", desc: "You choose an amount and submit sha3_256(amount ‖ nonce). The hash commits you to the bid without revealing it. Miners, validators, and every other bidder see only a 32-byte hash until reveal. Front-running requires seeing the bid. You made that impossible." },
   { num: "03", label: "Reveal when the phase opens", desc: "After the commit window closes, you send your actual amount and nonce. The contract recomputes the hash and verifies it matches exactly. Reveal a different amount: rejected. Reveal late: rejected. No flexibility, by design." },
   { num: "04", label: "Anyone calls resolve", desc: "No admin required. Anyone calls resolve and the contract does the work: sort bids, find the clearing price, break ties using sui::random at 0x8. Validator DKG randomness — no single party can predict or bias it. The outcome is on-chain and permanent." },

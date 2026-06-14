@@ -32,7 +32,11 @@ export async function sealEncrypt(
 ): Promise<Uint8Array> {
   const id = auctionId.replace(/^0x/, "");
   const { encryptedObject } = await sealClient.encrypt({
-    threshold: 1,
+    // threshold = 2: BOTH key servers must cooperate to release the decryption
+    // key. No single custodian can unilaterally read the nonce. (Was 1 — that
+    // let either server decrypt alone, contradicting the "no server can read it"
+    // trust claim.)
+    threshold: 2,
     packageId,
     id,
     data,

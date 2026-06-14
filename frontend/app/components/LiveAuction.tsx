@@ -252,14 +252,33 @@ export function LiveAuction() {
     const snap: UserSnapshot = { entryId: null, commitmentId: null, commitmentBlobId: null, certificateId: null, creatorCapId: null, revealedAmount: null };
     if (!account?.address || !PACKAGE_ID) return snap;
     try {
-      const owned = await client.getOwnedObjects({
-        owner: account.address,
-        filter: { Package: PACKAGE_ID },
-        options: { showContent: true },
-      });
-      for (const obj of owned.data) {
+      // Paginate: a reused demo wallet accumulates >50 objects (the default page
+      // size), so the relevant Entry/Commitment/Cert can sit past page 1. Without
+      // the cursor loop the UI silently shows "not registered" → the "did it work?"
+      // failure this whole phase exists to kill.
+      const ownedData: Awaited<ReturnType<typeof client.getOwnedObjects>>["data"] = [];
+      let cursor: string | null | undefined = null;
+      do {
+        const page = await client.getOwnedObjects({
+          owner: account.address,
+          filter: { Package: PACKAGE_ID },
+          options: { showContent: true },
+          cursor,
+        });
+        ownedData.push(...page.data);
+        cursor = page.hasNextPage ? page.nextCursor : null;
+      } while (cursor);
+      // Scope every owned object to the CURRENT auction. Entry/Commitment/Cert/
+      // CreatorCap all carry an `auction_id` field; a wallet reused across auctions
+      // otherwise picks up a stale Commitment from a dead auction and feeds its
+      // long-expired Walrus blob into recovery → "Walrus read failed: 404".
+      const normId = (s: unknown) =>
+        typeof s === "string" ? s.replace(/^0x/, "").toLowerCase().padStart(64, "0") : "";
+      const wantAuction = normId(AUCTION_ID);
+      for (const obj of ownedData) {
         if (!obj.data?.content || obj.data.content.dataType !== "moveObject") continue;
         const content = obj.data.content as { type: string; fields: Record<string, unknown> };
+        if (normId(content.fields.auction_id) !== wantAuction) continue; // ignore other auctions
         if (content.type.includes("::auction::Entry")) { snap.entryId = obj.data.objectId; setEntryId(obj.data.objectId); }
         if (content.type.includes("::auction::Commitment")) {
           snap.commitmentId = obj.data.objectId; setCommitmentId(obj.data.objectId);
