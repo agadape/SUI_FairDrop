@@ -20,3 +20,6 @@ desktop.ini
 # Environment files
 .env.local
 .env*.local
+
+# Umbra floor demo keypair (dummy account — never a real wallet)
+frontend/scripts/.umbra_floor_key
