@@ -7,8 +7,15 @@ import { CLOCK_ID, RANDOM_ID } from "./constants";
 export const UMBRA_PACKAGE_ID = process.env.NEXT_PUBLIC_UMBRA_PACKAGE_ID ?? "";
 export const UMBRA_POOL_ID = process.env.NEXT_PUBLIC_UMBRA_POOL_ID ?? "";
 
-// Default art for the evolving MEV-Shield receipt.
-export const SHIELD_IMG = "https://fairdrop.app/umbra-shield.png";
+// Fully on-chain SVG art for the evolving MEV-Shield receipt — no image host, no
+// backend (stored on-chain in the NFT, rendered via the Display image_url template).
+export const SHIELD_IMG =
+  "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='400'>" +
+  "<rect width='400' height='400' fill='%2309090b'/>" +
+  "<path d='M200 70 L310 115 V205 Q310 295 200 345 Q90 295 90 205 V115 Z' fill='none' stroke='%2322d3ee' stroke-width='6'/>" +
+  "<text x='200' y='200' fill='%2322d3ee' font-family='monospace' font-size='30' text-anchor='middle'>Umbra</text>" +
+  "<text x='200' y='240' fill='%23ec4899' font-family='monospace' font-size='16' text-anchor='middle' letter-spacing='3'>MEV SHIELD</text>" +
+  "</svg>";
 
 // commitment_hash = sha3_256(price_le8 ‖ qty_le8 ‖ nonce) — mirrors umbra_swap::reveal_order
 export function computeOrderHash(priceMist: bigint, qty: bigint, nonce: Uint8Array): Uint8Array {
