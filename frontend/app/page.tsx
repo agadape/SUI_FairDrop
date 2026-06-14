@@ -157,6 +157,7 @@ function NavBar() {
           <a href="#how" className="text-xs text-zinc-600 hover:text-zinc-300 transition-colors hidden md:block">How it works</a>
           <a href="#why-sui" className="text-xs text-zinc-600 hover:text-zinc-300 transition-colors hidden md:block">Why Sui</a>
           <a href="#auction" className="text-xs text-zinc-600 hover:text-zinc-300 transition-colors hidden md:block">Live auction</a>
+          <a href="/umbra" className="text-xs font-semibold text-cyan-400 hover:text-cyan-300 transition-colors border border-cyan-500/30 rounded-full px-2.5 py-1">⚡ Umbra</a>
           <ConnectButton />
         </div>
       </div>
