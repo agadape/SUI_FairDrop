@@ -150,11 +150,11 @@ function formatCountdown(ms: number): string {
 }
 
 const PHASE_STYLE: Record<string, { bg: string; border: string; label: string }> = {
-  COMMIT:   { bg: "bg-blue-950/50",   border: "border-blue-500/30",   label: "text-blue-300" },
-  REVEAL:   { bg: "bg-amber-950/50",  border: "border-amber-500/30",  label: "text-amber-300" },
-  ENDED:    { bg: "bg-orange-950/50", border: "border-orange-500/30", label: "text-orange-300" },
-  RESOLVED: { bg: "bg-emerald-950/50",border: "border-emerald-500/30",label: "text-emerald-300" },
-  LOADING:  { bg: "bg-zinc-900/50",   border: "border-zinc-700/30",   label: "text-zinc-400" },
+  COMMIT:   { bg: "bg-black", border: "border-white/15", label: "text-white" },
+  REVEAL:   { bg: "bg-black", border: "border-white/15", label: "text-white" },
+  ENDED:    { bg: "bg-black", border: "border-white/15", label: "text-white" },
+  RESOLVED: { bg: "bg-black", border: "border-white/15", label: "text-white" },
+  LOADING:  { bg: "bg-black", border: "border-white/15", label: "text-zinc-500" },
 };
 
 export function LiveAuction() {
@@ -605,7 +605,7 @@ export function LiveAuction() {
 
   if (phase === "NOT_CONFIGURED") {
     return (
-      <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-6 text-zinc-500 text-sm">
+      <div className="rounded-none border border-white/10 bg-white/[0.02] p-6 text-zinc-500 text-sm">
         Set NEXT_PUBLIC_PACKAGE_ID and NEXT_PUBLIC_AUCTION_ID in .env.local
       </div>
     );
@@ -619,12 +619,12 @@ export function LiveAuction() {
       <div className="lg:col-span-2 space-y-4">
 
         {/* Big phase + countdown */}
-        <div className={`rounded-2xl border px-5 py-4 ${ps.bg} ${ps.border}`}>
+        <div className={`rounded-none border px-5 py-4 ${ps.bg} ${ps.border}`}>
           <div className="flex items-end justify-between gap-4 flex-wrap">
             <div>
               <p className="text-[10px] text-zinc-500 font-mono uppercase tracking-[0.2em] mb-1.5">The auction · live on testnet</p>
               <div className="flex items-center gap-2">
-                <span className={`w-2.5 h-2.5 rounded-full ${phase === "LOADING" ? "bg-zinc-600" : "bg-current animate-pulse"} ${ps.label}`} />
+                <span className={`w-2.5 h-2.5 rounded-full ${phase === "LOADING" ? "bg-zinc-600" : "bg-current"} ${ps.label}`} />
                 <span className={`text-2xl font-bold tracking-tight ${ps.label}`}>{phase === "LOADING" ? "Loading…" : phase}</span>
               </div>
             </div>
@@ -667,7 +667,7 @@ export function LiveAuction() {
             { k: "Committed", v: auction ? String(auction.commitCount) : "…" },
             { k: "Revealed", v: auction ? String(auction.revealCount) : "…" },
           ].map((s) => (
-            <div key={s.k} className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-3">
+            <div key={s.k} className="rounded-none border border-white/[0.06] bg-white/[0.02] px-3 py-3">
               <p className="text-[10px] text-zinc-500 font-mono uppercase tracking-widest mb-1">{s.k}</p>
               <p className="text-xl font-bold text-zinc-100 tabular-nums">{s.v}</p>
             </div>
@@ -676,7 +676,7 @@ export function LiveAuction() {
 
       {/* Resolve verifiability banner */}
       {resolveDigest && (
-        <div className="rounded-xl border border-emerald-500/20 bg-emerald-950/20 px-4 py-3 space-y-2">
+        <div className="rounded-none border border-emerald-500/20 bg-black px-4 py-3 space-y-2">
           <p className="text-emerald-400 text-sm font-semibold">Winners selected via Sui validator DKG</p>
           <p className="text-zinc-400 text-xs">
             <a href={objUrl(RANDOM_ID)} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">sui::random at 0x8 ↗</a>
@@ -689,7 +689,7 @@ export function LiveAuction() {
       )}
 
         {/* Verify on-chain footer */}
-        <div className="rounded-xl border border-white/[0.05] bg-white/[0.015] px-4 py-3 space-y-2">
+        <div className="rounded-none border border-white/[0.05] bg-white/[0.015] px-4 py-3 space-y-2">
           <p className="text-[10px] text-zinc-600 font-mono uppercase tracking-[0.2em]">Verify on-chain</p>
           <div className="flex flex-wrap gap-x-4 gap-y-1">
             {["No backend", "No admin key", "100% on-chain", "Explorer verifiable"].map((t) => (
@@ -713,13 +713,13 @@ export function LiveAuction() {
 
       {/* zkLogin hint */}
       {account && !isZkLoginWallet && phase === "COMMIT" && !entryId && (
-        <div className="rounded-xl border border-amber-500/20 bg-amber-950/10 px-3 py-2 text-xs text-amber-300">
+        <div className="rounded-none border border-amber-500/20 bg-black px-3 py-2 text-xs text-amber-300">
           For full Sybil resistance, connect via <strong>Continue with Google</strong> (zkLogin) in the wallet modal.
         </div>
       )}
 
       {!account && (
-        <div className="rounded-xl border border-white/10 bg-white/[0.02] px-6 py-8 flex flex-col items-center gap-4">
+        <div className="rounded-none border border-white/10 bg-white/[0.02] px-6 py-8 flex flex-col items-center gap-4">
           <p className="text-zinc-400 text-sm">Connect a wallet to participate.</p>
           <ConnectButton />
         </div>
@@ -729,7 +729,7 @@ export function LiveAuction() {
         <div className="space-y-3">
 
           {/* Connected wallet context — address · network · balance · ready (P0-3) */}
-          <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2 space-y-1.5">
+          <div className="rounded-none border border-white/[0.06] bg-white/[0.02] px-3 py-2 space-y-1.5">
             <div className="flex items-center justify-between gap-2">
               <span className="font-mono text-[11px] text-zinc-400 break-all">{account.address}</span>
               <button
@@ -765,7 +765,7 @@ export function LiveAuction() {
             <section className="space-y-2">
               <p className="text-zinc-500 text-[10px] font-mono uppercase tracking-[0.2em]">Step 1 — Register</p>
               <button onClick={handleRegister} disabled={isSubmitting}
-                className="w-full py-3.5 rounded-xl text-sm font-semibold text-zinc-950 bg-emerald-400 hover:bg-emerald-300 active:scale-[0.98] transition disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center gap-2">
+                className="w-full py-3.5 rounded-none text-sm font-semibold text-zinc-950 bg-white hover:bg-zinc-200 active:scale-[0.98] transition disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center gap-2">
                 {isSubmitting ? <><Spinner className="w-4 h-4" /> Registering…</> : <>{isZkLoginWallet ? "Register with Google" : "Register"} <IArrow className="w-4 h-4" /></>}
               </button>
               <p className="text-zinc-600 text-xs">One entry per wallet. {isZkLoginWallet ? "Gas sponsored by Enoki." : ""}</p>
@@ -776,7 +776,7 @@ export function LiveAuction() {
           {entryId && !commitmentId && phase === "COMMIT" && (
             <section className="space-y-2">
               <p className="text-zinc-500 text-[10px] font-mono uppercase tracking-[0.2em]">Step 2 — Blind Bid</p>
-              <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-4">
+              <div className="rounded-none border border-white/10 bg-white/[0.02] p-4">
                 <label className="text-[10px] font-mono uppercase tracking-widest text-zinc-500">Your bid</label>
                 <div className="flex items-end justify-between gap-3 mt-1">
                   <input type="number" inputMode="decimal" placeholder="0.0" value={bidAmount}
@@ -790,7 +790,7 @@ export function LiveAuction() {
                 </div>
               </div>
               <button onClick={handleCommit} disabled={isSubmitting}
-                className="w-full py-3.5 rounded-xl text-sm font-semibold text-zinc-950 bg-emerald-400 hover:bg-emerald-300 active:scale-[0.98] transition disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center gap-2">
+                className="w-full py-3.5 rounded-none text-sm font-semibold text-zinc-950 bg-white hover:bg-zinc-200 active:scale-[0.98] transition disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center gap-2">
                 {isSubmitting ? <><Spinner className="w-4 h-4" /> Committing…</> : <><ILock className="w-4 h-4" /> Commit Blind Bid</>}
               </button>
               <p className="text-zinc-600 text-xs">Nonce Seal-encrypted &amp; backed up to Walrus.</p>
@@ -808,7 +808,7 @@ export function LiveAuction() {
               initial={{ opacity: 0, scale: 0.97 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ type: "spring", damping: 20, stiffness: 240 }}
-              className="rounded-xl border border-amber-500/20 bg-amber-950/10 px-4 py-4"
+              className="rounded-none border border-amber-500/20 bg-black px-4 py-4"
             >
               <div className="flex items-center justify-between mb-2">
                 <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-zinc-500">You hold the only key</span>
@@ -856,7 +856,7 @@ export function LiveAuction() {
                 <div className="mt-3 pt-3 border-t border-amber-500/15 space-y-2">
                   {recoveryStage === "idle" && (
                     <button onClick={simulateDeviceLoss}
-                      className="w-full py-2.5 rounded-lg text-xs font-semibold border border-white/10 bg-white/[0.03] hover:bg-white/[0.07] text-zinc-300 active:scale-[0.98] transition">
+                      className="w-full py-2.5 rounded-none text-xs font-semibold border border-white/10 bg-white/[0.03] hover:bg-white/[0.07] text-zinc-300 active:scale-[0.98] transition">
                       Simulate device loss →
                     </button>
                   )}
@@ -864,8 +864,8 @@ export function LiveAuction() {
                     <>
                       <p className="text-[11px] text-rose-300">Local key wiped. This device can no longer open the bid.</p>
                       <button onClick={handleRecover}
-                        className="w-full py-2.5 rounded-lg text-xs font-semibold text-white bg-gradient-to-r from-cyan-500 to-fuchsia-500 hover:from-cyan-400 hover:to-fuchsia-400 active:scale-[0.98] transition">
-                        Recover from Walrus + Seal →
+                        className="w-full py-2.5 text-[11px] font-mono font-bold uppercase tracking-wide text-black bg-white hover:bg-zinc-200 active:scale-[0.99] transition">
+                        Recover from Walrus + Seal
                       </button>
                     </>
                   )}
@@ -888,7 +888,7 @@ export function LiveAuction() {
                     <div className="space-y-1.5">
                       <p className="text-[11px] text-red-300">Recovery failed: {recoveryError}</p>
                       <button onClick={handleRecover}
-                        className="w-full py-2 rounded-lg text-xs font-semibold border border-red-500/30 bg-red-950/20 hover:bg-red-950/30 text-red-200 transition-colors">
+                        className="w-full py-2 rounded-none text-xs font-semibold border border-red-500/30 bg-black hover:bg-black text-red-200 transition-colors">
                         Retry recovery →
                       </button>
                     </div>
@@ -915,7 +915,7 @@ export function LiveAuction() {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0, scale: 0.94, transition: { duration: 0.15 } }}
-                    className="rounded-xl border border-amber-500/25 bg-amber-950/15 px-4 py-4"
+                    className="rounded-none border border-amber-500/25 bg-black px-4 py-4"
                   >
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-zinc-500">Sealed bid</span>
@@ -932,7 +932,7 @@ export function LiveAuction() {
                     initial={{ opacity: 0, scale: 0.88, y: 10 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     transition={{ type: "spring", damping: 22, stiffness: 200, delay: 0.08 }}
-                    className="rounded-xl border border-emerald-500/30 bg-emerald-950/20 px-4 py-4"
+                    className="rounded-none border border-emerald-500/30 bg-black px-4 py-4"
                   >
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-zinc-500">Bid revealed</span>
@@ -955,7 +955,7 @@ export function LiveAuction() {
                     <p className="text-red-400 text-xs">localStorage cleared and no Walrus backup. Reveal may fail.</p>
                   )}
                   <button onClick={handleReveal} disabled={isSubmitting}
-                    className="w-full py-3.5 rounded-xl text-sm font-semibold text-zinc-950 bg-amber-400 hover:bg-amber-300 active:scale-[0.98] transition disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center gap-2">
+                    className="w-full py-3.5 rounded-none text-sm font-semibold text-zinc-950 bg-white hover:bg-zinc-200 active:scale-[0.98] transition disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center gap-2">
                     {isSubmitting ? <><Spinner className="w-4 h-4" /> Revealing…</> : <>Reveal Bid <IArrow className="w-4 h-4" /></>}
                   </button>
                 </>
@@ -968,7 +968,7 @@ export function LiveAuction() {
             <section className="space-y-2">
               <p className="text-zinc-500 text-xs uppercase tracking-widest">Step 4 — Resolve</p>
               <button onClick={handleResolve} disabled={isSubmitting}
-                className="w-full py-3.5 rounded-xl text-sm font-semibold text-zinc-950 bg-emerald-400 hover:bg-emerald-300 active:scale-[0.98] transition disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center gap-2">
+                className="w-full py-3.5 rounded-none text-sm font-semibold text-zinc-950 bg-white hover:bg-zinc-200 active:scale-[0.98] transition disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center gap-2">
                 {isSubmitting ? <><Spinner className="w-4 h-4" /> Resolving…</> : <><IDice className="w-4 h-4" /> Resolve Auction</>}
               </button>
               <p className="text-zinc-600 text-xs">
@@ -976,7 +976,7 @@ export function LiveAuction() {
               </p>
               {commitmentId && !revealedAmount && (
                 <button onClick={handleReclaimEscrow} disabled={isSubmitting}
-                  className="w-full py-2.5 rounded-xl text-xs font-semibold border border-white/10 bg-white/[0.03] hover:bg-white/[0.06] text-zinc-400 active:scale-[0.98] transition disabled:opacity-50 disabled:pointer-events-none">
+                  className="w-full py-2.5 rounded-none text-xs font-semibold border border-white/10 bg-white/[0.03] hover:bg-white/[0.06] text-zinc-400 active:scale-[0.98] transition disabled:opacity-50 disabled:pointer-events-none">
                   {isSubmitting ? "Reclaiming…" : "Reclaim escrow · did not reveal"}
                 </button>
               )}
@@ -991,7 +991,7 @@ export function LiveAuction() {
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ type: "spring", damping: 20, stiffness: 260 }}
-                  className="rounded-xl border border-emerald-500/40 bg-emerald-950/30 px-4 py-4"
+                  className="rounded-none border border-emerald-500/40 bg-black px-4 py-4"
                 >
                   <div className="flex items-center gap-2 mb-3">
                     <span className="text-emerald-400"><ICheck className="w-4 h-4" /></span>
@@ -999,22 +999,22 @@ export function LiveAuction() {
                   </div>
                   <p className="text-xs text-zinc-400 mb-3">Your address was selected by Sui validator DKG randomness. Allocation is yours.</p>
                   <button onClick={handleClaim} disabled={isSubmitting}
-                    className="w-full py-3.5 rounded-xl text-sm font-semibold text-zinc-950 bg-emerald-400 hover:bg-emerald-300 active:scale-[0.98] transition disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center gap-2">
+                    className="w-full py-3.5 rounded-none text-sm font-semibold text-zinc-950 bg-white hover:bg-zinc-200 active:scale-[0.98] transition disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center gap-2">
                     {isSubmitting ? <><Spinner className="w-4 h-4" /> Claiming…</> : <>Claim Allocation <IArrow className="w-4 h-4" /></>}
                   </button>
                 </motion.div>
               )}
-              <div className="rounded-xl border border-emerald-900/40 bg-emerald-950/10 px-4 py-3">
+              <div className="rounded-none border border-emerald-900/40 bg-black px-4 py-3">
                 <p className="text-emerald-400 text-sm font-semibold">Auction resolved.</p>
               {!certificateId && commitmentId && (
                 <button onClick={handleReclaimEscrow} disabled={isSubmitting}
-                  className="w-full py-3 rounded-xl text-sm font-semibold border border-white/10 bg-white/[0.03] hover:bg-white/[0.07] text-zinc-300 active:scale-[0.98] transition disabled:opacity-50 disabled:pointer-events-none">
+                  className="w-full py-3 rounded-none text-sm font-semibold border border-white/10 bg-white/[0.03] hover:bg-white/[0.07] text-zinc-300 active:scale-[0.98] transition disabled:opacity-50 disabled:pointer-events-none">
                   {isSubmitting ? "Reclaiming…" : "Reclaim escrow · not selected"}
                 </button>
               )}
               {creatorCapId && (
                 <button onClick={handleWithdrawProceeds} disabled={isSubmitting}
-                  className="w-full py-2.5 rounded-xl text-xs font-semibold border border-white/10 bg-white/[0.03] hover:bg-white/[0.06] text-zinc-400 active:scale-[0.98] transition disabled:opacity-50 disabled:pointer-events-none">
+                  className="w-full py-2.5 rounded-none text-xs font-semibold border border-white/10 bg-white/[0.03] hover:bg-white/[0.06] text-zinc-400 active:scale-[0.98] transition disabled:opacity-50 disabled:pointer-events-none">
                   {isSubmitting ? "Withdrawing…" : "Withdraw proceeds · creator"}
                 </button>
               )}
@@ -1034,13 +1034,13 @@ export function LiveAuction() {
         const success = !pending && /(registered!|committed!|revealed!|resolved|claimed|recovered|syncing)/i.test(txStatus);
         const error = !pending && /(error|failed|cancelled|insufficient|no sui|below min|not found)/i.test(txStatus);
         const tone = pending
-          ? "border-amber-500/40 bg-amber-950/30 text-amber-200"
-          : success ? "border-emerald-500/40 bg-emerald-950/30 text-emerald-200"
-          : error ? "border-red-500/40 bg-red-950/30 text-red-200"
+          ? "border-amber-500/40 bg-black text-amber-200"
+          : success ? "border-emerald-500/40 bg-black text-emerald-200"
+          : error ? "border-red-500/40 bg-black text-red-200"
           : "border-white/10 bg-white/[0.03] text-zinc-300";
         return (
           <motion.div key={`${pending}-${success}-${error}`} initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }}
-            className={`flex items-center gap-2.5 rounded-xl border px-4 py-3 text-sm font-medium ${tone}`}>
+            className={`flex items-center gap-2.5 rounded-none border px-4 py-3 text-sm font-medium ${tone}`}>
             {pending && <Spinner />}
             {success && <ICheck className="w-4 h-4 text-emerald-400" />}
             <span>{txStatus}</span>

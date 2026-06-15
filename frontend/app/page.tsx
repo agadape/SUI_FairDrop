@@ -84,7 +84,7 @@ const FAIRNESS = [
         <span className="text-zinc-700">→</span>
         <span className="text-blue-500 text-[10px]">sha3_256</span>
         <span className="text-zinc-700">→</span>
-        <span className="text-blue-300 text-[10px] bg-blue-950/40 px-1.5 py-0.5 rounded border border-blue-500/20">0x4f2a…</span>
+        <span className="text-blue-300 text-[10px] bg-black px-1.5 py-0.5 rounded border border-blue-500/20">0x4f2a…</span>
       </div>
     ),
   },
@@ -94,7 +94,7 @@ const FAIRNESS = [
     border: "border-amber-500/25", glow: "rgba(245,158,11,0.1)", accent: "text-amber-400",
     visual: (
       <div className="flex items-center gap-2 font-mono text-xs">
-        <span className="text-amber-300 bg-amber-950/40 px-2 py-0.5 rounded border border-amber-500/20 text-[10px]">5.0 SUI</span>
+        <span className="text-amber-300 bg-black px-2 py-0.5 rounded border border-amber-500/20 text-[10px]">5.0 SUI</span>
         <span className="text-zinc-700">→</span>
         <span className="text-amber-500 text-[10px]">sha3_256</span>
         <span className="text-zinc-700">→</span>
@@ -110,7 +110,7 @@ const FAIRNESS = [
       <div className="flex items-center gap-2 font-mono text-xs">
         <span className="text-zinc-600 text-[10px]">validator DKG</span>
         <span className="text-zinc-700">→</span>
-        <span className="text-violet-400 font-bold px-2 py-0.5 rounded bg-violet-950/50 border border-violet-500/30">0x8</span>
+        <span className="text-violet-400 font-bold px-2 py-0.5 rounded bg-black border border-violet-500/30">0x8</span>
         <span className="text-zinc-700">→</span>
         <span className="text-violet-300 text-[10px]">winner ✓</span>
       </div>
@@ -144,11 +144,11 @@ const STEPS = [
 
 const PRIMITIVES = [
   { name: "Seal", by: "Kostas Chalkias", desc: "Threshold-encrypts your reveal secret. An on-chain Move policy (seal_approve) releases it only to you, only during reveal — no FairDrop server can decrypt it.", color: "text-pink-400", border: "border-pink-500/20", bg: "bg-pink-950/20" },
-  { name: "Walrus", by: "Mysten Labs", desc: "Decentralized blob storage for the encrypted secret. Recoverable from any device — no backend, no team custody.", color: "text-cyan-400", border: "border-cyan-500/20", bg: "bg-cyan-950/20" },
-  { name: "zkLogin", by: "Deepak Maram", desc: "Google login instead of a wallet — the same login re-derives the same wallet on any device. Raises Sybil cost; not proof-of-personhood.", color: "text-blue-400", border: "border-blue-500/20", bg: "bg-blue-950/20" },
-  { name: "sui::random", by: "Andrew Schran", desc: "Validator DKG randomness at object 0x8. Unpredictable before the transaction. Unbiasable by any party.", color: "text-violet-400", border: "border-violet-500/20", bg: "bg-violet-950/20" },
+  { name: "Walrus", by: "Mysten Labs", desc: "Decentralized blob storage for the encrypted secret. Recoverable from any device — no backend, no team custody.", color: "text-cyan-400", border: "border-cyan-500/20", bg: "bg-black" },
+  { name: "zkLogin", by: "Deepak Maram", desc: "Google login instead of a wallet — the same login re-derives the same wallet on any device. Raises Sybil cost; not proof-of-personhood.", color: "text-blue-400", border: "border-blue-500/20", bg: "bg-black" },
+  { name: "sui::random", by: "Andrew Schran", desc: "Validator DKG randomness at object 0x8. Unpredictable before the transaction. Unbiasable by any party.", color: "text-violet-400", border: "border-violet-500/20", bg: "bg-black" },
   { name: "Enoki", by: "Mysten Labs", desc: "The zkLogin auth flow behind the Google button — onboards users with no seed phrase and no extension. Gas is self-paid on testnet (no sponsorship).", color: "text-orange-400", border: "border-orange-500/20", bg: "bg-orange-950/20" },
-  { name: "PTBs", by: "Sui protocol", desc: "Programmable Transaction Blocks compose many Move calls into one atomic transaction — resolve mints every WinnerCertificate in a single PTB. Final settlement is pull-based (claim, reclaim, withdraw), so no party can be stranded by another's failure.", color: "text-emerald-400", border: "border-emerald-500/20", bg: "bg-emerald-950/20" },
+  { name: "PTBs", by: "Sui protocol", desc: "Programmable Transaction Blocks compose many Move calls into one atomic transaction — resolve mints every WinnerCertificate in a single PTB. Final settlement is pull-based (claim, reclaim, withdraw), so no party can be stranded by another's failure.", color: "text-emerald-400", border: "border-emerald-500/20", bg: "bg-black" },
 ];
 
 // ─── Explorer receipts ────────────────────────────────────────────────────────
@@ -188,8 +188,6 @@ function HeroSection() {
   return (
     <section className="relative overflow-hidden pt-16 pb-24 lg:pt-24 lg:pb-32">
       {/* Background ambient glows */}
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_75%_60%_at_65%_40%,rgba(139,92,246,0.07),transparent)]" />
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_50%_50%_at_15%_70%,rgba(59,130,246,0.05),transparent)]" />
 
       <div className="relative max-w-6xl mx-auto px-6">
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
@@ -203,7 +201,7 @@ function HeroSection() {
               <h1 className="text-5xl lg:text-[3.75rem] font-bold tracking-tight leading-[1.05] text-white">
                 Lose your device.
                 <br />
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-300 to-blue-400">
+                <span className="text-blue-500">
                   Keep your bid.
                 </span>
               </h1>
@@ -235,12 +233,12 @@ function HeroSection() {
               transition={{ delay: 0.45, duration: 0.55 }}
             >
               <a href="#auction"
-                className="px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-zinc-950 text-sm font-semibold rounded-xl transition active:scale-[0.98]">
+                className="px-5 py-2.5 bg-white hover:bg-zinc-200 text-black text-sm font-semibold rounded-none transition active:scale-[0.98]">
                 Launch Live Auction →
               </a>
               {AUCTION_ID && (
                 <a href={objUrl(AUCTION_ID)} target="_blank" rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-white/[0.05] hover:bg-white/[0.09] border border-white/10 text-white text-sm font-semibold rounded-xl transition active:scale-[0.98]">
+                  className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-white/[0.05] hover:bg-white/[0.09] border border-white/10 text-white text-sm font-semibold rounded-none transition active:scale-[0.98]">
                   Verify on Explorer <IExternal className="w-3.5 h-3.5" />
                 </a>
               )}
@@ -275,7 +273,7 @@ function HeroSection() {
             <RecoveryHero />
             <a
               href="#auction"
-              className="group mt-4 flex items-center justify-center gap-2 rounded-xl border border-emerald-500/25 bg-emerald-950/20 px-4 py-2.5 text-sm font-semibold text-emerald-300 transition-colors hover:border-emerald-400/40 hover:bg-emerald-950/35"
+              className="group mt-4 flex items-center justify-center gap-2 border border-white/20 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/[0.06]"
             >
               Try it on a live bid
               <span className="transition-transform group-hover:translate-y-0.5"><IArrowDown className="w-4 h-4" /></span>
@@ -307,7 +305,7 @@ function ProblemSection() {
             {PROBLEMS.map((p) => (
               <motion.div key={p.title} variants={fadeUp}
                 whileHover={{ scale: 1.015 }}
-                className="p-5 rounded-2xl border border-rose-500/10 bg-rose-950/[0.12] hover:border-rose-500/20 hover:bg-rose-950/20 transition-all cursor-default flex flex-col">
+                className="p-5 rounded-none border border-rose-500/10 bg-black hover:border-white/30 transition-all cursor-default flex flex-col">
                 <div className="w-9 h-9 rounded-lg border border-rose-500/20 bg-rose-500/[0.06] flex items-center justify-center mb-3">
                   <Icon d={p.icon} className="w-5 h-5 text-rose-400" />
                 </div>
@@ -343,8 +341,7 @@ function FairnessSection() {
             {FAIRNESS.map((f) => (
               <motion.div key={f.title} variants={fadeUp}
                 whileHover={{ scale: 1.012 }}
-                className={`p-6 rounded-2xl border ${f.border} transition-all cursor-default`}
-                style={{ background: `radial-gradient(ellipse 80% 60% at 20% 0%, ${f.glow}, transparent 70%)` }}>
+                className={`p-6 border ${f.border} bg-black transition-all cursor-default`}>
                 <div className="mb-4 min-h-[28px] flex items-center">{f.visual}</div>
                 <h3 className={`text-base font-bold ${f.accent} mb-2`}>{f.title}</h3>
                 <p className="text-xs text-zinc-400 leading-relaxed">{f.body}</p>
@@ -378,9 +375,9 @@ function HowItWorksSection() {
             {STEPS.map((step, i) => (
               <motion.div key={step.num} variants={fadeUp}
                 onClick={() => setActive(active === i ? null : i)}
-                className={`group flex gap-5 p-5 rounded-2xl border transition-all cursor-pointer select-none ${
+                className={`group flex gap-5 p-5 rounded-none border transition-all cursor-pointer select-none ${
                   active === i
-                    ? "border-emerald-500/30 bg-emerald-950/20"
+                    ? "border-emerald-500/30 bg-black"
                     : "border-white/[0.05] hover:border-white/10 bg-white/[0.015] hover:bg-white/[0.03]"
                 }`}>
                 <span className={`font-mono text-sm font-bold flex-shrink-0 mt-0.5 w-8 transition-colors ${active === i ? "text-emerald-500" : "text-zinc-700"}`}>{step.num}</span>
@@ -434,7 +431,7 @@ function WhySuiSection() {
             {PRIMITIVES.map((p) => (
               <motion.div key={p.name} variants={fadeUp}
                 whileHover={{ scale: 1.018 }}
-                className={`p-4 rounded-xl border ${p.border} ${p.bg} transition-all cursor-default`}>
+                className={`p-4 rounded-none border ${p.border} ${p.bg} transition-all cursor-default`}>
                 <div className="flex items-start justify-between mb-2">
                   <span className={`text-sm font-bold ${p.color} font-mono`}>{p.name}</span>
                   <span className="text-[9px] text-zinc-700 mt-0.5">by {p.by}</span>
@@ -466,12 +463,12 @@ function VerifiabilitySection() {
 
           <motion.div variants={stagger} className="flex flex-wrap gap-3 mb-10">
             {[
-              { label: "Google-gated entry", color: "text-blue-400 border-blue-500/20 bg-blue-950/20" },
-              { label: "No backend", color: "text-emerald-400 border-emerald-500/20 bg-emerald-950/20" },
-              { label: "No admin key", color: "text-emerald-400 border-emerald-500/20 bg-emerald-950/20" },
-              { label: "One PTB settlement", color: "text-blue-400 border-blue-500/20 bg-blue-950/20" },
-              { label: "sui::random DKG", color: "text-blue-400 border-blue-500/20 bg-blue-950/20" },
-              { label: "100% on-chain state", color: "text-cyan-400 border-cyan-500/20 bg-cyan-950/20" },
+              { label: "Google-gated entry", color: "text-blue-400 border-blue-500/20 bg-black" },
+              { label: "No backend", color: "text-emerald-400 border-emerald-500/20 bg-black" },
+              { label: "No admin key", color: "text-emerald-400 border-emerald-500/20 bg-black" },
+              { label: "One PTB settlement", color: "text-blue-400 border-blue-500/20 bg-black" },
+              { label: "sui::random DKG", color: "text-blue-400 border-blue-500/20 bg-black" },
+              { label: "100% on-chain state", color: "text-cyan-400 border-cyan-500/20 bg-black" },
             ].map((item) => (
               <motion.span key={item.label} variants={fadeUp}
                 className={`text-xs font-mono px-3 py-1.5 rounded-full border flex items-center gap-1.5 ${item.color}`}>
@@ -485,7 +482,7 @@ function VerifiabilitySection() {
               <motion.a key={r.label} variants={fadeUp}
                 href={objUrl(r.id!)} target="_blank" rel="noopener noreferrer"
                 whileHover={{ scale: 1.012 }}
-                className="group flex items-center justify-between p-4 rounded-xl border border-white/[0.05] bg-white/[0.015] hover:border-emerald-500/25 hover:bg-emerald-950/10 transition-all">
+                className="group flex items-center justify-between p-4 rounded-none border border-white/[0.05] bg-white/[0.015] hover:border-emerald-500/25 hover:bg-white/[0.04] transition-all">
                 <div className="min-w-0">
                   <p className="text-sm text-white font-medium group-hover:text-emerald-300 transition-colors">{r.label}</p>
                   <p className="text-[10px] text-zinc-700 font-mono mt-0.5">{r.id!.slice(0, 20)}…</p>
@@ -497,7 +494,7 @@ function VerifiabilitySection() {
           </motion.div>
 
           {/* Lifecycle artifacts — what to look for on a live auction */}
-          <motion.div variants={fadeUp} className="mt-4 rounded-xl border border-white/[0.05] bg-white/[0.015] p-4">
+          <motion.div variants={fadeUp} className="mt-4 rounded-none border border-white/[0.05] bg-white/[0.015] p-4">
             <p className="text-[10px] text-zinc-600 font-mono uppercase tracking-[0.2em] mb-3">Trace any auction</p>
             <div className="grid sm:grid-cols-2 gap-x-6 gap-y-2 font-mono text-[11px]">
               {[
@@ -550,7 +547,7 @@ function FooterSection() {
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-[#030712]">
+    <main className="min-h-screen bg-black">
       <NavBar />
       <HeroSection />
       <ProblemSection />
@@ -594,12 +591,12 @@ export default function Home() {
             </motion.p>
             <motion.div variants={fadeUp} className="flex justify-center gap-4 flex-wrap">
               <a href="#auction"
-                className="px-7 py-3.5 bg-emerald-500 hover:bg-emerald-400 text-zinc-950 text-sm font-semibold rounded-xl transition active:scale-[0.98]">
+                className="px-7 py-3.5 bg-white hover:bg-zinc-200 text-black text-sm font-semibold rounded-none transition active:scale-[0.98]">
                 Launch Live Auction →
               </a>
               {PACKAGE_ID && (
                 <a href={objUrl(PACKAGE_ID)} target="_blank" rel="noopener noreferrer"
-                  className="px-7 py-3.5 bg-white/[0.05] hover:bg-white/[0.09] border border-white/10 text-white text-sm font-semibold rounded-xl transition-colors">
+                  className="px-7 py-3.5 bg-white/[0.05] hover:bg-white/[0.09] border border-white/10 text-white text-sm font-semibold rounded-none transition-colors">
                   Read the Contract ↗
                 </a>
               )}
