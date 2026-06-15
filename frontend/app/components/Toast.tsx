@@ -21,10 +21,10 @@ export function useToast(): ToastCtx {
 }
 
 const TONE: Record<ToastKind, string> = {
-  success: "border-emerald-500/40 bg-emerald-950/40 text-emerald-200",
-  error: "border-red-500/40 bg-red-950/40 text-red-200",
-  info: "border-cyan-500/40 bg-cyan-950/40 text-cyan-200",
-  pending: "border-amber-500/40 bg-amber-950/40 text-amber-200",
+  success: "border-emerald-300 bg-emerald-50 text-emerald-800",
+  error: "border-red-300 bg-red-50 text-red-800",
+  info: "border-blue-300 bg-blue-50 text-blue-800",
+  pending: "border-amber-300 bg-amber-50 text-amber-800",
 };
 
 export function ToastProvider({ children }: { children: ReactNode }) {
@@ -67,7 +67,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
               animate={{ opacity: 1, x: 0, scale: 1 }}
               exit={{ opacity: 0, x: 40, scale: 0.96 }}
               transition={{ type: "spring", stiffness: 320, damping: 26 }}
-              className={`rounded-xl border px-4 py-3 shadow-lg backdrop-blur-md ${TONE[t.kind]}`}
+              className={`rounded-md border px-4 py-3 shadow-md ${TONE[t.kind]}`}
             >
               <div className="flex items-start gap-2.5">
                 <span className="mt-0.5 flex-shrink-0">

@@ -27,7 +27,7 @@ function StatusDot({ active, color, label }: { active: boolean; color: string; l
   return (
     <div className="flex items-center gap-1.5">
       <motion.span
-        className={`inline-block w-1.5 h-1.5 rounded-full ${active ? color : "bg-zinc-700"}`}
+        className={`inline-block w-1.5 h-1.5 rounded-full ${active ? color : "bg-zinc-300"}`}
         animate={active ? { opacity: [0.5, 1, 0.5] } : { opacity: 0.5 }}
         transition={{ duration: 1.4, repeat: active ? Infinity : 0 }}
       />
@@ -38,7 +38,7 @@ function StatusDot({ active, color, label }: { active: boolean; color: string; l
 
 function Connector({ active }: { active: boolean }) {
   return (
-    <div className="relative ml-[18px] my-1 h-4 w-px bg-zinc-800">
+    <div className="relative ml-[18px] my-1 h-4 w-px bg-zinc-200">
       <motion.span
         className="absolute -left-[3px] top-0 w-1.5 h-1.5 rounded-full bg-white/40"
         animate={active ? { y: [0, 14], opacity: [0, 0.9, 0] } : { opacity: 0 }}
@@ -70,7 +70,7 @@ export function RecoveryHero({ className = "" }: { className?: string }) {
     <div className={`mx-auto w-full max-w-sm ${className}`} aria-label="Lose your device, keep your bid — recovery flow">
       {/* Device A — this device */}
       <motion.div
-        className="rounded-2xl border border-amber-500/25 bg-amber-950/15 px-4 py-3"
+        className="rounded-2xl border border-amber-300 bg-amber-50 px-4 py-3"
         animate={{ opacity: lost ? 0.4 : 1, filter: lost ? "grayscale(1)" : "grayscale(0)" }}
         transition={{ duration: 0.5 }}
       >
@@ -80,7 +80,7 @@ export function RecoveryHero({ className = "" }: { className?: string }) {
             <motion.span
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="text-[10px] font-mono text-red-400"
+              className="text-[10px] font-mono text-red-600"
             >device lost</motion.span>
           ) : (
             <motion.span
@@ -99,12 +99,12 @@ export function RecoveryHero({ className = "" }: { className?: string }) {
       {/* Walrus — stored */}
       <motion.div
         className={`flex items-center justify-between rounded-xl border px-4 py-2.5 ${
-          walrusActive ? "border-cyan-500/30 bg-cyan-950/20 glow-cyan" : "border-white/[0.06] bg-white/[0.02]"
+          walrusActive ? "border-cyan-300 bg-cyan-50 glow-cyan" : "border-white/[0.06] bg-zinc-50"
         }`}
         animate={{ scale: phase === 2 ? [1, 1.02, 1] : 1 }}
         transition={{ duration: 0.6 }}
       >
-        <span className={`text-sm font-semibold font-mono ${walrusActive ? "text-cyan-400" : "text-zinc-600"}`}>Walrus</span>
+        <span className={`text-sm font-semibold font-mono ${walrusActive ? "text-cyan-700" : "text-zinc-600"}`}>Walrus</span>
         <StatusDot active={walrusActive} color="bg-cyan-400" label={walrusActive ? "blob stored" : "off-device backup"} />
       </motion.div>
 
@@ -113,7 +113,7 @@ export function RecoveryHero({ className = "" }: { className?: string }) {
       {/* Seal — authorized */}
       <motion.div
         className={`flex items-center justify-between rounded-xl border px-4 py-2.5 ${
-          sealActive ? "border-pink-500/30 bg-pink-950/20 glow-pink" : "border-white/[0.06] bg-white/[0.02]"
+          sealActive ? "border-rose-300 bg-rose-50 glow-pink" : "border-white/[0.06] bg-zinc-50"
         }`}
         animate={{ scale: phase === 2 ? [1, 1.03, 1] : 1 }}
         transition={{ ...SPRING }}
@@ -127,7 +127,7 @@ export function RecoveryHero({ className = "" }: { className?: string }) {
       {/* Device B — recovered */}
       <motion.div
         className={`rounded-2xl border px-4 py-3 ${
-          recovered ? "border-emerald-500/30 bg-emerald-950/20 glow-emerald" : "border-dashed border-white/10 bg-white/[0.015]"
+          recovered ? "border-emerald-300 bg-emerald-50 glow-emerald" : "border-dashed border-zinc-200 bg-zinc-50"
         }`}
         animate={recovered ? { scale: [0.96, 1] } : { scale: 1 }}
         transition={{ ...SPRING }}
@@ -135,17 +135,17 @@ export function RecoveryHero({ className = "" }: { className?: string }) {
         <div className="flex items-center justify-between">
           <span className="text-[10px] text-zinc-500 uppercase tracking-widest">Any browser</span>
           {recovered ? (
-            <span className="text-emerald-400 text-sm">✓</span>
+            <span className="text-emerald-700 text-sm">✓</span>
           ) : (
             <span className="text-[10px] font-mono text-zinc-600">awaiting…</span>
           )}
         </div>
         {recovered ? (
           <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-            <div className="mt-1 font-mono text-xl font-bold text-emerald-300 tracking-tight">5.0 SUI recovered</div>
-            <div className="mt-1 inline-flex items-center gap-1.5 rounded-full border border-blue-500/20 bg-blue-950/30 px-2 py-0.5">
+            <div className="mt-1 font-mono text-xl font-bold text-emerald-700 tracking-tight">5.0 SUI recovered</div>
+            <div className="mt-1 inline-flex items-center gap-1.5 rounded-full border border-blue-300 bg-blue-50 px-2 py-0.5">
               <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
-              <span className="text-[10px] font-mono text-blue-300">same wallet · zkLogin</span>
+              <span className="text-[10px] font-mono text-blue-700">same wallet · zkLogin</span>
             </div>
           </motion.div>
         ) : (
@@ -155,7 +155,7 @@ export function RecoveryHero({ className = "" }: { className?: string }) {
 
       {/* caption — surfaces sponsors only as functional waypoints */}
       <p className="mt-3 text-center text-[10px] font-mono text-zinc-600">
-        on <span className="text-cyan-500">Walrus</span> · behind <span className="text-pink-500">Seal</span> · re-derived by <span className="text-blue-400">zkLogin</span>
+        on <span className="text-cyan-700">Walrus</span> · behind <span className="text-rose-600">Seal</span> · re-derived by <span className="text-blue-700">zkLogin</span>
       </p>
     </div>
   );

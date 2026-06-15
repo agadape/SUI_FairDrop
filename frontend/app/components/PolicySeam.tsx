@@ -38,14 +38,14 @@ export function PolicySeam() {
       initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, ease: [0.25, 0.1, 0.25, 1] }}
-      className="rounded-2xl border border-white/10 bg-gradient-to-br from-cyan-950/15 via-zinc-950/40 to-pink-950/15 p-5 sm:p-6 space-y-5"
+      className="rounded-md border border-zinc-200 bg-white p-5 sm:p-6 space-y-5"
     >
       <div className="space-y-1">
         <p className="text-[10px] font-mono uppercase tracking-[0.2em] text-zinc-500">
           What just happened, underneath
         </p>
-        <h3 className="text-lg font-bold text-zinc-100">
-          The auction is one <span className="text-cyan-400">policy</span>.
+        <h3 className="text-lg font-bold text-zinc-900">
+          The auction is one <span className="text-cyan-700">policy</span>.
         </h3>
         <p className="text-sm text-zinc-400 leading-relaxed max-w-2xl">
           That recovery wasn&apos;t a server handing your bid back. A Seal key server asked the
@@ -55,39 +55,39 @@ export function PolicySeam() {
       </div>
 
       {/* The real, deployed policy */}
-      <div className="rounded-xl border border-cyan-500/20 bg-black/40 overflow-hidden">
+      <div className="rounded-md border border-zinc-200 bg-zinc-50 overflow-hidden">
         <div className="flex items-center justify-between px-3 py-1.5 border-b border-cyan-500/15">
-          <span className="text-[10px] font-mono text-cyan-400/90">fairdrop::seal_policy — live on-chain</span>
-          <span className="text-[10px] font-mono text-emerald-500/70">✓ gating the decrypt you just saw</span>
+          <span className="text-[10px] font-mono text-cyan-700">fairdrop::seal_policy — live on-chain</span>
+          <span className="text-[10px] font-mono text-emerald-700">✓ gating the decrypt you just saw</span>
         </div>
-        <pre className="text-[11px] leading-relaxed font-mono text-zinc-300 px-3 py-3 overflow-x-auto">
+        <pre className="text-[11px] leading-relaxed font-mono text-zinc-700 px-3 py-3 overflow-x-auto">
           <code>{REAL_POLICY}</code>
         </pre>
       </div>
 
       {/* Swap the policy → other secrets */}
       <div className="space-y-2">
-        <p className="text-[11px] font-mono text-pink-400/90">
+        <p className="text-[11px] font-mono text-rose-600/90">
           Swap those three asserts → the same recoverable secret becomes:
         </p>
         <div className="space-y-1.5">
           {SWAPS.map((s) => (
             <div
               key={s.label}
-              className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 rounded-lg border border-white/[0.06] bg-white/[0.02] px-3 py-2"
+              className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2"
             >
-              <span className="text-xs text-zinc-300 font-semibold sm:w-56 flex-shrink-0">{s.label}</span>
-              <code className="text-[11px] font-mono text-pink-300/80 break-all">{s.line}</code>
+              <span className="text-xs text-zinc-700 font-semibold sm:w-56 flex-shrink-0">{s.label}</span>
+              <code className="text-[11px] font-mono text-rose-600/80 break-all">{s.line}</code>
             </div>
           ))}
         </div>
       </div>
 
       {/* Category close */}
-      <p className="text-sm text-zinc-300 leading-relaxed border-t border-white/10 pt-4 max-w-2xl">
-        Underneath FairDrop is a <span className="text-cyan-400 font-semibold">recoverable, on-chain-governed secret</span> no
-        server can read — encrypted by <span className="text-pink-400">Seal</span>, stored on{" "}
-        <span className="text-cyan-400">Walrus</span>, openable only by the Entry owner the chain approves.
+      <p className="text-sm text-zinc-700 leading-relaxed border-t border-zinc-200 pt-4 max-w-2xl">
+        Underneath FairDrop is a <span className="text-cyan-700 font-semibold">recoverable, on-chain-governed secret</span> no
+        server can read — encrypted by <span className="text-rose-600">Seal</span>, stored on{" "}
+        <span className="text-cyan-700">Walrus</span>, openable only by the Entry owner the chain approves.
         The sealed-bid auction is just its first policy.
       </p>
     </motion.section>
