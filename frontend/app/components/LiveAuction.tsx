@@ -101,10 +101,10 @@ function RecoveryRail({ stage }: { stage: RecoveryStage }) {
   const restored: NodeState = idx >= 3 ? "done" : "idle";
   return (
     <div className="flex items-center gap-2.5">
-      <RailNode label="Walrus" color="text-cyan-400" state={walrus} />
-      <span className="h-px w-4 bg-white/10" />
-      <RailNode label="Seal" color="text-fuchsia-400" state={seal} />
-      <span className="h-px w-4 bg-white/10" />
+      <RailNode label="Walrus" color="text-cyan-700" state={walrus} />
+      <span className="h-px w-4 bg-zinc-200" />
+      <RailNode label="Seal" color="text-fuchsia-700" state={seal} />
+      <span className="h-px w-4 bg-zinc-200" />
       <RailNode label="Restored" color="text-emerald-700" state={restored} />
     </div>
   );
@@ -625,7 +625,7 @@ export function LiveAuction() {
               <p className="text-[10px] text-zinc-500 font-mono uppercase tracking-[0.2em] mb-1.5">The auction · live on testnet</p>
               <div className="flex items-center gap-2">
                 <span className={`w-2.5 h-2.5 rounded-full ${phase === "LOADING" ? "bg-zinc-600" : "bg-current"} ${ps.label}`} />
-                <span className={`text-2xl font-bold tracking-tight ${ps.label}`}>{phase === "LOADING" ? "Loading…" : phase}</span>
+                <span className={`text-5xl lg:text-6xl font-black tracking-[-0.04em] leading-none ${ps.label}`}>{phase === "LOADING" ? "Loading…" : phase}</span>
               </div>
             </div>
             {countdown && (
@@ -652,7 +652,7 @@ export function LiveAuction() {
                     </span>
                     <span className="text-[11px] font-medium hidden sm:inline">{label}</span>
                   </div>
-                  {i < PHASE_STEPS.length - 1 && <span className={`flex-1 h-px ${isPast ? "bg-white/15" : "bg-zinc-100"}`} />}
+                  {i < PHASE_STEPS.length - 1 && <span className={`flex-1 h-px ${isPast ? "bg-zinc-300" : "bg-zinc-100"}`} />}
                 </div>
               );
             })}
@@ -669,7 +669,7 @@ export function LiveAuction() {
           ].map((s) => (
             <div key={s.k} className="rounded-none border border-zinc-200 bg-zinc-50 px-3 py-3">
               <p className="text-[10px] text-zinc-500 font-mono uppercase tracking-widest mb-1">{s.k}</p>
-              <p className="text-xl font-bold text-zinc-100 tabular-nums">{s.v}</p>
+              <p className="text-xl font-bold text-zinc-900 tabular-nums">{s.v}</p>
             </div>
           ))}
         </div>
@@ -689,7 +689,7 @@ export function LiveAuction() {
       )}
 
         {/* Verify on-chain footer */}
-        <div className="rounded-none border border-white/[0.05] bg-zinc-50 px-4 py-3 space-y-2">
+        <div className="rounded-none border border-zinc-200 bg-zinc-50 px-4 py-3 space-y-2">
           <p className="text-[10px] text-zinc-600 font-mono uppercase tracking-[0.2em]">Verify on-chain</p>
           <div className="flex flex-wrap gap-x-4 gap-y-1">
             {["No backend", "No admin key", "100% on-chain", "Explorer verifiable"].map((t) => (
@@ -739,7 +739,7 @@ export function LiveAuction() {
               </button>
             </div>
             <div className="flex items-center gap-2 text-[11px] font-mono">
-              <span className="text-cyan-400">{NETWORK === "testnet" ? "Testnet" : NETWORK}</span>
+              <span className="text-cyan-700">{NETWORK === "testnet" ? "Testnet" : NETWORK}</span>
               <span className="text-zinc-700">·</span>
               <span className="text-zinc-700">{balance === null ? "… SUI" : `${(Number(balance) / 1e9).toFixed(3)} SUI`}</span>
               <span className="text-zinc-700">·</span>
@@ -776,17 +776,17 @@ export function LiveAuction() {
           {entryId && !commitmentId && phase === "COMMIT" && (
             <section className="space-y-2">
               <p className="text-zinc-500 text-[10px] font-mono uppercase tracking-[0.2em]">Step 2 — Blind Bid</p>
-              <div className="rounded-none border border-zinc-200 bg-zinc-50 p-4">
-                <label className="text-[10px] font-mono uppercase tracking-widest text-zinc-500">Your bid</label>
-                <div className="flex items-end justify-between gap-3 mt-1">
+              <div className="border-b-2 border-zinc-900 pb-4 pt-1">
+                <label className="text-[9px] font-mono uppercase tracking-[0.3em] text-zinc-500">Your bid</label>
+                <div className="flex items-baseline gap-3 mt-3">
                   <input type="number" inputMode="decimal" placeholder="0.0" value={bidAmount}
                     onChange={(e) => setBidAmount(e.target.value)}
-                    className="w-full bg-transparent text-3xl font-mono font-semibold text-zinc-50 tabular-nums outline-none placeholder:text-zinc-700" />
-                  <span className="text-sm font-mono text-zinc-500 pb-1.5">SUI</span>
+                    className="w-full bg-transparent text-5xl font-black text-zinc-900 tabular-nums outline-none placeholder:text-zinc-200 tracking-[-0.02em]" />
+                  <span className="text-xl font-mono text-zinc-400 font-bold">SUI</span>
                 </div>
-                <div className="flex items-center justify-between text-[11px] font-mono pt-2.5 mt-2 border-t border-zinc-200">
-                  <span className="text-zinc-500">min {minBidSui} SUI</span>
-                  {bidAmountUsd && <span className="text-zinc-400 tabular-nums">{bidAmountUsd.replace(/[() ]/g, "")}</span>}
+                <div className="flex items-center justify-between text-[10px] font-mono pt-2 mt-1 text-zinc-500">
+                  <span>min {minBidSui} SUI</span>
+                  {bidAmountUsd && <span className="tabular-nums">{bidAmountUsd.replace(/[() ]/g, "")}</span>}
                 </div>
               </div>
               <button onClick={handleCommit} disabled={isSubmitting}
@@ -822,7 +822,7 @@ export function LiveAuction() {
                     {heldAmountSui} SUI <span className="text-amber-500/40 text-sm font-normal">in escrow</span>
                   </div>
                   <p className="text-[11px] text-zinc-500 mt-1">
-                    <span className="text-amber-500/70">??? to validators, MEV bots, every rival</span> — only you can see this.
+                    <span className="text-amber-600">??? to validators, MEV bots, every rival</span> — only you can see this.
                   </p>
                 </>
               ) : (
@@ -837,17 +837,17 @@ export function LiveAuction() {
                 <div className="flex items-baseline gap-1.5">
                   <span className="text-amber-600 flex-shrink-0">●</span>
                   <span className="text-zinc-400">
-                    <span className="text-zinc-200 font-semibold">One 32-byte key</span> opens this bid
+                    <span className="text-zinc-800 font-semibold">One 32-byte key</span> opens this bid
                     {keyFp ? <> — <span className="font-mono text-amber-600">{keyFp}</span>, the only copy that can.</> : <>. The only copy that can.</>}
                   </span>
                 </div>
                 <div className="flex items-baseline gap-1.5">
-                  <span className="text-pink-400 flex-shrink-0">●</span>
-                  <span className="text-zinc-400">No server, no FairDrop team can open it for you. <span className="text-zinc-200">Not even to help.</span></span>
+                  <span className="text-pink-600 flex-shrink-0">●</span>
+                  <span className="text-zinc-400">No server, no FairDrop team can open it for you. <span className="text-zinc-800">Not even to help.</span></span>
                 </div>
                 <div className="flex items-baseline gap-1.5">
                   <span className="text-zinc-500 flex-shrink-0">●</span>
-                  <span className="text-zinc-400">One entry, one bid. <span className="text-zinc-200">Miss reveal and the escrow locks forever.</span></span>
+                  <span className="text-zinc-400">One entry, one bid. <span className="text-zinc-800">Miss reveal and the escrow locks forever.</span></span>
                 </div>
               </div>
 
@@ -862,7 +862,7 @@ export function LiveAuction() {
                   )}
                   {recoveryStage === "wiped" && (
                     <>
-                      <p className="text-[11px] text-rose-300">Local key wiped. This device can no longer open the bid.</p>
+                      <p className="text-[11px] text-rose-600">Local key wiped. This device can no longer open the bid.</p>
                       <button onClick={handleRecover}
                         className="w-full py-2.5 text-[11px] font-mono font-bold uppercase tracking-wide text-white bg-zinc-900 hover:bg-zinc-800 active:scale-[0.99] transition">
                         Recover from Walrus + Seal
@@ -888,7 +888,7 @@ export function LiveAuction() {
                     <div className="space-y-1.5">
                       <p className="text-[11px] text-red-600">Recovery failed: {recoveryError}</p>
                       <button onClick={handleRecover}
-                        className="w-full py-2 rounded-none text-xs font-semibold border border-red-500/30 bg-white hover:bg-white text-red-200 transition-colors">
+                        className="w-full py-2 rounded-none text-xs font-semibold border border-red-500/30 bg-white hover:bg-rose-50 text-red-600 transition-colors">
                         Retry recovery →
                       </button>
                     </div>
@@ -923,7 +923,7 @@ export function LiveAuction() {
                         <ILock className="w-4 h-4" />
                       </motion.span>
                     </div>
-                    <div className="font-mono text-3xl font-bold text-amber-500/50 tracking-[0.2em] select-none">???  SUI</div>
+                    <div className="font-mono text-3xl font-bold text-zinc-200 tracking-[0.2em] select-none">???  SUI</div>
                     <p className="text-[11px] text-zinc-600 mt-1.5">Amount hidden from everyone until you reveal.</p>
                   </motion.div>
                 ) : (
@@ -1034,9 +1034,9 @@ export function LiveAuction() {
         const success = !pending && /(registered!|committed!|revealed!|resolved|claimed|recovered|syncing)/i.test(txStatus);
         const error = !pending && /(error|failed|cancelled|insufficient|no sui|below min|not found)/i.test(txStatus);
         const tone = pending
-          ? "border-amber-500/40 bg-white text-amber-200"
-          : success ? "border-emerald-500/40 bg-white text-emerald-200"
-          : error ? "border-red-500/40 bg-white text-red-200"
+          ? "border-amber-500/40 bg-white text-amber-700"
+          : success ? "border-emerald-500/40 bg-white text-emerald-700"
+          : error ? "border-red-500/40 bg-white text-red-600"
           : "border-zinc-200 bg-zinc-50 text-zinc-700";
         return (
           <motion.div key={`${pending}-${success}-${error}`} initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }}

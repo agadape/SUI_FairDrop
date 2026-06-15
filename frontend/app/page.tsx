@@ -187,19 +187,19 @@ function NavBar() {
 
 function HeroSection() {
   return (
-    <section className="relative overflow-hidden pt-16 pb-24 lg:pt-24 lg:pb-32">
+    <section className="relative overflow-hidden pt-20 pb-36 lg:pt-32 lg:pb-48">
       {/* Background ambient glows */}
 
       <div className="relative max-w-6xl mx-auto px-6">
-        <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+        <div className="grid lg:grid-cols-[5fr_4fr] gap-10 lg:gap-16 items-start">
 
           {/* Left — copy */}
           <div className="space-y-7">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
-              <p className="text-[10px] text-zinc-600 font-mono uppercase tracking-[0.2em] mb-5">
+              <p className="text-[9px] text-zinc-500 font-mono uppercase tracking-[0.3em] mb-8 border-l-2 border-zinc-900 pl-3">
                 Sealed-Bid Fair-Launch Auction · Sui Overflow 2026 · Testnet
               </p>
-              <h1 className="text-5xl lg:text-[3.75rem] font-bold tracking-tight leading-[1.05] text-zinc-900">
+              <h1 className="text-[3rem] lg:text-7xl xl:text-8xl font-black tracking-[-0.04em] leading-[0.88] text-zinc-900">
                 Lose your device.
                 <br />
                 <span className="text-blue-600">
@@ -295,7 +295,7 @@ function ProblemSection() {
           <motion.p variants={fadeUp} className="text-[10px] text-zinc-600 font-mono uppercase tracking-[0.2em] mb-3">
             The problem
           </motion.p>
-          <motion.h2 variants={fadeUp} className="text-3xl font-bold text-zinc-900 mb-3">
+          <motion.h2 variants={fadeUp} className="text-4xl lg:text-5xl font-black tracking-[-0.02em] text-zinc-900 mb-3">
             Every launch you&apos;ve seen was gameable.
           </motion.h2>
           <motion.p variants={fadeUp} className="text-zinc-500 mb-12 max-w-xl leading-relaxed">
@@ -334,7 +334,7 @@ function FairnessSection() {
           <motion.p variants={fadeUp} className="text-[10px] text-zinc-600 font-mono uppercase tracking-[0.2em] mb-3">
             Privacy · Fairness · Verifiability
           </motion.p>
-          <motion.h2 variants={fadeUp} className="text-3xl font-bold text-zinc-900 mb-12">
+          <motion.h2 variants={fadeUp} className="text-4xl lg:text-5xl font-black tracking-[-0.02em] text-zinc-900 mb-12">
             Private bids, a fair draw, verifiable settlement.
           </motion.h2>
 
@@ -365,7 +365,7 @@ function HowItWorksSection() {
           <motion.p variants={fadeUp} className="text-[10px] text-zinc-600 font-mono uppercase tracking-[0.2em] mb-3">
             Auction lifecycle
           </motion.p>
-          <motion.h2 variants={fadeUp} className="text-3xl font-bold text-zinc-900 mb-2">
+          <motion.h2 variants={fadeUp} className="text-4xl lg:text-5xl font-black tracking-[-0.02em] text-zinc-900 mb-2">
             Five steps. No trust required.
           </motion.h2>
           <motion.p variants={fadeUp} className="text-zinc-600 text-xs mb-10">
@@ -381,7 +381,7 @@ function HowItWorksSection() {
                     ? "border-emerald-500/30 bg-white"
                     : "border-zinc-200 hover:border-zinc-300 bg-zinc-50 hover:bg-white"
                 }`}>
-                <span className={`font-mono text-sm font-bold flex-shrink-0 mt-0.5 w-8 transition-colors ${active === i ? "text-emerald-700" : "text-zinc-700"}`}>{step.num}</span>
+                <span className={`font-mono text-4xl lg:text-5xl font-black flex-shrink-0 leading-none w-14 lg:w-16 transition-colors ${active === i ? "text-emerald-700" : "text-zinc-100"}`}>{step.num}</span>
                 <div className="min-w-0 flex-1">
                   <p className={`text-sm font-semibold transition-colors ${active === i ? "text-zinc-900" : "text-zinc-700 group-hover:text-zinc-900"}`}>{step.label}</p>
                   <AnimatePresence initial={false}>
@@ -421,7 +421,7 @@ function WhySuiSection() {
           <motion.p variants={fadeUp} className="text-[10px] text-zinc-600 font-mono uppercase tracking-[0.2em] mb-3">
             Powered by
           </motion.p>
-          <motion.h2 variants={fadeUp} className="text-3xl font-bold text-zinc-900 mb-4">
+          <motion.h2 variants={fadeUp} className="text-4xl lg:text-5xl font-black tracking-[-0.02em] text-zinc-900 mb-4">
             Built entirely from Sui-native primitives.
           </motion.h2>
           <motion.p variants={fadeUp} className="text-zinc-500 mb-12 max-w-xl leading-relaxed">
@@ -455,7 +455,7 @@ function VerifiabilitySection() {
           <motion.p variants={fadeUp} className="text-[10px] text-zinc-600 font-mono uppercase tracking-[0.2em] mb-3">
             Verifiability
           </motion.p>
-          <motion.h2 variants={fadeUp} className="text-3xl font-bold text-zinc-900 mb-4">
+          <motion.h2 variants={fadeUp} className="text-4xl lg:text-5xl font-black tracking-[-0.02em] text-zinc-900 mb-4">
             Don&apos;t trust us. Verify it yourself.
           </motion.h2>
           <motion.p variants={fadeUp} className="text-zinc-500 mb-8 max-w-xl leading-relaxed">
@@ -565,7 +565,7 @@ export default function Home() {
             <motion.p variants={fadeUp} className="text-[10px] text-zinc-600 font-mono uppercase tracking-[0.2em] mb-3">
               Live on testnet
             </motion.p>
-            <motion.h2 variants={fadeUp} className="text-3xl font-bold text-zinc-900 mb-2">
+            <motion.h2 variants={fadeUp} className="text-4xl lg:text-5xl font-black tracking-[-0.02em] text-zinc-900 mb-2">
               Participate in a live auction.
             </motion.h2>
             <motion.p variants={fadeUp} className="text-zinc-500 text-sm">
