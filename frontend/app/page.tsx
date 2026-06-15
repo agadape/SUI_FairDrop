@@ -7,6 +7,25 @@ import { LiveAuction } from "@/app/components/LiveAuction";
 import { RecoveryHero } from "@/app/components/RecoveryHero";
 import { PACKAGE_ID, AUCTION_ID, RANDOM_ID, NETWORK } from "@/lib/constants";
 
+// ─── Icons (shared stroke language with the terminals — zero emoji) ────────────
+
+function Icon({ d, className = "w-4 h-4" }: { d: string; className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden>
+      <path d={d} />
+    </svg>
+  );
+}
+const ICheck = (p: { className?: string }) => <Icon className={p.className} d="M20 6 9 17l-5-5" />;
+const IExternal = (p: { className?: string }) => <Icon className={p.className} d="M15 3h6v6M10 14 21 3M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5" />;
+const IArrowDown = (p: { className?: string }) => <Icon className={p.className} d="M12 5v14m-6-6 6 6 6-6" />;
+const IChevron = (p: { className?: string }) => <Icon className={p.className} d="M9 6l6 6-6 6" />;
+const IBolt = (p: { className?: string }) => <Icon className={p.className} d="M13 2 3 14h7l-1 8 10-12h-7l1-8z" />;
+// Problem-card glyphs
+const PATH_BOT = "M12 8V4H8M4 8h16v12H4zM2 14h2m16 0h2M9 13v2m6-2v2";
+const PATH_EYE = "M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7zM12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z";
+const PATH_DICE = "M4 4h16v16H4zM8.5 8.5h.01M15.5 8.5h.01M12 12h.01M8.5 15.5h.01M15.5 15.5h.01";
+
 // ─── Explorer helpers ─────────────────────────────────────────────────────────
 
 const SUISCAN = `https://suiscan.xyz/${NETWORK}`;
@@ -33,19 +52,19 @@ const stagger = {
 
 const PROBLEMS = [
   {
-    icon: "🤖",
+    icon: PATH_BOT,
     title: "Bots steal allocations",
     body: "Bots watch the mempool and submit higher bids in the same block. Public bids are weapons for front-running.",
     fix: "Blind bids — no amount on-chain until reveal. Nothing to front-run.",
   },
   {
-    icon: "👁",
+    icon: PATH_EYE,
     title: "Whales see your bid",
     body: "In public auctions, large holders watch submissions and shade their bid above yours at the last second.",
     fix: "Every bid is a hash until reveal phase. Whales can't see, can't shade.",
   },
   {
-    icon: "🎲",
+    icon: PATH_DICE,
     title: "Nobody verifies the draw",
     body: "The organizer controls winner selection. \"Random\" just means they said so. No proof exists.",
     fix: "sui::random at 0x8 — validator DKG. On-chain. Auditable forever.",
@@ -157,7 +176,7 @@ function NavBar() {
           <a href="#how" className="text-xs text-zinc-600 hover:text-zinc-300 transition-colors hidden md:block">How it works</a>
           <a href="#why-sui" className="text-xs text-zinc-600 hover:text-zinc-300 transition-colors hidden md:block">Why Sui</a>
           <a href="#auction" className="text-xs text-zinc-600 hover:text-zinc-300 transition-colors hidden md:block">Live auction</a>
-          <a href="/umbra" className="text-xs font-semibold text-cyan-400 hover:text-cyan-300 transition-colors border border-cyan-500/30 rounded-full px-2.5 py-1">⚡ Umbra</a>
+          <a href="/umbra" className="inline-flex items-center gap-1 text-xs font-semibold text-cyan-400 hover:text-cyan-300 transition-colors border border-cyan-500/30 rounded-full px-2.5 py-1"><IBolt className="w-3.5 h-3.5" /> Umbra</a>
           <ConnectButton />
         </div>
       </div>
@@ -221,8 +240,8 @@ function HeroSection() {
               </a>
               {AUCTION_ID && (
                 <a href={objUrl(AUCTION_ID)} target="_blank" rel="noopener noreferrer"
-                  className="px-5 py-2.5 bg-white/[0.05] hover:bg-white/[0.09] border border-white/10 text-white text-sm font-semibold rounded-xl transition-colors">
-                  Verify on Explorer ↗
+                  className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-white/[0.05] hover:bg-white/[0.09] border border-white/10 text-white text-sm font-semibold rounded-xl transition active:scale-[0.98]">
+                  Verify on Explorer <IExternal className="w-3.5 h-3.5" />
                 </a>
               )}
             </motion.div>
@@ -239,8 +258,8 @@ function HeroSection() {
                 "No backend",
                 "No admin key",
               ].map((t) => (
-                <span key={t} className="text-[11px] text-zinc-500 flex items-center gap-1">
-                  <span className="text-emerald-600">✓</span> {t}
+                <span key={t} className="text-[11px] text-zinc-500 flex items-center gap-1.5">
+                  <ICheck className="w-3 h-3 text-emerald-500" /> {t}
                 </span>
               ))}
             </motion.div>
@@ -259,7 +278,7 @@ function HeroSection() {
               className="group mt-4 flex items-center justify-center gap-2 rounded-xl border border-emerald-500/25 bg-emerald-950/20 px-4 py-2.5 text-sm font-semibold text-emerald-300 transition-colors hover:border-emerald-400/40 hover:bg-emerald-950/35"
             >
               Try it on a live bid
-              <span className="transition-transform group-hover:translate-y-0.5">↓</span>
+              <span className="transition-transform group-hover:translate-y-0.5"><IArrowDown className="w-4 h-4" /></span>
             </a>
           </motion.div>
 
@@ -288,9 +307,11 @@ function ProblemSection() {
             {PROBLEMS.map((p) => (
               <motion.div key={p.title} variants={fadeUp}
                 whileHover={{ scale: 1.015 }}
-                className="p-5 rounded-2xl border border-red-500/10 bg-red-950/[0.12] hover:border-red-500/20 hover:bg-red-950/20 transition-all cursor-default flex flex-col">
-                <div className="text-2xl mb-3">{p.icon}</div>
-                <h3 className="text-sm font-semibold text-red-300 mb-2">{p.title}</h3>
+                className="p-5 rounded-2xl border border-rose-500/10 bg-rose-950/[0.12] hover:border-rose-500/20 hover:bg-rose-950/20 transition-all cursor-default flex flex-col">
+                <div className="w-9 h-9 rounded-lg border border-rose-500/20 bg-rose-500/[0.06] flex items-center justify-center mb-3">
+                  <Icon d={p.icon} className="w-5 h-5 text-rose-400" />
+                </div>
+                <h3 className="text-sm font-semibold text-rose-300 mb-2">{p.title}</h3>
                 <p className="text-xs text-zinc-500 leading-relaxed flex-1">{p.body}</p>
                 <div className="mt-3 pt-3 border-t border-emerald-500/10">
                   <p className="text-[11px] text-emerald-600 leading-relaxed">
@@ -383,8 +404,8 @@ function HowItWorksSection() {
                 <motion.span
                   animate={{ rotate: active === i ? 90 : 0 }}
                   transition={{ duration: 0.18 }}
-                  className={`flex-shrink-0 text-sm mt-0.5 transition-colors ${active === i ? "text-emerald-400" : "text-zinc-700 group-hover:text-zinc-500"}`}
-                >›</motion.span>
+                  className={`flex-shrink-0 mt-1 transition-colors ${active === i ? "text-emerald-400" : "text-zinc-700 group-hover:text-zinc-500"}`}
+                ><IChevron className="w-4 h-4" /></motion.span>
               </motion.div>
             ))}
           </motion.div>
@@ -454,7 +475,7 @@ function VerifiabilitySection() {
             ].map((item) => (
               <motion.span key={item.label} variants={fadeUp}
                 className={`text-xs font-mono px-3 py-1.5 rounded-full border flex items-center gap-1.5 ${item.color}`}>
-                <span className="text-emerald-500">✓</span> {item.label}
+                <ICheck className="w-3 h-3" /> {item.label}
               </motion.span>
             ))}
           </motion.div>

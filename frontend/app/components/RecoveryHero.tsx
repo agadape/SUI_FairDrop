@@ -3,6 +3,12 @@
 import { motion, useReducedMotion } from "framer-motion";
 import { useEffect, useState } from "react";
 
+function HIcon({ d, className = "w-4 h-4" }: { d: string; className?: string }) {
+  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden><path d={d} /></svg>;
+}
+const HLock = (p: { className?: string }) => <HIcon className={p.className} d="M5 11h14v10H5zM8 11V7a4 4 0 0 1 8 0v4" />;
+const HUnlock = (p: { className?: string }) => <HIcon className={p.className} d="M5 11h14v10H5zM8 11V7a4 4 0 0 1 7.5-1.3" />;
+
 // ─── RecoveryHero ───────────────────────────────────────────────────────────
 //
 // Isolated visual for the frozen hero narrative: "Lose your device. Keep your bid."
@@ -80,8 +86,8 @@ export function RecoveryHero({ className = "" }: { className?: string }) {
             <motion.span
               animate={{ opacity: [1, 0.4, 1] }}
               transition={{ duration: 1.4, repeat: Infinity }}
-              className="text-amber-500 text-sm"
-            >🔒</motion.span>
+              className="text-amber-400"
+            ><HLock className="w-3.5 h-3.5" /></motion.span>
           )}
         </div>
         <div className="mt-1 font-mono text-xl font-bold text-amber-500/60 tracking-[0.15em] select-none">●●●● SUI</div>
@@ -112,8 +118,8 @@ export function RecoveryHero({ className = "" }: { className?: string }) {
         animate={{ scale: phase === 2 ? [1, 1.03, 1] : 1 }}
         transition={{ ...SPRING }}
       >
-        <span className={`text-sm font-semibold font-mono ${sealActive ? "text-pink-400" : "text-zinc-600"}`}>Seal</span>
-        <span className={`text-sm ${sealActive ? "text-pink-400" : "text-zinc-600"}`}>{sealActive ? "🔓" : "🔒"}</span>
+        <span className={`text-sm font-semibold font-mono ${sealActive ? "text-fuchsia-400" : "text-zinc-600"}`}>Seal</span>
+        <span className={sealActive ? "text-fuchsia-400" : "text-zinc-600"}>{sealActive ? <HUnlock className="w-4 h-4" /> : <HLock className="w-4 h-4" />}</span>
       </motion.div>
 
       <Connector active={phase === 2} />
