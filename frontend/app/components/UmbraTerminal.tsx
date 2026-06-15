@@ -84,10 +84,10 @@ type StoredOrder = { nonce: string; price: string; qty: string };
 function RailNode({ label, state }: { label: string; state: NodeState }) {
   return (
     <div className="flex items-center gap-1.5">
-      <span className={`w-5 h-5 flex items-center justify-center border-2 text-[10px] ${state === "idle" ? "border-zinc-900 text-zinc-900" : "border-2 border-zinc-900 text-zinc-900"}`}>
-        {state === "done" ? <ICheck className="w-3 h-3" /> : state === "active" ? <Spinner className="w-3 h-3" /> : <span className="w-1 h-1 bg-zinc-600" />}
+      <span className={`w-5 h-5 flex items-center justify-center rounded-full text-[10px] transition-all duration-300 ${state === "done" ? "bg-emerald-500 text-white" : state === "active" ? "bg-blue-500 text-white" : "bg-zinc-100 text-zinc-400"}`}>
+        {state === "done" ? <ICheck className="w-3 h-3" /> : state === "active" ? <Spinner className="w-3 h-3" /> : <span className="w-1 h-1 bg-zinc-400 rounded-full" />}
       </span>
-      <span className={`text-[11px] font-mono uppercase tracking-wide ${state === "idle" ? "text-zinc-600" : "text-zinc-900"}`}>{label}</span>
+      <span className={`text-[11px] font-mono uppercase tracking-wide ${state === "idle" ? "text-zinc-400" : "text-zinc-700"}`}>{label}</span>
     </div>
   );
 }
@@ -100,9 +100,9 @@ function RecoveryRail({ stage }: { stage: RecoveryStage }) {
   return (
     <div className="flex items-center gap-2.5">
       <RailNode label="Walrus" state={walrus} />
-      <span className="h-0.5 w-4 bg-zinc-900" />
+      <span className="h-0.5 w-4 bg-zinc-200" />
       <RailNode label="Seal" state={seal} />
-      <span className="h-0.5 w-4 bg-zinc-900" />
+      <span className="h-0.5 w-4 bg-zinc-200" />
       <RailNode label="Restored" state={restored} />
     </div>
   );
@@ -119,40 +119,40 @@ function RektPanel() {
     { t: "backrun", d: `bot dumps · banks the spread`, c: "text-rose-400" },
   ];
   return (
-    <div className="border-2 border-zinc-900 bg-white shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
-      <div className="flex items-center justify-between px-4 py-3 border-b-2 border-zinc-900">
+    <div className="rounded-[2rem] bg-white border border-black/[0.04] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.06)] p-6 sm:p-8">
+      <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <IAlert className="w-4 h-4 text-red-500" />
-          <span className="text-sm font-bold tracking-tight text-zinc-900">The Rekt</span>
+          <span className="text-lg font-bold text-zinc-800 tracking-tight">The Rekt</span>
           <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-zinc-600">public · {SANDWICH.dex}</span>
         </div>
         <span className="flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-widest text-zinc-500">
-          <span className="w-1.5 h-1.5 bg-red-600" />mempool
+          <span className="w-1.5 h-1.5 rounded-full bg-red-500" />mempool
         </span>
       </div>
 
-      <div className="p-4 sm:p-5 font-mono text-[12px] leading-relaxed space-y-1.5">
+      <div className="rounded-2xl bg-zinc-50 border border-black/[0.04] font-mono text-xs p-4 space-y-1.5 mb-4">
         {log.map((l, i) => (
-          <motion.div key={l.t} initial={{ opacity: 0, x: -6 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0, duration: 0.05 }} className="flex gap-2.5">
-            <span className="text-zinc-700 select-none tabular-nums">{String(i + 1).padStart(2, "0")}</span>
-            <span className="text-zinc-600 select-none w-16 flex-shrink-0 uppercase">{l.t}</span>
-            <span className="text-zinc-900">{l.d}</span>
+          <motion.div key={l.t} initial={{ opacity: 0, x: -6 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0, duration: 0.5, ease: [0.25, 0.1, 0.25, 1] }} className="flex gap-2.5">
+            <span className="text-zinc-400 select-none tabular-nums">{String(i + 1).padStart(2, "0")}</span>
+            <span className="text-zinc-500 select-none w-16 flex-shrink-0 uppercase">{l.t}</span>
+            <span className={l.c}>{l.d}</span>
           </motion.div>
         ))}
         <div className="flex gap-2.5 pt-0.5">
-          <span className="text-zinc-700 select-none">{">"}</span>
-          <span className="inline-block w-2 h-4 bg-zinc-900" />
+          <span className="text-zinc-400 select-none">{">"}</span>
+          <span className="inline-block w-2 h-4 bg-zinc-300" />
         </div>
       </div>
 
-      <div className="border-t-2 border-zinc-900 px-4 sm:px-5 py-4 flex items-baseline justify-between">
+      <div className="px-0 py-4 flex items-baseline justify-between border-t border-black/[0.06]">
         <span className="text-[11px] font-mono uppercase tracking-[0.2em] text-zinc-500">MEV extracted</span>
         <span className="font-mono text-4xl font-bold text-red-600 tabular-nums tracking-tighter">−${SANDWICH.mevExtracted.toFixed(2)}</span>
       </div>
-      <div className="border-t-2 border-zinc-900 px-4 sm:px-5 py-3">
+      <div className="pt-3 border-t border-black/[0.06]">
         <p className="text-[11px] text-zinc-500 leading-relaxed">
-          Readable the instant it broadcast. Front-running only needs to <span className="text-zinc-900">see</span> the trade.
-          {SANDWICH.txDigest && (<>{" "}<a href={txUrl(SANDWICH.txDigest)} target="_blank" rel="noopener noreferrer" className="text-zinc-900 underline">verify</a></>)}
+          Readable the instant it broadcast. Front-running only needs to <span className="text-zinc-700">see</span> the trade.
+          {SANDWICH.txDigest && (<>{" "}<a href={txUrl(SANDWICH.txDigest)} target="_blank" rel="noopener noreferrer" className="text-zinc-700 underline">verify</a></>)}
         </p>
       </div>
     </div>
@@ -425,23 +425,23 @@ export function UmbraTerminal() {
 
   // ── Shield panel ────────────────────────────────────────────────────────────
   function ShieldPanel() {
-    const btn = "w-full py-3.5 text-[13px] font-bold uppercase tracking-wide active:scale-[0.99] transition-none disabled:opacity-40 disabled:pointer-events-none flex items-center justify-center gap-2 bg-zinc-900 text-white hover:bg-yellow-400 hover:text-zinc-900 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] border-2 border-zinc-900";
+    const btn = "w-full py-3.5 text-[13px] font-bold uppercase tracking-wide active:scale-[0.98] transition-all duration-300 disabled:opacity-40 disabled:pointer-events-none flex items-center justify-center gap-2 bg-zinc-900 text-white rounded-full hover:-translate-y-0.5 hover:shadow-lg";
     const steps = [{ k: "COMMIT", l: "Submit" }, { k: "REVEAL", l: "Reveal" }, { k: "ENDED", l: "Settle" }, { k: "SETTLED", l: "Claim" }];
     const cur = steps.findIndex((s) => s.k === phase);
     return (
-      <div className="border-2 border-zinc-900 bg-white shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
-        <div className="flex items-center justify-between px-4 py-3 border-b-2 border-zinc-900">
+      <div className="rounded-[2rem] bg-white border border-black/[0.04] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.06)] p-6 sm:p-8">
+        <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <IShield className="w-4 h-4 text-zinc-900" />
-            <span className="text-sm font-bold tracking-tight text-zinc-900">The Shield</span>
-            <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-zinc-600">confidential · Umbra</span>
+            <IShield className="w-4 h-4 text-zinc-700" />
+            <span className="text-lg font-bold text-zinc-800 tracking-tight">The Shield</span>
+            <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-zinc-500">confidential · Umbra</span>
           </div>
           {phase !== "LOADING" && phase !== "NOT_CONFIGURED" && (
-            <span className="text-[10px] font-mono uppercase tracking-widest text-zinc-900 border-2 border-zinc-900 px-2 py-0.5">{phase}</span>
+            <span className="text-[10px] font-mono uppercase tracking-widest text-zinc-600 border border-black/[0.06] rounded-full px-2.5 py-0.5 bg-zinc-50">{phase}</span>
           )}
         </div>
 
-        <div className="p-4 sm:p-5 space-y-4">
+        <div className="space-y-4">
           {phase === "NOT_CONFIGURED" ? (
             <p className="text-sm text-zinc-500 font-mono">Set NEXT_PUBLIC_UMBRA_PACKAGE_ID / _POOL_ID in .env.local.</p>
           ) : !account ? (
@@ -453,27 +453,27 @@ export function UmbraTerminal() {
           ) : (
             <>
               {/* Swap card */}
-              <div className="border-2 border-zinc-900 bg-white p-4">
+              <div className="rounded-2xl bg-zinc-50 border border-black/[0.04] p-4">
                 <div className="flex items-end justify-between gap-3">
                   <div className="flex-1 min-w-0">
                     <label className="text-[10px] font-mono uppercase tracking-widest text-zinc-500">Quantity</label>
                     <input value={qty} onChange={(e) => setQty(e.target.value)} type="number" inputMode="decimal"
-                      className="w-full mt-1 bg-transparent text-3xl font-mono font-bold text-zinc-900 tabular-nums tracking-tight outline-none placeholder:text-zinc-700" />
+                      className="w-full mt-1 bg-transparent text-3xl font-mono font-bold text-zinc-900 tabular-nums tracking-tight outline-none placeholder:text-zinc-300" />
                   </div>
                   <span className="text-sm font-mono text-zinc-500 pb-1.5">UMB</span>
                 </div>
-                <div className="h-0.5 bg-zinc-900 my-2" />
+                <div className="h-px bg-black/[0.06] my-2" />
                 <div className="flex items-end justify-between gap-3">
                   <div className="flex-1 min-w-0">
                     <label className="text-[10px] font-mono uppercase tracking-widest text-zinc-500">Max price / unit</label>
                     <input value={price} onChange={(e) => setPrice(e.target.value)} type="number" inputMode="decimal"
-                      className="w-full mt-1 bg-transparent text-3xl font-mono font-bold text-zinc-900 tabular-nums tracking-tight outline-none placeholder:text-zinc-700" />
+                      className="w-full mt-1 bg-transparent text-3xl font-mono font-bold text-zinc-900 tabular-nums tracking-tight outline-none placeholder:text-zinc-300" />
                   </div>
                   <span className="text-sm font-mono text-zinc-500 pb-1.5">SUI</span>
                 </div>
-                <div className="flex items-center justify-between text-[11px] font-mono pt-2.5 mt-1 border-t-2 border-zinc-900">
+                <div className="flex items-center justify-between text-[11px] font-mono pt-2.5 mt-1 border-t border-black/[0.06]">
                   <span className="text-zinc-500 uppercase tracking-wide">Escrow</span>
-                  <span className="text-zinc-900 tabular-nums">{escrowSui.toFixed(4)} SUI <span className="text-zinc-600">· floor {minPriceSui}</span></span>
+                  <span className="text-sm font-semibold text-zinc-800 tabular-nums">{escrowSui.toFixed(4)} SUI <span className="font-normal text-zinc-500">· floor {minPriceSui}</span></span>
                 </div>
               </div>
 
@@ -481,13 +481,13 @@ export function UmbraTerminal() {
               <div className="flex items-center gap-1.5">
                 {steps.map((s, i) => (
                   <div key={s.k} className="flex items-center gap-1.5 flex-1 last:flex-none">
-                    <div className={`flex items-center gap-1.5 text-zinc-900`}>
-                      <span className={`w-5 h-5 border-2 flex items-center justify-center text-[10px] font-mono tabular-nums ${i === cur ? "border-zinc-900 bg-yellow-400 text-zinc-900" : i < cur ? "border-zinc-900" : "border-zinc-900"}`}>
+                    <div className="flex items-center gap-1.5">
+                      <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-mono tabular-nums transition-all duration-300 ${i < cur ? "bg-emerald-500 text-white" : i === cur ? "bg-blue-500 text-white" : "bg-zinc-100 text-zinc-400"}`}>
                         {i < cur ? <ICheck className="w-3 h-3" /> : i + 1}
                       </span>
-                      <span className="text-[11px] font-mono uppercase font-medium hidden sm:inline">{s.l}</span>
+                      <span className="text-sm text-zinc-600 hidden sm:inline">{s.l}</span>
                     </div>
-                    {i < steps.length - 1 && <span className={`flex-1 h-0.5 bg-zinc-900`} />}
+                    {i < steps.length - 1 && <span className="flex-1 h-px bg-black/[0.06]" />}
                   </div>
                 ))}
               </div>
@@ -495,16 +495,16 @@ export function UmbraTerminal() {
               {/* Hash hero — the locked, encrypted string */}
               <AnimatePresence>
                 {orderHash && (
-                  <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.05 }}
-                    className="border-2 border-zinc-900 bg-white p-4 space-y-2.5">
+                  <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.5, ease: [0.25, 0.1, 0.25, 1] }}
+                    className="rounded-2xl bg-emerald-50 border border-emerald-100 font-mono text-xs text-emerald-700 p-4 space-y-2.5">
                     <div className="flex items-center justify-between">
-                      <span className="flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-widest text-zinc-400"><ILock className="w-3 h-3" />What the mempool sees</span>
-                      <span className="text-[10px] font-mono uppercase tracking-widest text-zinc-600">encrypted</span>
+                      <span className="flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-widest text-emerald-600"><ILock className="w-3 h-3" />What the mempool sees</span>
+                      <span className="text-[10px] font-mono uppercase tracking-widest text-emerald-500">encrypted</span>
                     </div>
-                    <p className="font-mono text-[12px] text-zinc-900 break-all leading-relaxed">{orderHash}</p>
-                    <div className="flex items-center gap-2 pt-2 border-t-2 border-zinc-900">
-                      <span className="text-zinc-900 font-black text-base tabular-nums">$0</span>
-                      <span className="text-[11px] text-zinc-500">extractable · nothing to front-run or reorder</span>
+                    <p className="font-mono text-[12px] text-emerald-700 break-all leading-relaxed">{orderHash}</p>
+                    <div className="flex items-center gap-2 pt-2 border-t border-emerald-100">
+                      <span className="text-emerald-700 font-bold text-base tabular-nums">$0</span>
+                      <span className="text-[11px] text-emerald-600">extractable · nothing to front-run or reorder</span>
                     </div>
                   </motion.div>
                 )}
@@ -512,7 +512,7 @@ export function UmbraTerminal() {
 
               {/* Phase-aware action area */}
               <AnimatePresence mode="wait">
-                <motion.div key={phase} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.05 }} className="space-y-3">
+                <motion.div key={phase} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.5, ease: [0.25, 0.1, 0.25, 1] }} className="space-y-3">
 
                   {phase === "COMMIT" && !orderId && (
                     <button onClick={handleSubmit} disabled={submitting} className={btn}>
@@ -521,27 +521,27 @@ export function UmbraTerminal() {
                   )}
 
                   {orderId && phase === "COMMIT" && (
-                    <div className="border-2 border-zinc-900 bg-white px-4 py-3">
-                      <p className="text-[12px] text-zinc-400">Order sealed &amp; escrowed. Reveal opens when the commit window closes.</p>
-                      <a href={objUrl(orderId)} target="_blank" rel="noopener noreferrer" className="mt-1.5 inline-flex items-center gap-1 text-[11px] text-zinc-900 hover:text-zinc-700 font-mono uppercase tracking-wide">SealedOrder <IExternal className="w-3 h-3" /></a>
+                    <div className="rounded-2xl bg-zinc-50 border border-black/[0.04] px-4 py-3">
+                      <p className="text-[12px] text-zinc-500">Order sealed &amp; escrowed. Reveal opens when the commit window closes.</p>
+                      <a href={objUrl(orderId)} target="_blank" rel="noopener noreferrer" className="mt-1.5 inline-flex items-center gap-1 text-[11px] text-zinc-700 hover:text-zinc-500 font-mono uppercase tracking-wide">SealedOrder <IExternal className="w-3 h-3" /></a>
                     </div>
                   )}
 
                   {/* Lose your device, keep your order — Walrus + Seal recovery */}
                   {orderId && phase === "COMMIT" && orderBlobId && (
-                    <div className="border-2 border-zinc-900 bg-white p-4 space-y-2.5">
-                      <span className="flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-widest text-zinc-500"><ILock className="w-3 h-3 text-zinc-900" />Lose your device, keep your order</span>
+                    <div className="rounded-2xl bg-zinc-50 border border-black/[0.04] p-4 space-y-2.5">
+                      <span className="flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-widest text-zinc-500"><ILock className="w-3 h-3 text-zinc-600" />Lose your device, keep your order</span>
                       {recoveryStage === "idle" && (
                         <button onClick={simulateDeviceLoss}
-                          className="w-full py-2.5 text-[11px] font-mono font-bold uppercase tracking-wide border-2 border-zinc-900 text-zinc-900 hover:bg-yellow-400 hover:text-zinc-900 transition-none active:scale-[0.99]">
+                          className="w-full py-2.5 text-[11px] font-mono font-bold uppercase tracking-wide rounded-full border border-black/[0.06] text-zinc-700 hover:-translate-y-0.5 hover:shadow-md transition-all duration-300 active:scale-[0.98]">
                           Simulate device loss
                         </button>
                       )}
                       {recoveryStage === "wiped" && (
                         <>
-                          <p className="text-[11px] text-red-600 font-mono">Local key wiped. This device can no longer open the order.</p>
+                          <p className="text-[11px] text-red-500 font-mono">Local key wiped. This device can no longer open the order.</p>
                           <button onClick={handleRecover}
-                            className="w-full py-2.5 text-[11px] font-mono font-bold uppercase tracking-wide bg-zinc-900 text-white hover:bg-yellow-400 hover:text-zinc-900 transition-none shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] border-2 border-zinc-900 active:scale-[0.99]">
+                            className="w-full py-2.5 text-[11px] font-mono font-bold uppercase tracking-wide bg-zinc-900 text-white rounded-full hover:-translate-y-0.5 hover:shadow-lg transition-all duration-300 active:scale-[0.98]">
                             Recover from Walrus + Seal
                           </button>
                         </>
@@ -553,15 +553,15 @@ export function UmbraTerminal() {
                         </div>
                       )}
                       {recoveryStage === "restored" && (
-                        <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="space-y-1.5">
+                        <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: [0.25, 0.1, 0.25, 1] }} className="space-y-1.5">
                           <RecoveryRail stage="restored" />
-                          <p className="text-[11px] text-zinc-900 font-mono">Order recovered. No server ever saw it.</p>
-                          <button onClick={() => setRecoveryStage("idle")} className="text-[10px] text-zinc-500 hover:text-zinc-700 font-mono">reset demo</button>
+                          <p className="text-[11px] text-zinc-700 font-mono">Order recovered. No server ever saw it.</p>
+                          <button onClick={() => setRecoveryStage("idle")} className="text-[10px] text-zinc-400 hover:text-zinc-600 font-mono transition-all duration-300">reset demo</button>
                         </motion.div>
                       )}
                       {recoveryStage === "error" && (
                         <button onClick={handleRecover}
-                          className="w-full py-2.5 text-[11px] font-mono font-bold uppercase tracking-wide border-2 border-zinc-900 text-red-600 hover:bg-yellow-400 hover:text-zinc-900 transition-none active:scale-[0.99]">
+                          className="w-full py-2.5 text-[11px] font-mono font-bold uppercase tracking-wide rounded-full border border-black/[0.06] text-red-500 hover:-translate-y-0.5 hover:shadow-md transition-all duration-300 active:scale-[0.98]">
                           Retry recovery
                         </button>
                       )}
@@ -579,7 +579,7 @@ export function UmbraTerminal() {
                   )}
                   {phase === "ENDED" && !pool?.settled && orderId && (
                     <button onClick={handleReclaim}
-                      className="w-full py-2.5 text-[11px] font-mono font-bold uppercase tracking-wide border-2 border-zinc-900 text-zinc-700 hover:bg-yellow-400 hover:text-zinc-900 transition-none active:scale-[0.99]">
+                      className="w-full py-2.5 text-[11px] font-mono font-bold uppercase tracking-wide rounded-full border border-black/[0.06] text-zinc-600 hover:-translate-y-0.5 hover:shadow-md transition-all duration-300 active:scale-[0.98]">
                       Reclaim escrow · escape hatch
                     </button>
                   )}
@@ -597,7 +597,7 @@ export function UmbraTerminal() {
               )}
 
               {statusMsg && (
-                <div className={`flex items-center gap-2 text-[12px] px-3 py-2 font-mono border-2 border-zinc-900 ${stage === "error" || statusMsg.startsWith("Error") ? "text-red-600" : "text-zinc-900"}`}>
+                <div className={`flex items-center gap-2 text-[12px] px-3 py-2 font-mono rounded-2xl border border-black/[0.04] bg-zinc-50 ${stage === "error" || statusMsg.startsWith("Error") ? "text-red-500" : "text-zinc-600"}`}>
                   {submitting && <Spinner className="w-3 h-3" />} {statusMsg}
                 </div>
               )}
@@ -615,23 +615,19 @@ export function UmbraTerminal() {
   return (
     <div className="space-y-6">
       <div className="text-center space-y-3">
-        <span className="inline-block text-[9px] font-mono uppercase tracking-[0.4em] text-zinc-500 border-l-4 border-zinc-900 pl-3">Same $5,000 swap — two outcomes</span>
-        <h2 className="text-5xl sm:text-8xl font-black tracking-[-0.05em] text-zinc-900 leading-[0.82]">
+        <span className="inline-block text-[9px] font-mono uppercase tracking-[0.4em] text-zinc-500 pl-3">Same $5,000 swap — two outcomes</span>
+        <h2 className="text-3xl sm:text-5xl font-bold text-zinc-800 tracking-tight">
           They can&apos;t sandwich what they can&apos;t <span className="text-blue-600">see</span>.
         </h2>
       </div>
       {loadError && !pool && (
-        <div className="mx-auto w-fit flex items-center gap-2 border-2 border-zinc-900 px-4 py-2.5 text-[12px] text-zinc-900 font-mono">
+        <div className="mx-auto w-fit flex items-center gap-2 rounded-full border border-black/[0.06] bg-zinc-50 px-4 py-2.5 text-[12px] text-zinc-500 font-mono">
           <Spinner className="w-3 h-3" /> Reconnecting to the Sui RPC…
         </div>
       )}
-      <div className="grid gap-0 lg:grid-cols-2 lg:items-start">
-        <div className="relative z-10 lg:translate-x-4">
-          <RektPanel />
-        </div>
-        <div className="relative z-20 lg:-translate-x-4 lg:translate-y-6">
-          <ShieldPanel />
-        </div>
+      <div className="grid gap-6 lg:grid-cols-2 lg:items-start">
+        <RektPanel />
+        <ShieldPanel />
       </div>
       {pool && (
         <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-1.5 text-[11px] font-mono uppercase tracking-wide text-zinc-900 font-mono">
