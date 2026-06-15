@@ -5,6 +5,7 @@ import { useState } from "react";
 import { ConnectButton } from "@mysten/dapp-kit";
 import { LiveAuction } from "@/app/components/LiveAuction";
 import { RecoveryHero } from "@/app/components/RecoveryHero";
+import { ArchitectureFlow } from "@/app/components/ArchitectureFlow";
 import { PACKAGE_ID, AUCTION_ID, RANDOM_ID, NETWORK } from "@/lib/constants";
 
 // ─── Icons (shared stroke language with the terminals — zero emoji) ────────────
@@ -553,6 +554,7 @@ export default function Home() {
       <ProblemSection />
       <FairnessSection />
       <HowItWorksSection />
+      <ArchitectureFlow />
       <WhySuiSection />
       <VerifiabilitySection />
 
