@@ -164,19 +164,19 @@ const RECEIPTS = [
 
 function NavBar() {
   return (
-    <nav className="sticky top-0 z-50 border-b border-white/[0.06] bg-[#030712]/80 backdrop-blur-xl">
+    <nav className="sticky top-0 z-50 border-b border-zinc-200 bg-white/80 backdrop-blur-xl">
       <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <span className="text-zinc-900 font-bold text-lg tracking-tight">FairDrop</span>
-          <span className="hidden sm:block text-[10px] text-zinc-700 font-mono border border-zinc-800 rounded-full px-2 py-0.5">
+          <span className="hidden sm:block text-[10px] text-zinc-500 font-mono border border-zinc-300 rounded-full px-2 py-0.5">
             Sui Overflow 2026
           </span>
         </div>
         <div className="flex items-center gap-5">
-          <a href="#how" className="text-xs text-zinc-600 hover:text-zinc-700 transition-colors hidden md:block">How it works</a>
-          <a href="#why-sui" className="text-xs text-zinc-600 hover:text-zinc-700 transition-colors hidden md:block">Why Sui</a>
-          <a href="#auction" className="text-xs text-zinc-600 hover:text-zinc-700 transition-colors hidden md:block">Live auction</a>
-          <a href="/umbra" className="inline-flex items-center gap-1 text-xs font-semibold text-cyan-700 hover:text-cyan-300 transition-colors border border-cyan-500/30 rounded-full px-2.5 py-1"><IBolt className="w-3.5 h-3.5" /> Umbra</a>
+          <a href="#how" className="text-xs text-zinc-600 hover:text-zinc-900 transition-colors hidden md:block">How it works</a>
+          <a href="#why-sui" className="text-xs text-zinc-600 hover:text-zinc-900 transition-colors hidden md:block">Why Sui</a>
+          <a href="#auction" className="text-xs text-zinc-600 hover:text-zinc-900 transition-colors hidden md:block">Live auction</a>
+          <a href="/umbra" className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-700 transition-colors border border-blue-300 rounded-full px-2.5 py-1"><IBolt className="w-3.5 h-3.5" /> Umbra</a>
           <ConnectButton />
         </div>
       </div>
