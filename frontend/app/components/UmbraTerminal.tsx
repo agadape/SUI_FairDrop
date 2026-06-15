@@ -84,7 +84,7 @@ type StoredOrder = { nonce: string; price: string; qty: string };
 function RailNode({ label, state }: { label: string; state: NodeState }) {
   return (
     <div className="flex items-center gap-1.5">
-      <span className={`w-5 h-5 flex items-center justify-center border text-[10px] ${state === "idle" ? "border-zinc-200 text-zinc-600" : "border-white/50 text-zinc-900"}`}>
+      <span className={`w-5 h-5 flex items-center justify-center border text-[10px] ${state === "idle" ? "border-zinc-200 text-zinc-600" : "border-zinc-300 text-zinc-900"}`}>
         {state === "done" ? <ICheck className="w-3 h-3" /> : state === "active" ? <Spinner className="w-3 h-3" /> : <span className="w-1 h-1 bg-zinc-600" />}
       </span>
       <span className={`text-[11px] font-mono uppercase tracking-wide ${state === "idle" ? "text-zinc-600" : "text-zinc-900"}`}>{label}</span>
@@ -625,7 +625,7 @@ export function UmbraTerminal() {
           <Spinner className="w-3 h-3" /> Reconnecting to the Sui RPC…
         </div>
       )}
-      <div className="grid gap-4 lg:grid-cols-2 lg:items-start">
+      <div className="grid gap-6 lg:grid-cols-2 lg:items-start">
         <RektPanel />
         <ShieldPanel />
       </div>

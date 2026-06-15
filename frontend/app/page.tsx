@@ -81,11 +81,11 @@ const FAIRNESS = [
     border: "border-blue-500/25", glow: "rgba(59,130,246,0.1)", accent: "text-blue-600",
     visual: (
       <div className="flex items-center gap-2 font-mono text-xs">
-        <span className="text-zinc-500 bg-zinc-900 px-2 py-0.5 rounded text-[10px]">Wallet addr</span>
+        <span className="text-zinc-700 bg-zinc-100 border border-zinc-200 px-2 py-0.5 rounded text-[10px]">Wallet addr</span>
         <span className="text-zinc-700">→</span>
         <span className="text-blue-600 text-[10px]">sha3_256</span>
         <span className="text-zinc-700">→</span>
-        <span className="text-blue-300 text-[10px] bg-white px-1.5 py-0.5 rounded border border-blue-500/20">0x4f2a…</span>
+        <span className="text-blue-600 text-[10px] bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200">0x4f2a…</span>
       </div>
     ),
   },
@@ -95,7 +95,7 @@ const FAIRNESS = [
     border: "border-amber-500/25", glow: "rgba(245,158,11,0.1)", accent: "text-amber-400",
     visual: (
       <div className="flex items-center gap-2 font-mono text-xs">
-        <span className="text-amber-300 bg-white px-2 py-0.5 rounded border border-amber-500/20 text-[10px]">5.0 SUI</span>
+        <span className="text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200 text-[10px]">5.0 SUI</span>
         <span className="text-zinc-700">→</span>
         <span className="text-amber-500 text-[10px]">sha3_256</span>
         <span className="text-zinc-700">→</span>
@@ -113,7 +113,7 @@ const FAIRNESS = [
         <span className="text-zinc-700">→</span>
         <span className="text-violet-700 font-bold px-2 py-0.5 rounded bg-white border border-violet-500/30">0x8</span>
         <span className="text-zinc-700">→</span>
-        <span className="text-violet-300 text-[10px]">winner ✓</span>
+        <span className="text-violet-700 text-[10px]">winner ✓</span>
       </div>
     ),
   },
@@ -144,11 +144,11 @@ const STEPS = [
 // ─── Sui primitives ───────────────────────────────────────────────────────────
 
 const PRIMITIVES = [
-  { name: "Seal", by: "Kostas Chalkias", desc: "Threshold-encrypts your reveal secret. An on-chain Move policy (seal_approve) releases it only to you, only during reveal — no FairDrop server can decrypt it.", color: "text-pink-400", border: "border-pink-500/20", bg: "bg-pink-950/20" },
+  { name: "Seal", by: "Kostas Chalkias", desc: "Threshold-encrypts your reveal secret. An on-chain Move policy (seal_approve) releases it only to you, only during reveal — no FairDrop server can decrypt it.", color: "text-pink-600", border: "border-pink-200", bg: "bg-pink-50" },
   { name: "Walrus", by: "Mysten Labs", desc: "Decentralized blob storage for the encrypted secret. Recoverable from any device — no backend, no team custody.", color: "text-cyan-700", border: "border-cyan-500/20", bg: "bg-white" },
   { name: "zkLogin", by: "Deepak Maram", desc: "Google login instead of a wallet — the same login re-derives the same wallet on any device. Raises Sybil cost; not proof-of-personhood.", color: "text-blue-600", border: "border-blue-500/20", bg: "bg-white" },
   { name: "sui::random", by: "Andrew Schran", desc: "Validator DKG randomness at object 0x8. Unpredictable before the transaction. Unbiasable by any party.", color: "text-violet-700", border: "border-violet-500/20", bg: "bg-white" },
-  { name: "Enoki", by: "Mysten Labs", desc: "The zkLogin auth flow behind the Google button — onboards users with no seed phrase and no extension. Gas is self-paid on testnet (no sponsorship).", color: "text-orange-400", border: "border-orange-500/20", bg: "bg-orange-950/20" },
+  { name: "Enoki", by: "Mysten Labs", desc: "The zkLogin auth flow behind the Google button — onboards users with no seed phrase and no extension. Gas is self-paid on testnet (no sponsorship).", color: "text-orange-600", border: "border-orange-200", bg: "bg-orange-50" },
   { name: "PTBs", by: "Sui protocol", desc: "Programmable Transaction Blocks compose many Move calls into one atomic transaction — resolve mints every WinnerCertificate in a single PTB. Final settlement is pull-based (claim, reclaim, withdraw), so no party can be stranded by another's failure.", color: "text-emerald-700", border: "border-emerald-500/20", bg: "bg-white" },
 ];
 
@@ -165,7 +165,7 @@ const RECEIPTS = [
 
 function NavBar() {
   return (
-    <nav className="sticky top-0 z-50 border-b border-zinc-200 bg-white/80 backdrop-blur-xl">
+    <nav className="sticky top-0 z-50 border-b border-zinc-200 bg-white">
       <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <span className="text-zinc-900 font-bold text-lg tracking-tight">FairDrop</span>
@@ -209,7 +209,7 @@ function HeroSection() {
             </motion.div>
 
             <motion.p
-              className="text-zinc-400 text-lg leading-relaxed max-w-md"
+              className="text-zinc-600 text-lg leading-relaxed max-w-md"
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.25, duration: 0.55 }}
@@ -274,7 +274,7 @@ function HeroSection() {
             <RecoveryHero />
             <a
               href="#auction"
-              className="group mt-4 flex items-center justify-center gap-2 border border-zinc-200 px-4 py-2.5 text-sm font-semibold text-zinc-900 transition hover:bg-white/[0.06]"
+              className="group mt-4 flex items-center justify-center gap-2 border border-zinc-200 px-4 py-2.5 text-sm font-semibold text-zinc-900 transition hover:bg-zinc-50"
             >
               Try it on a live bid
               <span className="transition-transform group-hover:translate-y-0.5"><IArrowDown className="w-4 h-4" /></span>
@@ -289,7 +289,7 @@ function HeroSection() {
 
 function ProblemSection() {
   return (
-    <section className="py-20 border-t border-zinc-200">
+    <section className="py-24 border-t border-zinc-200">
       <div className="max-w-6xl mx-auto px-6">
         <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }}>
           <motion.p variants={fadeUp} className="text-[10px] text-zinc-600 font-mono uppercase tracking-[0.2em] mb-3">
@@ -328,7 +328,7 @@ function ProblemSection() {
 
 function FairnessSection() {
   return (
-    <section className="py-20 border-t border-zinc-200">
+    <section className="py-24 border-t border-zinc-200">
       <div className="max-w-6xl mx-auto px-6">
         <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }}>
           <motion.p variants={fadeUp} className="text-[10px] text-zinc-600 font-mono uppercase tracking-[0.2em] mb-3">
@@ -345,7 +345,7 @@ function FairnessSection() {
                 className={`p-6 border ${f.border} bg-white transition-all cursor-default`}>
                 <div className="mb-4 min-h-[28px] flex items-center">{f.visual}</div>
                 <h3 className={`text-base font-bold ${f.accent} mb-2`}>{f.title}</h3>
-                <p className="text-xs text-zinc-400 leading-relaxed">{f.body}</p>
+                <p className="text-xs text-zinc-600 leading-relaxed">{f.body}</p>
               </motion.div>
             ))}
           </motion.div>
@@ -359,7 +359,7 @@ function HowItWorksSection() {
   const [active, setActive] = useState<number | null>(null);
 
   return (
-    <section id="how" className="py-20 border-t border-zinc-200">
+    <section id="how" className="py-24 border-t border-zinc-200">
       <div className="max-w-6xl mx-auto px-6">
         <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }}>
           <motion.p variants={fadeUp} className="text-[10px] text-zinc-600 font-mono uppercase tracking-[0.2em] mb-3">
@@ -379,7 +379,7 @@ function HowItWorksSection() {
                 className={`group flex gap-5 p-5 rounded-none border transition-all cursor-pointer select-none ${
                   active === i
                     ? "border-emerald-500/30 bg-white"
-                    : "border-zinc-200 hover:border-zinc-200 bg-zinc-50 hover:bg-white/[0.03]"
+                    : "border-zinc-200 hover:border-zinc-300 bg-zinc-50 hover:bg-white"
                 }`}>
                 <span className={`font-mono text-sm font-bold flex-shrink-0 mt-0.5 w-8 transition-colors ${active === i ? "text-emerald-700" : "text-zinc-700"}`}>{step.num}</span>
                 <div className="min-w-0 flex-1">
@@ -415,7 +415,7 @@ function HowItWorksSection() {
 
 function WhySuiSection() {
   return (
-    <section id="why-sui" className="py-20 border-t border-zinc-200">
+    <section id="why-sui" className="py-24 border-t border-zinc-200">
       <div className="max-w-6xl mx-auto px-6">
         <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }}>
           <motion.p variants={fadeUp} className="text-[10px] text-zinc-600 font-mono uppercase tracking-[0.2em] mb-3">
@@ -449,7 +449,7 @@ function WhySuiSection() {
 
 function VerifiabilitySection() {
   return (
-    <section className="py-20 border-t border-zinc-200">
+    <section className="py-24 border-t border-zinc-200">
       <div className="max-w-6xl mx-auto px-6">
         <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }}>
           <motion.p variants={fadeUp} className="text-[10px] text-zinc-600 font-mono uppercase tracking-[0.2em] mb-3">
@@ -485,7 +485,7 @@ function VerifiabilitySection() {
                 whileHover={{ scale: 1.012 }}
                 className="group flex items-center justify-between p-4 rounded-none border border-zinc-200 bg-zinc-50 hover:border-emerald-500/25 hover:bg-zinc-100 transition-all">
                 <div className="min-w-0">
-                  <p className="text-sm text-zinc-900 font-medium group-hover:text-emerald-300 transition-colors">{r.label}</p>
+                  <p className="text-sm text-zinc-900 font-medium group-hover:text-emerald-700 transition-colors">{r.label}</p>
                   <p className="text-[10px] text-zinc-700 font-mono mt-0.5">{r.id!.slice(0, 20)}…</p>
                   <p className="text-[10px] text-zinc-600 mt-0.5">{r.hint}</p>
                 </div>
@@ -559,7 +559,7 @@ export default function Home() {
       <VerifiabilitySection />
 
       {/* Live Auction */}
-      <section id="auction" className="py-20 border-t border-zinc-200">
+      <section id="auction" className="py-24 border-t border-zinc-200">
         <div className="max-w-6xl mx-auto px-6">
           <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }} className="mb-10">
             <motion.p variants={fadeUp} className="text-[10px] text-zinc-600 font-mono uppercase tracking-[0.2em] mb-3">
@@ -583,11 +583,11 @@ export default function Home() {
             <motion.h2 variants={fadeUp} className="text-4xl lg:text-5xl font-bold text-zinc-900 mb-6 leading-tight text-balance">
               Lose your device.
               {" "}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-300 to-blue-400">
+              <span className="text-blue-600">
                 Keep your bid.
               </span>
             </motion.h2>
-            <motion.p variants={fadeUp} className="text-zinc-400 text-lg mb-10 max-w-lg mx-auto leading-relaxed">
+            <motion.p variants={fadeUp} className="text-zinc-600 text-lg mb-10 max-w-lg mx-auto leading-relaxed">
               Blind bids, a verifiable draw, atomic settlement — and a sealed bid you can recover from
               any device. No backend, no admin key, no trust beyond the Sui protocol itself.
             </motion.p>
