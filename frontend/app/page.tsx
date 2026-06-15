@@ -184,7 +184,7 @@ function HeroSection() {
               <h1 className="text-5xl lg:text-[3.75rem] font-bold tracking-tight leading-[1.05] text-white">
                 Lose your device.
                 <br />
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-emerald-400">
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-300 to-blue-400">
                   Keep your bid.
                 </span>
               </h1>
@@ -216,7 +216,7 @@ function HeroSection() {
               transition={{ delay: 0.45, duration: 0.55 }}
             >
               <a href="#auction"
-                className="px-5 py-2.5 bg-violet-600 hover:bg-violet-500 text-white text-sm font-semibold rounded-xl transition-colors">
+                className="px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-zinc-950 text-sm font-semibold rounded-xl transition active:scale-[0.98]">
                 Launch Live Auction →
               </a>
               {AUCTION_ID && (
@@ -359,10 +359,10 @@ function HowItWorksSection() {
                 onClick={() => setActive(active === i ? null : i)}
                 className={`group flex gap-5 p-5 rounded-2xl border transition-all cursor-pointer select-none ${
                   active === i
-                    ? "border-violet-500/30 bg-violet-950/20"
+                    ? "border-emerald-500/30 bg-emerald-950/20"
                     : "border-white/[0.05] hover:border-white/10 bg-white/[0.015] hover:bg-white/[0.03]"
                 }`}>
-                <span className={`font-mono text-sm font-bold flex-shrink-0 mt-0.5 w-8 transition-colors ${active === i ? "text-violet-500" : "text-zinc-700"}`}>{step.num}</span>
+                <span className={`font-mono text-sm font-bold flex-shrink-0 mt-0.5 w-8 transition-colors ${active === i ? "text-emerald-500" : "text-zinc-700"}`}>{step.num}</span>
                 <div className="min-w-0 flex-1">
                   <p className={`text-sm font-semibold transition-colors ${active === i ? "text-white" : "text-zinc-300 group-hover:text-white"}`}>{step.label}</p>
                   <AnimatePresence initial={false}>
@@ -383,7 +383,7 @@ function HowItWorksSection() {
                 <motion.span
                   animate={{ rotate: active === i ? 90 : 0 }}
                   transition={{ duration: 0.18 }}
-                  className={`flex-shrink-0 text-sm mt-0.5 transition-colors ${active === i ? "text-violet-400" : "text-zinc-700 group-hover:text-zinc-500"}`}
+                  className={`flex-shrink-0 text-sm mt-0.5 transition-colors ${active === i ? "text-emerald-400" : "text-zinc-700 group-hover:text-zinc-500"}`}
                 >›</motion.span>
               </motion.div>
             ))}
@@ -448,8 +448,8 @@ function VerifiabilitySection() {
               { label: "Google-gated entry", color: "text-blue-400 border-blue-500/20 bg-blue-950/20" },
               { label: "No backend", color: "text-emerald-400 border-emerald-500/20 bg-emerald-950/20" },
               { label: "No admin key", color: "text-emerald-400 border-emerald-500/20 bg-emerald-950/20" },
-              { label: "One PTB settlement", color: "text-violet-400 border-violet-500/20 bg-violet-950/20" },
-              { label: "sui::random DKG", color: "text-violet-400 border-violet-500/20 bg-violet-950/20" },
+              { label: "One PTB settlement", color: "text-blue-400 border-blue-500/20 bg-blue-950/20" },
+              { label: "sui::random DKG", color: "text-blue-400 border-blue-500/20 bg-blue-950/20" },
               { label: "100% on-chain state", color: "text-cyan-400 border-cyan-500/20 bg-cyan-950/20" },
             ].map((item) => (
               <motion.span key={item.label} variants={fadeUp}
@@ -482,7 +482,7 @@ function VerifiabilitySection() {
               {[
                 { k: "Commitment", v: "hash only — no amount on-chain until reveal", c: "text-amber-400" },
                 { k: "BidRevealed event", v: "amount appears here, in the reveal tx", c: "text-amber-300" },
-                { k: "Resolve tx", v: "consumes 0x8, settles winners + refunds atomically", c: "text-violet-400" },
+                { k: "Resolve tx", v: "consumes 0x8 — selects winners via DKG randomness", c: "text-blue-400" },
                 { k: "WinnerCertificate", v: "minted on-chain to each winner", c: "text-emerald-400" },
               ].map((a) => (
                 <div key={a.k} className="flex items-baseline gap-2">
@@ -563,7 +563,7 @@ export default function Home() {
             <motion.h2 variants={fadeUp} className="text-4xl lg:text-5xl font-bold text-white mb-6 leading-tight text-balance">
               Lose your device.
               {" "}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-emerald-400">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-300 to-blue-400">
                 Keep your bid.
               </span>
             </motion.h2>
@@ -573,7 +573,7 @@ export default function Home() {
             </motion.p>
             <motion.div variants={fadeUp} className="flex justify-center gap-4 flex-wrap">
               <a href="#auction"
-                className="px-7 py-3.5 bg-violet-600 hover:bg-violet-500 text-white text-sm font-semibold rounded-xl transition-colors">
+                className="px-7 py-3.5 bg-emerald-500 hover:bg-emerald-400 text-zinc-950 text-sm font-semibold rounded-xl transition active:scale-[0.98]">
                 Launch Live Auction →
               </a>
               {PACKAGE_ID && (
