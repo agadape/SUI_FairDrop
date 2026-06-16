@@ -5,7 +5,15 @@ import { UmbraTerminal } from "@/app/components/UmbraTerminal";
 
 export default function UmbraPage() {
   return (
-    <main className="min-h-screen bg-white text-zinc-900">
+    <main
+      className="min-h-screen bg-white text-zinc-900 relative"
+      style={{
+        backgroundImage:
+          "linear-gradient(to right,rgba(0,0,0,0.04) 1px,transparent 1px)," +
+          "linear-gradient(to bottom,rgba(0,0,0,0.04) 1px,transparent 1px)",
+        backgroundSize: "40px 40px",
+      }}
+    >
       <div className="mx-auto max-w-5xl px-4 sm:px-6 py-16 sm:py-24 space-y-12">
         <header className="space-y-3">
           <Link href="/" className="text-[11px] font-mono uppercase tracking-wide text-zinc-500 hover:text-zinc-900">← FairDrop</Link>
