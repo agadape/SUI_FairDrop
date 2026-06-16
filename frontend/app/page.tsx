@@ -206,46 +206,64 @@ function HeroSection() {
           </radialGradient>
         </defs>
 
-        {/* central spine (behind headline, very faint) */}
-        <motion.line x1="640" y1="150" x2="640" y2="470"
-          stroke="#ececed" strokeWidth="1.25" strokeLinecap="round"
+        {/* TrustLine-style enclosing frame: a large faint rounded rectangle
+            that the cards overlap, a central vertical axis with up/down arrow
+            tips + nodes, and short stubs docking each card. One connected graph. */}
+
+        {/* main frame loop */}
+        <motion.path
+          id="frame"
+          d="M 640 150 L 934 150 Q 980 150 980 196 L 980 594 Q 980 640 934 640 L 346 640 Q 300 640 300 594 L 300 196 Q 300 150 346 150 Z"
+          fill="none" stroke="#e4e4e7" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
           initial={{ pathLength: 0, opacity: 0 }}
           animate={{ pathLength: 1, opacity: 1 }}
-          transition={{ delay: 0.45, duration: 0.8, ease: "easeOut" }} />
+          transition={{ delay: 0.5, duration: 1.7, ease: [0.16, 1, 0.3, 1] }} />
 
-        {/* four symmetric branches: hub → card column */}
+        {/* central vertical axis — dashed, with arrow tips above & below */}
+        <motion.line x1="640" y1="100" x2="640" y2="150"
+          stroke="#dcdce0" strokeWidth="1.25" strokeDasharray="4 4" strokeLinecap="round"
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.4, duration: 0.6 }} />
+        <motion.polyline points="634 110 640 102 646 110"
+          fill="none" stroke="#cfcfd4" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.6, duration: 0.5 }} />
+        <motion.line x1="640" y1="640" x2="640" y2="694"
+          stroke="#dcdce0" strokeWidth="1.25" strokeDasharray="4 4" strokeLinecap="round"
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.4, duration: 0.6 }} />
+        <motion.polyline points="634 684 640 692 646 684"
+          fill="none" stroke="#cfcfd4" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.6, duration: 0.5 }} />
+
+        {/* short stubs: frame edge → each card */}
         {[
-          { id: "b1", d: "M 640 150 L 470 150 Q 450 150 450 172 L 450 300 Q 450 322 428 322 L 252 322", delay: 0.6 },
-          { id: "b2", d: "M 640 150 L 810 150 Q 830 150 830 172 L 830 300 Q 830 322 852 322 L 1028 322", delay: 0.68 },
-          { id: "b3", d: "M 640 470 L 470 470 Q 450 470 450 492 L 450 556 Q 450 578 428 578 L 252 578", delay: 0.76 },
-          { id: "b4", d: "M 640 470 L 810 470 Q 830 470 830 492 L 830 556 Q 830 578 852 578 L 1028 578", delay: 0.84 },
-        ].map((b) => (
-          <motion.path key={b.id} id={b.id} d={b.d}
-            fill="none" stroke="#e4e4e7" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
+          "M 300 380 L 250 380", "M 300 560 L 250 560",
+          "M 980 330 L 1030 330", "M 980 510 L 1030 510",
+        ].map((d, i) => (
+          <motion.path key={`s${i}`} d={d}
+            fill="none" stroke="#e4e4e7" strokeWidth="1.5" strokeLinecap="round"
             initial={{ pathLength: 0, opacity: 0 }}
             animate={{ pathLength: 1, opacity: 1 }}
-            transition={{ delay: b.delay, duration: 1.0, ease: [0.16, 1, 0.3, 1] }} />
+            transition={{ delay: 1.5 + i * 0.06, duration: 0.5, ease: "easeOut" }} />
         ))}
 
-        {/* hub nodes */}
-        {[[640, 150], [640, 470]].map(([cx, cy]) => (
-          <motion.circle key={`h${cy}`} cx={cx} cy={cy} r="3.5" fill="#c7d2fe"
+        {/* axis tip nodes (top + bottom center) */}
+        {[[640, 100], [640, 694]].map(([cx, cy]) => (
+          <motion.circle key={`a${cy}`} cx={cx} cy={cy} r="3.5" fill="#c7d2fe"
             initial={{ opacity: 0, scale: 0 }} animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.45, duration: 0.4, ease: "backOut" }} />
+            transition={{ delay: 1.7, duration: 0.4, ease: "backOut" }} />
         ))}
 
-        {/* dock dots at card columns */}
-        {[[252, 322], [1028, 322], [252, 578], [1028, 578]].map(([cx, cy]) => (
-          <motion.circle key={`d${cx}-${cy}`} cx={cx} cy={cy} r="3" fill="#d4d4d8"
+        {/* frame corner + dock nodes */}
+        {[[640, 150], [640, 640], [300, 380], [300, 560], [980, 330], [980, 510]].map(([cx, cy]) => (
+          <motion.circle key={`n${cx}-${cy}`} cx={cx} cy={cy} r="3" fill="#d4d4d8"
             initial={{ opacity: 0 }} animate={{ opacity: 1 }}
             transition={{ delay: 1.5, duration: 0.4 }} />
         ))}
 
-        {/* traveling pulses: hub → card, looping */}
-        {["b1", "b2", "b3", "b4"].map((id, i) => (
-          <circle key={`p${id}`} r="3.5" fill="url(#pulseFill)">
-            <animateMotion dur="3.6s" begin={`${1.7 + i * 0.4}s`} repeatCount="indefinite" calcMode="linear">
-              <mpath href={`#${id}`} />
+        {/* two pulses chasing around the frame */}
+        {[1.9, 6.4].map((begin, i) => (
+          <circle key={`p${i}`} r="4" fill="url(#pulseFill)">
+            <animateMotion dur="9s" begin={`${begin}s`} repeatCount="indefinite" calcMode="linear">
+              <mpath href="#frame" />
             </animateMotion>
           </circle>
         ))}
