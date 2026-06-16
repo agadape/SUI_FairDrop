@@ -183,116 +183,91 @@ function NavBar() {
 
 function HeroSection() {
   return (
-    <section className="relative overflow-hidden bg-white pt-14 pb-20 lg:pt-18 lg:pb-28">
-      {/* Technical dot grid */}
-      <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(#d4d4d8_1px,transparent_1px)] [background-size:20px_20px] opacity-50" />
-      {/* Vignette — dissolves grid toward center so card reads clean */}
-      <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_70%_70%_at_50%_40%,white_40%,transparent_100%)]" />
+    <section className="relative flex flex-col items-center overflow-hidden bg-white pt-14 pb-28">
 
-      <div className="relative max-w-7xl mx-auto px-6">
+      {/* Architectural line grid — edge to edge */}
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#e4e4e7_1px,transparent_1px),linear-gradient(to_bottom,#e4e4e7_1px,transparent_1px)] bg-[size:4rem_4rem]" />
+      {/* Top white fade */}
+      <div className="absolute top-0 inset-x-0 h-20 bg-gradient-to-b from-white to-transparent pointer-events-none z-10" />
+      {/* Bottom white fade — dissolves grid before next section */}
+      <div className="absolute bottom-0 inset-x-0 h-56 bg-gradient-to-b from-transparent to-white pointer-events-none z-10" />
 
-        {/* Eyebrow */}
-        <motion.p
-          className={`${EYEBROW} border-l-2 border-zinc-200 pl-3 mb-6`}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.5 }}
-        >
-          Sealed-Bid Fair-Launch Auction · Sui Overflow 2026 · Testnet
-        </motion.p>
+      {/* Eyebrow — centered */}
+      <motion.div
+        className="relative z-20 flex items-center gap-2 mb-10"
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+        <p className={`${EYEBROW} mb-0`}>
+          Sealed-Bid · Fair-Launch · Sui Overflow 2026 · Testnet
+        </p>
+      </motion.div>
 
-        {/* Poster block: massive headline + overlapping terminal card */}
-        <div className="relative">
+      {/* Monument headline — dead center */}
+      <motion.h1
+        className="relative z-20 text-center font-black tracking-[-0.05em] leading-[0.88] text-zinc-900 px-4 w-full"
+        style={{ fontSize: "clamp(3.2rem, 11vw, 12rem)" }}
+        initial={{ opacity: 0, y: 50 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
+      >
+        Lose your<br />device.
+        <br />
+        <span className="text-zinc-300">Keep your<br />bid.</span>
+      </motion.h1>
 
-          {/* Headline — full width poster type, right-padded on desktop to make room for card */}
-          <motion.h1
-            className="font-black leading-none tracking-[-0.04em] text-[clamp(3rem,8.5vw,9rem)] lg:pr-[430px]"
-            initial={{ y: 70, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.85, ease: [0.16, 1, 0.3, 1] }}
-          >
-            <span className="text-zinc-900">Lose your<br />device.</span>
-            <br />
-            <span className="text-zinc-300">Keep your<br />bid.</span>
-          </motion.h1>
-
-          {/* Recovery terminal — snaps in on top of headline */}
-          <motion.div
-            className="mt-8 lg:mt-0 lg:absolute lg:right-0 lg:top-1/2 lg:-translate-y-1/2 w-full lg:w-[400px]"
-            initial={{ opacity: 0, y: 28, scale: 0.97 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            transition={{ delay: 0.4, duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-          >
-            <div className="bg-white/90 backdrop-blur-2xl border border-zinc-200/90 rounded-[2rem] shadow-[0_40px_100px_-20px_rgba(0,0,0,0.15),0_0_0_1px_rgba(0,0,0,0.04)] overflow-hidden">
-              {/* Terminal header bar */}
-              <div className="flex items-center gap-1.5 px-5 pt-4 pb-3 border-b border-zinc-100">
-                <span className="w-2.5 h-2.5 rounded-full bg-zinc-200" />
-                <span className="w-2.5 h-2.5 rounded-full bg-zinc-200" />
-                <span className="w-2.5 h-2.5 rounded-full bg-zinc-200" />
-                <span className="ml-3 text-[10px] font-mono text-zinc-400 tracking-[0.15em] uppercase">Recovery Flow · Live</span>
-              </div>
-              <div className="p-5">
-                <RecoveryHero />
-              </div>
-            </div>
-          </motion.div>
-
+      {/* Recovery terminal — dead center, overlaps bottom half of headline */}
+      <motion.div
+        className="relative z-30 -mt-12 sm:-mt-16 lg:-mt-20 w-full max-w-[360px] px-4"
+        initial={{ opacity: 0, y: 32, scale: 0.95 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ delay: 0.45, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+      >
+        <div className="bg-white/95 backdrop-blur-2xl border border-zinc-200 rounded-[2rem] shadow-[0_40px_100px_-15px_rgba(0,0,0,0.18),0_0_0_1px_rgba(0,0,0,0.04)] overflow-hidden">
+          {/* Terminal chrome */}
+          <div className="flex items-center gap-1.5 px-5 pt-4 pb-3 border-b border-zinc-100">
+            <span className="w-2.5 h-2.5 rounded-full bg-zinc-200" />
+            <span className="w-2.5 h-2.5 rounded-full bg-zinc-200" />
+            <span className="w-2.5 h-2.5 rounded-full bg-zinc-200" />
+            <span className="ml-3 text-[10px] font-mono text-zinc-400 tracking-[0.15em] uppercase">Recovery Flow · Live</span>
+          </div>
+          <div className="p-5">
+            <RecoveryHero />
+          </div>
         </div>
+      </motion.div>
 
-        {/* Body copy + CTAs — staged in after headline */}
-        <div className="mt-10 lg:mt-14 lg:max-w-[500px]">
-
-          <motion.p
-            className="text-zinc-500 text-lg leading-relaxed mb-3"
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.55, duration: 0.55 }}
-          >
-            One Google login, a blind bid only you can open. Lose this device and the bid lands
-            on the next one — held on Walrus, locked by Seal. No server, no FairDrop team, ever sees it.
-          </motion.p>
-
-          <motion.p
-            className="text-zinc-400 text-sm mb-8"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.65, duration: 0.55 }}
-          >
-            zkLogin re-derives the same wallet on any device. Raises Sybil cost — not Sybil-proof.
-          </motion.p>
-
-          <motion.div
-            className="flex flex-wrap gap-3 mb-8"
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.7, duration: 0.5 }}
-          >
-            <a href="#auction" className={BTN_PRIMARY}>
-              Launch Live Auction →
+      {/* CTAs — centered below terminal */}
+      <motion.div
+        className="relative z-20 mt-7 flex flex-col items-center gap-5"
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.7, duration: 0.55 }}
+      >
+        <div className="flex flex-wrap justify-center gap-3">
+          <a href="#auction" className={BTN_PRIMARY}>Launch Live Auction →</a>
+          {AUCTION_ID && (
+            <a href={objUrl(AUCTION_ID)} target="_blank" rel="noopener noreferrer" className={BTN_SECONDARY}>
+              Verify on Explorer <IExternal className="w-3.5 h-3.5" />
             </a>
-            {AUCTION_ID && (
-              <a href={objUrl(AUCTION_ID)} target="_blank" rel="noopener noreferrer" className={BTN_SECONDARY}>
-                Verify on Explorer <IExternal className="w-3.5 h-3.5" />
-              </a>
-            )}
-          </motion.div>
-
-          <motion.div
-            className="flex flex-wrap gap-x-5 gap-y-2"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.8, duration: 0.55 }}
-          >
-            {["Bids hidden until reveal", "Recover from any device", "No backend", "No admin key"].map((t) => (
-              <span key={t} className="text-[11px] text-zinc-400 flex items-center gap-1.5">
-                <ICheck className="w-3 h-3 text-emerald-500" /> {t}
-              </span>
-            ))}
-          </motion.div>
-
+          )}
         </div>
 
-      </div>
+        <p className="text-zinc-400 text-sm text-center max-w-sm leading-relaxed px-4">
+          One Google login. A blind bid only you can open. Lose this device — the bid is on the next one. No server, no team, ever sees it.
+        </p>
+
+        <div className="flex flex-wrap justify-center gap-x-5 gap-y-1.5">
+          {["Bids hidden until reveal", "Recover from any device", "No backend", "No admin key"].map((t) => (
+            <span key={t} className="text-[11px] text-zinc-400 flex items-center gap-1.5">
+              <ICheck className="w-3 h-3 text-emerald-500" /> {t}
+            </span>
+          ))}
+        </div>
+      </motion.div>
+
     </section>
   );
 }
@@ -300,9 +275,7 @@ function HeroSection() {
 function ProblemSection() {
   return (
     <section className="relative overflow-hidden py-20">
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-10 right-10 w-80 h-80 bg-rose-100 rounded-full blur-3xl opacity-40" />
-      </div>
+      <div className="absolute inset-0 pointer-events-none" />
       <div className="relative max-w-6xl mx-auto px-6">
         <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }}>
           <motion.p variants={fadeUp} className={EYEBROW}>The problem</motion.p>
@@ -369,9 +342,7 @@ function HowItWorksSection() {
 
   return (
     <section id="how" className="relative overflow-hidden py-20">
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-violet-100 rounded-full blur-3xl opacity-30" />
-      </div>
+      <div className="absolute inset-0 pointer-events-none" />
       <div className="relative max-w-6xl mx-auto px-6">
         <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }}>
           <motion.p variants={fadeUp} className={EYEBROW}>Auction lifecycle</motion.p>
@@ -422,10 +393,7 @@ function HowItWorksSection() {
 function WhySuiSection() {
   return (
     <section id="why-sui" className="relative overflow-hidden py-20">
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-0 right-0 w-[30rem] h-[30rem] bg-cyan-100 rounded-full blur-3xl opacity-30" />
-        <div className="absolute bottom-0 left-20 w-64 h-64 bg-orange-100 rounded-full blur-3xl opacity-25" />
-      </div>
+      <div className="absolute inset-0 pointer-events-none" />
       <div className="relative max-w-6xl mx-auto px-6">
         <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }}>
           <motion.p variants={fadeUp} className={EYEBROW}>Powered by</motion.p>
@@ -566,9 +534,7 @@ export default function Home() {
 
       {/* Live Auction */}
       <section id="auction" className="relative overflow-hidden py-20">
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-0 left-1/4 w-96 h-96 bg-blue-100 rounded-full blur-3xl opacity-25" />
-        </div>
+        <div className="absolute inset-0 pointer-events-none" />
         <div className="relative max-w-6xl mx-auto px-6">
           <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }} className="mb-10">
             <motion.p variants={fadeUp} className={EYEBROW}>Live on testnet</motion.p>
@@ -585,9 +551,7 @@ export default function Home() {
 
       {/* Final CTA */}
       <section className="relative overflow-hidden py-28">
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-[40rem] h-[20rem] bg-gradient-to-b from-violet-100 to-transparent rounded-full blur-3xl opacity-50" />
-        </div>
+        <div className="absolute inset-0 pointer-events-none" />
         <div className="relative max-w-6xl mx-auto px-6 text-center">
           <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }}>
             <motion.h2 variants={fadeUp} className="text-4xl lg:text-6xl font-bold text-zinc-900 mb-6 tracking-tight leading-tight">
