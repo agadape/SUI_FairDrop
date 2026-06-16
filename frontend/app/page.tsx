@@ -183,35 +183,44 @@ function NavBar() {
 
 function HeroSection() {
   return (
-    <section className="relative overflow-hidden bg-white">
+    <section className="relative overflow-hidden">
 
       {/* Circuit-trace SVG network — desktop only, purely decorative */}
       <svg
         className="absolute inset-0 w-full h-full pointer-events-none hidden lg:block"
-        viewBox="0 0 1280 860"
+        viewBox="0 0 1280 780"
         preserveAspectRatio="xMidYMid slice"
         aria-hidden
       >
-        {/* Left floater → center headline elbow trace */}
-        <path d="M 230 190 L 310 190 Q 330 190 330 210 L 330 270 Q 330 295 355 295 L 490 295"
+        {/* ── Top-left floater → center headline ── */}
+        <path d="M 225 178 L 318 178 Q 338 178 338 198 L 338 262 Q 338 285 362 285 L 492 285"
           fill="none" stroke="#e4e4e7" strokeWidth="1.5" strokeLinecap="round" />
-        {/* dot terminus */}
-        <circle cx="490" cy="295" r="3" fill="#d4d4d8" />
+        <circle cx="492" cy="285" r="3" fill="#d4d4d8" />
 
-        {/* Right floater → center headline elbow trace */}
-        <path d="M 1050 175 L 970 175 Q 950 175 950 195 L 950 270 Q 950 295 925 295 L 790 295"
+        {/* ── Center → left bottom mini-card (sui::random) ── */}
+        <path d="M 492 320 L 362 320 Q 338 320 338 345 L 338 412 Q 338 432 318 432 L 225 432"
           fill="none" stroke="#e4e4e7" strokeWidth="1.5" strokeLinecap="round" />
-        <circle cx="790" cy="295" r="3" fill="#d4d4d8" />
+        <circle cx="225" cy="432" r="3" fill="#d4d4d8" />
 
-        {/* Center CTA → RecoveryHero dashed vertical */}
-        <line x1="640" y1="530" x2="640" y2="590"
-          stroke="#e4e4e7" strokeWidth="1.5" strokeDasharray="5 3" strokeLinecap="round" />
-        <circle cx="640" cy="592" r="3" fill="#d4d4d8" />
+        {/* ── Top-right floater → center headline ── */}
+        <path d="M 1055 162 L 962 162 Q 942 162 942 182 L 942 262 Q 942 285 918 285 L 788 285"
+          fill="none" stroke="#e4e4e7" strokeWidth="1.5" strokeLinecap="round" />
+        <circle cx="788" cy="285" r="3" fill="#d4d4d8" />
 
-        {/* Ambient corner traces — give depth without noise */}
-        <path d="M 0 60 L 80 60 Q 100 60 100 80 L 100 140" fill="none" stroke="#f0f0f0" strokeWidth="1" />
-        <path d="M 1280 40 L 1200 40 Q 1180 40 1180 60 L 1180 130" fill="none" stroke="#f0f0f0" strokeWidth="1" />
-        <path d="M 0 760 L 100 760 Q 120 760 120 740 L 120 680" fill="none" stroke="#f0f0f0" strokeWidth="1" />
+        {/* ── Center → right bottom mini-card (Walrus) ── */}
+        <path d="M 788 320 L 918 320 Q 942 320 942 345 L 942 412 Q 942 432 962 432 L 1055 432"
+          fill="none" stroke="#e4e4e7" strokeWidth="1.5" strokeLinecap="round" />
+        <circle cx="1055" cy="432" r="3" fill="#d4d4d8" />
+
+        {/* ── Center downward trace → next section ── */}
+        <line x1="640" y1="560" x2="640" y2="680"
+          stroke="#e4e4e7" strokeWidth="1" strokeDasharray="4 4" strokeLinecap="round" />
+
+        {/* ── Ambient corner circuit traces ── */}
+        <path d="M 0 50 L 72 50 Q 90 50 90 68 L 90 130" fill="none" stroke="#ececee" strokeWidth="1" />
+        <path d="M 1280 36 L 1208 36 Q 1190 36 1190 54 L 1190 120" fill="none" stroke="#ececee" strokeWidth="1" />
+        <path d="M 0 720 L 88 720 Q 106 720 106 702 L 106 640" fill="none" stroke="#ececee" strokeWidth="1" />
+        <path d="M 1280 700 L 1192 700 Q 1174 700 1174 682 L 1174 620" fill="none" stroke="#ececee" strokeWidth="1" />
       </svg>
 
       {/* 3-column spatial grid: [left floater] [center] [right floater] */}
@@ -336,30 +345,7 @@ function HeroSection() {
             ))}
           </motion.div>
 
-          {/* Connector line: CTAs → RecoveryHero */}
-          <div className="w-px h-8 bg-gradient-to-b from-zinc-200 to-zinc-100" />
-
-          {/* RecoveryHero — bottom center, connected */}
-          <motion.div
-            className="w-full max-w-sm mt-0"
-            initial={{ opacity: 0, y: 20, scale: 0.97 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            transition={{ delay: 0.55, duration: 0.75, ease: [0.16, 1, 0.3, 1] }}
-          >
-            <div className="rounded-[2rem] bg-white border border-zinc-100 shadow-[0_24px_60px_-12px_rgba(0,0,0,0.10),0_0_0_1px_rgba(0,0,0,0.03)] overflow-hidden">
-              <div className="flex items-center gap-1.5 px-5 pt-4 pb-3 border-b border-zinc-50">
-                <span className="w-2 h-2 rounded-full bg-zinc-100" />
-                <span className="w-2 h-2 rounded-full bg-zinc-100" />
-                <span className="w-2 h-2 rounded-full bg-zinc-100" />
-                <span className="ml-3 text-[10px] font-mono text-zinc-400 tracking-[0.15em] uppercase">Recovery Flow · Live</span>
-              </div>
-              <div className="p-5">
-                <RecoveryHero />
-              </div>
-            </div>
-          </motion.div>
-
-          <div className="pb-10" />
+          <div className="pb-12" />
         </div>
 
         {/* ── RIGHT FLOATER: Secured by Seal ─────────────────────────── */}
@@ -407,6 +393,64 @@ function HeroSection() {
           </div>
         </motion.div>
 
+      </div>
+    </section>
+  );
+}
+
+function RecoverySection() {
+  return (
+    <section className="relative overflow-hidden py-24">
+      <div className="max-w-5xl mx-auto px-6 flex flex-col items-center text-center gap-10">
+        {/* Eyebrow */}
+        <motion.div
+          className="flex flex-col items-center gap-3"
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, ease: [0.25, 0.1, 0.25, 1] }}
+        >
+          <span className="text-xs font-medium uppercase tracking-widest text-zinc-400">Recovery Flow</span>
+          <h2 className="text-3xl lg:text-5xl font-bold text-zinc-800 tracking-tight">
+            Lose your device.<br className="hidden sm:block" /> Keep your bid.
+          </h2>
+          <p className="max-w-lg text-zinc-500 text-base leading-relaxed">
+            Your encrypted nonce lives in Walrus. Your access policy lives on-chain.
+            No server holds your keys — not even ours.
+          </p>
+        </motion.div>
+
+        {/* Terminal card */}
+        <motion.div
+          className="w-full max-w-sm"
+          initial={{ opacity: 0, y: 24, scale: 0.97 }}
+          whileInView={{ opacity: 1, y: 0, scale: 1 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.15, duration: 0.75, ease: [0.16, 1, 0.3, 1] }}
+        >
+          <div className="rounded-[2rem] bg-white border border-zinc-100 shadow-[0_32px_80px_-16px_rgba(0,0,0,0.10),0_0_0_1px_rgba(0,0,0,0.03)] overflow-hidden">
+            <div className="flex items-center gap-1.5 px-5 pt-4 pb-3 border-b border-zinc-50">
+              <span className="w-2 h-2 rounded-full bg-zinc-100" />
+              <span className="w-2 h-2 rounded-full bg-zinc-100" />
+              <span className="w-2 h-2 rounded-full bg-zinc-100" />
+              <span className="ml-3 text-[10px] font-mono text-zinc-400 tracking-[0.15em] uppercase">Recovery Flow · Live</span>
+            </div>
+            <div className="p-5">
+              <RecoveryHero />
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Proof line */}
+        <motion.p
+          className="text-xs text-zinc-400 font-mono tracking-widest uppercase"
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.4, duration: 0.5 }}
+        >
+          Walrus blob_id stored in Commitment on-chain · Seal policy: Entry owner only
+        </motion.p>
       </div>
     </section>
   );
@@ -665,6 +709,7 @@ export default function Home() {
     <main className="min-h-screen bg-[#FAFAFA]">
       <NavBar />
       <HeroSection />
+      <RecoverySection />
       <ProblemSection />
       <FairnessSection />
       <HowItWorksSection />
