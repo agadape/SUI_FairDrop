@@ -185,23 +185,69 @@ function HeroSection() {
   return (
     <section className="relative overflow-hidden">
 
-      {/* Ambient corner traces — desktop only, purely decorative texture.
-          Faint, self-drawing on load. No card connectors (responsive grid
-          can't pin SVG endpoints reliably — kept as pure ambient framing). */}
+      {/* Circuit bus — desktop only, decorative. A central vertical spine
+          feeds four symmetric branches that dock at the card columns. The
+          shared hub + perfect mirror symmetry read as an intentional node
+          graph (vs. floating connectors). Self-draws on load; pulses travel
+          hub → card continuously. Center-anchored so xMid slice keeps it
+          stable across widths. Sits behind the cards (cards cover branch
+          ends, so they appear plugged in). */}
       <svg
         className="absolute inset-0 w-full h-full pointer-events-none hidden lg:block"
         viewBox="0 0 1280 780"
         preserveAspectRatio="xMidYMid slice"
         aria-hidden
       >
-        {["M 0 60 L 84 60 Q 104 60 104 80 L 104 150",
-          "M 1280 44 L 1196 44 Q 1176 44 1176 64 L 1176 134",
-          "M 0 716 L 96 716 Q 116 716 116 696 L 116 628",
-          "M 1280 700 L 1184 700 Q 1164 700 1164 680 L 1164 612"].map((d, i) => (
-          <motion.path key={i} d={d} fill="none" stroke="#ededf0" strokeWidth="1"
+        <defs>
+          <radialGradient id="pulseFill" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="#818cf8" stopOpacity="0.9" />
+            <stop offset="60%" stopColor="#818cf8" stopOpacity="0.35" />
+            <stop offset="100%" stopColor="#818cf8" stopOpacity="0" />
+          </radialGradient>
+        </defs>
+
+        {/* central spine (behind headline, very faint) */}
+        <motion.line x1="640" y1="150" x2="640" y2="470"
+          stroke="#ececed" strokeWidth="1.25" strokeLinecap="round"
+          initial={{ pathLength: 0, opacity: 0 }}
+          animate={{ pathLength: 1, opacity: 1 }}
+          transition={{ delay: 0.45, duration: 0.8, ease: "easeOut" }} />
+
+        {/* four symmetric branches: hub → card column */}
+        {[
+          { id: "b1", d: "M 640 150 L 470 150 Q 450 150 450 172 L 450 300 Q 450 322 428 322 L 252 322", delay: 0.6 },
+          { id: "b2", d: "M 640 150 L 810 150 Q 830 150 830 172 L 830 300 Q 830 322 852 322 L 1028 322", delay: 0.68 },
+          { id: "b3", d: "M 640 470 L 470 470 Q 450 470 450 492 L 450 556 Q 450 578 428 578 L 252 578", delay: 0.76 },
+          { id: "b4", d: "M 640 470 L 810 470 Q 830 470 830 492 L 830 556 Q 830 578 852 578 L 1028 578", delay: 0.84 },
+        ].map((b) => (
+          <motion.path key={b.id} id={b.id} d={b.d}
+            fill="none" stroke="#e4e4e7" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
             initial={{ pathLength: 0, opacity: 0 }}
             animate={{ pathLength: 1, opacity: 1 }}
-            transition={{ delay: 0.6 + i * 0.1, duration: 1.0, ease: "easeOut" }} />
+            transition={{ delay: b.delay, duration: 1.0, ease: [0.16, 1, 0.3, 1] }} />
+        ))}
+
+        {/* hub nodes */}
+        {[[640, 150], [640, 470]].map(([cx, cy]) => (
+          <motion.circle key={`h${cy}`} cx={cx} cy={cy} r="3.5" fill="#c7d2fe"
+            initial={{ opacity: 0, scale: 0 }} animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.45, duration: 0.4, ease: "backOut" }} />
+        ))}
+
+        {/* dock dots at card columns */}
+        {[[252, 322], [1028, 322], [252, 578], [1028, 578]].map(([cx, cy]) => (
+          <motion.circle key={`d${cx}-${cy}`} cx={cx} cy={cy} r="3" fill="#d4d4d8"
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+            transition={{ delay: 1.5, duration: 0.4 }} />
+        ))}
+
+        {/* traveling pulses: hub → card, looping */}
+        {["b1", "b2", "b3", "b4"].map((id, i) => (
+          <circle key={`p${id}`} r="3.5" fill="url(#pulseFill)">
+            <animateMotion dur="3.6s" begin={`${1.7 + i * 0.4}s`} repeatCount="indefinite" calcMode="linear">
+              <mpath href={`#${id}`} />
+            </animateMotion>
+          </circle>
         ))}
       </svg>
 
