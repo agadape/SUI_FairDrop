@@ -185,119 +185,23 @@ function HeroSection() {
   return (
     <section className="relative overflow-hidden">
 
-      {/* Circuit-trace SVG network — desktop only, purely decorative.
-          Paths self-draw on load (pathLength), then glowing pulses travel
-          center → cards continuously (SMIL animateMotion along each trace). */}
+      {/* Ambient corner traces — desktop only, purely decorative texture.
+          Faint, self-drawing on load. No card connectors (responsive grid
+          can't pin SVG endpoints reliably — kept as pure ambient framing). */}
       <svg
         className="absolute inset-0 w-full h-full pointer-events-none hidden lg:block"
         viewBox="0 0 1280 780"
         preserveAspectRatio="xMidYMid slice"
         aria-hidden
       >
-        <defs>
-          {/* soft glow for traveling pulse */}
-          <filter id="pulseGlow" x="-200%" y="-200%" width="500%" height="500%">
-            <feGaussianBlur stdDeviation="2.2" result="b" />
-            <feMerge>
-              <feMergeNode in="b" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
-          <radialGradient id="pulseFill" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#a5b4fc" stopOpacity="0.95" />
-            <stop offset="100%" stopColor="#a5b4fc" stopOpacity="0" />
-          </radialGradient>
-        </defs>
-
-        {/* ── Top-left floater ↔ center headline ── */}
-        <motion.path
-          id="trace1"
-          d="M 225 178 L 318 178 Q 338 178 338 198 L 338 262 Q 338 285 362 285 L 492 285"
-          fill="none" stroke="#e4e4e7" strokeWidth="1.5" strokeLinecap="round"
-          initial={{ pathLength: 0, opacity: 0 }}
-          animate={{ pathLength: 1, opacity: 1 }}
-          transition={{ delay: 0.5, duration: 1.1, ease: [0.16, 1, 0.3, 1] }}
-        />
-        <motion.circle cx="492" cy="285" r="3" fill="#d4d4d8"
-          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.5, duration: 0.4 }} />
-
-        {/* ── Center → left bottom mini-card (sui::random) ── */}
-        <motion.path
-          id="trace2"
-          d="M 492 320 L 362 320 Q 338 320 338 345 L 338 412 Q 338 432 318 432 L 225 432"
-          fill="none" stroke="#e4e4e7" strokeWidth="1.5" strokeLinecap="round"
-          initial={{ pathLength: 0, opacity: 0 }}
-          animate={{ pathLength: 1, opacity: 1 }}
-          transition={{ delay: 0.62, duration: 1.1, ease: [0.16, 1, 0.3, 1] }}
-        />
-        <motion.circle cx="225" cy="432" r="3" fill="#d4d4d8"
-          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.6, duration: 0.4 }} />
-
-        {/* ── Top-right floater ↔ center headline ── */}
-        <motion.path
-          id="trace3"
-          d="M 1055 162 L 962 162 Q 942 162 942 182 L 942 262 Q 942 285 918 285 L 788 285"
-          fill="none" stroke="#e4e4e7" strokeWidth="1.5" strokeLinecap="round"
-          initial={{ pathLength: 0, opacity: 0 }}
-          animate={{ pathLength: 1, opacity: 1 }}
-          transition={{ delay: 0.56, duration: 1.1, ease: [0.16, 1, 0.3, 1] }}
-        />
-        <motion.circle cx="788" cy="285" r="3" fill="#d4d4d8"
-          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.5, duration: 0.4 }} />
-
-        {/* ── Center → right bottom mini-card (Walrus) ── */}
-        <motion.path
-          id="trace4"
-          d="M 788 320 L 918 320 Q 942 320 942 345 L 942 412 Q 942 432 962 432 L 1055 432"
-          fill="none" stroke="#e4e4e7" strokeWidth="1.5" strokeLinecap="round"
-          initial={{ pathLength: 0, opacity: 0 }}
-          animate={{ pathLength: 1, opacity: 1 }}
-          transition={{ delay: 0.68, duration: 1.1, ease: [0.16, 1, 0.3, 1] }}
-        />
-        <motion.circle cx="1055" cy="432" r="3" fill="#d4d4d8"
-          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.6, duration: 0.4 }} />
-
-        {/* ── Traveling pulses: center → each card, looping ── */}
-        {/* trace1/trace3 run card→center in geometry, so reverse via keyPoints */}
-        <circle r="3.5" fill="url(#pulseFill)" filter="url(#pulseGlow)">
-          <animateMotion dur="3.4s" begin="1.6s" repeatCount="indefinite"
-            keyPoints="1;0" keyTimes="0;1" calcMode="linear">
-            <mpath href="#trace1" />
-          </animateMotion>
-        </circle>
-        <circle r="3.5" fill="url(#pulseFill)" filter="url(#pulseGlow)">
-          <animateMotion dur="3.4s" begin="2.0s" repeatCount="indefinite" calcMode="linear">
-            <mpath href="#trace2" />
-          </animateMotion>
-        </circle>
-        <circle r="3.5" fill="url(#pulseFill)" filter="url(#pulseGlow)">
-          <animateMotion dur="3.4s" begin="1.8s" repeatCount="indefinite"
-            keyPoints="1;0" keyTimes="0;1" calcMode="linear">
-            <mpath href="#trace3" />
-          </animateMotion>
-        </circle>
-        <circle r="3.5" fill="url(#pulseFill)" filter="url(#pulseGlow)">
-          <animateMotion dur="3.4s" begin="2.2s" repeatCount="indefinite" calcMode="linear">
-            <mpath href="#trace4" />
-          </animateMotion>
-        </circle>
-
-        {/* ── Center downward trace → next section ── */}
-        <motion.line x1="640" y1="560" x2="640" y2="680"
-          stroke="#e4e4e7" strokeWidth="1" strokeDasharray="4 4" strokeLinecap="round"
-          initial={{ pathLength: 0, opacity: 0 }}
-          animate={{ pathLength: 1, opacity: 1 }}
-          transition={{ delay: 1.0, duration: 0.8 }} />
-
-        {/* ── Ambient corner circuit traces ── */}
-        {["M 0 50 L 72 50 Q 90 50 90 68 L 90 130",
-          "M 1280 36 L 1208 36 Q 1190 36 1190 54 L 1190 120",
-          "M 0 720 L 88 720 Q 106 720 106 702 L 106 640",
-          "M 1280 700 L 1192 700 Q 1174 700 1174 682 L 1174 620"].map((d, i) => (
-          <motion.path key={i} d={d} fill="none" stroke="#ececee" strokeWidth="1"
+        {["M 0 60 L 84 60 Q 104 60 104 80 L 104 150",
+          "M 1280 44 L 1196 44 Q 1176 44 1176 64 L 1176 134",
+          "M 0 716 L 96 716 Q 116 716 116 696 L 116 628",
+          "M 1280 700 L 1184 700 Q 1164 700 1164 680 L 1164 612"].map((d, i) => (
+          <motion.path key={i} d={d} fill="none" stroke="#ededf0" strokeWidth="1"
             initial={{ pathLength: 0, opacity: 0 }}
             animate={{ pathLength: 1, opacity: 1 }}
-            transition={{ delay: 0.8 + i * 0.08, duration: 0.9, ease: "easeOut" }} />
+            transition={{ delay: 0.6 + i * 0.1, duration: 1.0, ease: "easeOut" }} />
         ))}
       </svg>
 
@@ -366,12 +270,11 @@ function HeroSection() {
 
           {/* Eyebrow */}
           <motion.div
-            className="flex items-center gap-2 mb-7"
+            className="mb-7"
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
             <p className={`${EYEBROW} mb-0`}>Sealed-Bid · Fair-Launch · Sui Overflow 2026 · Testnet</p>
           </motion.div>
 
