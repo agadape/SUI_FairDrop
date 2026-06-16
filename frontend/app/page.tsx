@@ -189,7 +189,7 @@ function HeroSection() {
 
         {/* ── LEFT: big light "stage" card ─────────────────────────────── */}
         <motion.div
-          className="relative overflow-hidden rounded-[2.25rem] sm:rounded-[2.5rem] bg-[#f1f0ee] border border-black/[0.04] p-7 sm:p-10 lg:p-12 min-h-[480px] lg:min-h-[560px] flex flex-col"
+          className="relative overflow-hidden rounded-[2.25rem] sm:rounded-[2.5rem] bg-white border border-black/[0.04] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.06)] p-7 sm:p-10 lg:p-12 min-h-[480px] lg:min-h-[560px] flex flex-col"
           initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
@@ -654,7 +654,7 @@ function FooterSection() {
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-[#FAFAFA]">
+    <main className="min-h-screen bg-zinc-100">
       <NavBar />
       <HeroSection />
       <RecoverySection />
