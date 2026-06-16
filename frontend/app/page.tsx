@@ -183,98 +183,115 @@ function NavBar() {
 
 function HeroSection() {
   return (
-    <section className="relative overflow-hidden pt-20 pb-32 lg:pt-28 lg:pb-44 bg-white">
+    <section className="relative overflow-hidden bg-white pt-14 pb-20 lg:pt-18 lg:pb-28">
       {/* Technical dot grid */}
-      <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(#d4d4d8_1px,transparent_1px)] [background-size:20px_20px] opacity-60" />
-      {/* Subtle vignette fade at edges */}
-      <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_80%_60%_at_50%_50%,transparent_60%,white_100%)]" />
+      <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(#d4d4d8_1px,transparent_1px)] [background-size:20px_20px] opacity-50" />
+      {/* Vignette — dissolves grid toward center so card reads clean */}
+      <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_70%_70%_at_50%_40%,white_40%,transparent_100%)]" />
 
-      <div className="relative max-w-6xl mx-auto px-6">
-        <div className="grid lg:grid-cols-[5fr_4fr] gap-12 lg:gap-20 items-center">
+      <div className="relative max-w-7xl mx-auto px-6">
 
-          {/* Left — copy */}
-          <div>
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6 }}>
-              <p className={`${EYEBROW} border-l-2 border-zinc-200 pl-3`}>
-                Sealed-Bid Fair-Launch Auction · Sui Overflow 2026 · Testnet
-              </p>
-              <h1 className="text-[2.8rem] lg:text-6xl xl:text-7xl font-black tracking-[-0.04em] leading-[1.02] text-zinc-900 mb-6">
-                Lose your device.{" "}
-                <span className="relative inline-block">
-                  Keep your bid.
-                  <span className="absolute -bottom-1 left-0 right-0 h-[3px] bg-zinc-900 rounded-full opacity-[0.15]" />
-                </span>
-              </h1>
-            </motion.div>
+        {/* Eyebrow */}
+        <motion.p
+          className={`${EYEBROW} border-l-2 border-zinc-200 pl-3 mb-6`}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5 }}
+        >
+          Sealed-Bid Fair-Launch Auction · Sui Overflow 2026 · Testnet
+        </motion.p>
 
-            <motion.p
-              className="text-zinc-500 text-lg leading-relaxed max-w-lg mb-3"
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.15, duration: 0.55 }}
-            >
-              One Google login, a blind bid only you can open. Lose this device and the bid lands
-              on the next one — held on Walrus, locked by Seal. No server, no FairDrop team, ever sees it.
-            </motion.p>
+        {/* Poster block: massive headline + overlapping terminal card */}
+        <div className="relative">
 
-            <motion.p
-              className="text-zinc-400 text-sm max-w-lg mb-8"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.25, duration: 0.55 }}
-            >
-              zkLogin re-derives the same wallet on any device. Raises Sybil cost — not Sybil-proof.
-            </motion.p>
-
-            <motion.div
-              className="flex flex-wrap gap-3 mb-8"
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3, duration: 0.55 }}
-            >
-              <a href="#auction" className={BTN_PRIMARY}>
-                Launch Live Auction →
-              </a>
-              {AUCTION_ID && (
-                <a href={objUrl(AUCTION_ID)} target="_blank" rel="noopener noreferrer" className={BTN_SECONDARY}>
-                  Verify on Explorer <IExternal className="w-3.5 h-3.5" />
-                </a>
-              )}
-            </motion.div>
-
-            <motion.div
-              className="flex flex-wrap gap-x-5 gap-y-2"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.45, duration: 0.6 }}
-            >
-              {["Bids hidden until reveal", "Recover from any device", "No backend", "No admin key"].map((t) => (
-                <span key={t} className="text-[11px] text-zinc-400 flex items-center gap-1.5">
-                  <ICheck className="w-3 h-3 text-emerald-500" /> {t}
-                </span>
-              ))}
-            </motion.div>
-          </div>
-
-          {/* Right — recovery */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2, duration: 0.6 }}
-            className="w-full"
+          {/* Headline — full width poster type, right-padded on desktop to make room for card */}
+          <motion.h1
+            className="font-black leading-none tracking-[-0.04em] text-[clamp(3rem,8.5vw,9rem)] lg:pr-[430px]"
+            initial={{ y: 70, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.85, ease: [0.16, 1, 0.3, 1] }}
           >
-            <div className="rounded-[2rem] bg-white border border-black/[0.04] shadow-[0_32px_80px_-20px_rgba(0,0,0,0.12),0_0_0_1px_rgba(0,0,0,0.03)] p-5 overflow-hidden">
-              <RecoveryHero />
+            <span className="text-zinc-900">Lose your<br />device.</span>
+            <br />
+            <span className="text-zinc-300">Keep your<br />bid.</span>
+          </motion.h1>
+
+          {/* Recovery terminal — snaps in on top of headline */}
+          <motion.div
+            className="mt-8 lg:mt-0 lg:absolute lg:right-0 lg:top-1/2 lg:-translate-y-1/2 w-full lg:w-[400px]"
+            initial={{ opacity: 0, y: 28, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ delay: 0.4, duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <div className="bg-white/90 backdrop-blur-2xl border border-zinc-200/90 rounded-[2rem] shadow-[0_40px_100px_-20px_rgba(0,0,0,0.15),0_0_0_1px_rgba(0,0,0,0.04)] overflow-hidden">
+              {/* Terminal header bar */}
+              <div className="flex items-center gap-1.5 px-5 pt-4 pb-3 border-b border-zinc-100">
+                <span className="w-2.5 h-2.5 rounded-full bg-zinc-200" />
+                <span className="w-2.5 h-2.5 rounded-full bg-zinc-200" />
+                <span className="w-2.5 h-2.5 rounded-full bg-zinc-200" />
+                <span className="ml-3 text-[10px] font-mono text-zinc-400 tracking-[0.15em] uppercase">Recovery Flow · Live</span>
+              </div>
+              <div className="p-5">
+                <RecoveryHero />
+              </div>
             </div>
-            <a
-              href="#auction"
-              className="group mt-4 flex items-center justify-center gap-2 rounded-2xl border border-black/[0.06] bg-white/60 px-4 py-3 text-sm font-medium text-zinc-600 transition-all duration-300 hover:bg-white hover:shadow-md hover:-translate-y-0.5"
-            >
-              Try it on a live bid <IArrowDown className="w-4 h-4 transition-transform group-hover:translate-y-0.5" />
-            </a>
           </motion.div>
 
         </div>
+
+        {/* Body copy + CTAs — staged in after headline */}
+        <div className="mt-10 lg:mt-14 lg:max-w-[500px]">
+
+          <motion.p
+            className="text-zinc-500 text-lg leading-relaxed mb-3"
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.55, duration: 0.55 }}
+          >
+            One Google login, a blind bid only you can open. Lose this device and the bid lands
+            on the next one — held on Walrus, locked by Seal. No server, no FairDrop team, ever sees it.
+          </motion.p>
+
+          <motion.p
+            className="text-zinc-400 text-sm mb-8"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.65, duration: 0.55 }}
+          >
+            zkLogin re-derives the same wallet on any device. Raises Sybil cost — not Sybil-proof.
+          </motion.p>
+
+          <motion.div
+            className="flex flex-wrap gap-3 mb-8"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.7, duration: 0.5 }}
+          >
+            <a href="#auction" className={BTN_PRIMARY}>
+              Launch Live Auction →
+            </a>
+            {AUCTION_ID && (
+              <a href={objUrl(AUCTION_ID)} target="_blank" rel="noopener noreferrer" className={BTN_SECONDARY}>
+                Verify on Explorer <IExternal className="w-3.5 h-3.5" />
+              </a>
+            )}
+          </motion.div>
+
+          <motion.div
+            className="flex flex-wrap gap-x-5 gap-y-2"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.8, duration: 0.55 }}
+          >
+            {["Bids hidden until reveal", "Recover from any device", "No backend", "No admin key"].map((t) => (
+              <span key={t} className="text-[11px] text-zinc-400 flex items-center gap-1.5">
+                <ICheck className="w-3 h-3 text-emerald-500" /> {t}
+              </span>
+            ))}
+          </motion.div>
+
+        </div>
+
       </div>
     </section>
   );

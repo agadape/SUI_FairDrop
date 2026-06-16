@@ -31,18 +31,19 @@ function StatusDot({ active, color, label }: { active: boolean; color: string; l
         animate={active ? { opacity: [0.5, 1, 0.5] } : { opacity: 0.5 }}
         transition={{ duration: 1.4, repeat: active ? Infinity : 0 }}
       />
-      <span className={`text-[10px] font-mono ${active ? "text-zinc-300" : "text-zinc-600"}`}>{label}</span>
+      <span className={`text-[9px] font-mono tracking-[0.1em] uppercase ${active ? "text-zinc-500" : "text-zinc-400"}`}>{label}</span>
     </div>
   );
 }
 
 function Connector({ active }: { active: boolean }) {
   return (
-    <div className="relative ml-[18px] my-1 h-4 w-px bg-zinc-200">
+    <div className="relative flex justify-start ml-[22px] my-0.5 h-5 w-px">
+      <div className="w-px h-full bg-zinc-100" />
       <motion.span
-        className="absolute -left-[3px] top-0 w-1.5 h-1.5 rounded-full bg-white/40"
-        animate={active ? { y: [0, 14], opacity: [0, 0.9, 0] } : { opacity: 0 }}
-        transition={{ duration: 0.7, repeat: active ? Infinity : 0, repeatDelay: 0.6, ease: "linear" }}
+        className="absolute -left-[3px] top-0 w-1.5 h-1.5 rounded-full bg-zinc-400"
+        animate={active ? { y: [0, 18], opacity: [0, 1, 0] } : { opacity: 0 }}
+        transition={{ duration: 0.65, repeat: active ? Infinity : 0, repeatDelay: 0.5, ease: "linear" }}
       />
     </div>
   );
@@ -67,96 +68,119 @@ export function RecoveryHero({ className = "" }: { className?: string }) {
   const recovered = phase === 3;
 
   return (
-    <div className={`mx-auto w-full max-w-sm ${className}`} aria-label="Lose your device, keep your bid — recovery flow">
+    <div className={`w-full space-y-0 ${className}`} aria-label="Lose your device, keep your bid — recovery flow">
+
       {/* Device A — this device */}
       <motion.div
-        className="rounded-2xl border border-amber-300 bg-amber-50 px-4 py-3"
-        animate={{ opacity: lost ? 0.4 : 1, filter: lost ? "grayscale(1)" : "grayscale(0)" }}
+        className="rounded-2xl border bg-zinc-950 px-4 py-3 border-zinc-800"
+        animate={{ opacity: lost ? 0.3 : 1, filter: lost ? "grayscale(1)" : "grayscale(0)" }}
         transition={{ duration: 0.5 }}
       >
-        <div className="flex items-center justify-between">
-          <span className="text-[10px] text-zinc-500 uppercase tracking-widest">This device</span>
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <div className={`w-1 h-4 rounded-full ${lost ? "bg-red-600" : "bg-amber-400"}`} />
+            <span className="text-[9px] font-mono text-zinc-500 uppercase tracking-[0.15em]">Primary device</span>
+          </div>
           {lost ? (
-            <motion.span
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="text-[10px] font-mono text-red-600"
-            >device lost</motion.span>
+            <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-[9px] font-mono text-red-500 tracking-wide">OFFLINE</motion.span>
           ) : (
-            <motion.span
-              animate={{ opacity: [1, 0.4, 1] }}
-              transition={{ duration: 1.4, repeat: Infinity }}
-              className="text-amber-400"
-            ><HLock className="w-3.5 h-3.5" /></motion.span>
+            <motion.span animate={{ opacity: [1, 0.3, 1] }} transition={{ duration: 1.4, repeat: Infinity }} className="text-amber-400">
+              <HLock className="w-3.5 h-3.5" />
+            </motion.span>
           )}
         </div>
-        <div className="mt-1 font-mono text-xl font-bold text-amber-500/60 tracking-[0.15em] select-none">●●●● SUI</div>
-        <div className="mt-0.5 font-mono text-[10px] text-zinc-600">commit 0x7c1b…????</div>
+        <div className="font-mono text-base font-bold text-amber-400 tracking-[0.2em] select-none">●●●● SUI</div>
+        <div className="mt-0.5 font-mono text-[9px] text-zinc-600">commit · 0x7c1b…????</div>
       </motion.div>
 
       <Connector active={phase === 1} />
 
       {/* Walrus — stored */}
       <motion.div
-        className={`flex items-center justify-between rounded-xl border px-4 py-2.5 ${
-          walrusActive ? "border-cyan-300 bg-cyan-50 glow-cyan" : "border-white/[0.06] bg-zinc-50"
+        className={`flex items-center justify-between rounded-xl border px-3 py-2.5 transition-colors duration-500 ${
+          walrusActive
+            ? "border-cyan-200 bg-white shadow-[inset_0_0_0_1px_rgba(6,182,212,0.12)]"
+            : "border-zinc-100 bg-zinc-50"
         }`}
         animate={{ scale: phase === 2 ? [1, 1.02, 1] : 1 }}
         transition={{ duration: 0.6 }}
       >
-        <span className={`text-sm font-semibold font-mono ${walrusActive ? "text-cyan-700" : "text-zinc-600"}`}>Walrus</span>
-        <StatusDot active={walrusActive} color="bg-cyan-400" label={walrusActive ? "blob stored" : "off-device backup"} />
+        <div className="flex items-center gap-2.5">
+          <div className={`w-1 h-6 rounded-full transition-colors duration-500 ${walrusActive ? "bg-cyan-400" : "bg-zinc-200"}`} />
+          <div>
+            <div className={`text-[11px] font-bold font-mono tracking-wide transition-colors duration-300 ${walrusActive ? "text-cyan-700" : "text-zinc-500"}`}>WALRUS</div>
+            <div className="text-[9px] font-mono text-zinc-400 mt-0.5">{walrusActive ? "blob_id · stored" : "off-device backup"}</div>
+          </div>
+        </div>
+        <StatusDot active={walrusActive} color="bg-cyan-400" label={walrusActive ? "active" : "standby"} />
       </motion.div>
 
       <Connector active={phase === 2} />
 
       {/* Seal — authorized */}
       <motion.div
-        className={`flex items-center justify-between rounded-xl border px-4 py-2.5 ${
-          sealActive ? "border-rose-300 bg-rose-50 glow-pink" : "border-white/[0.06] bg-zinc-50"
+        className={`flex items-center justify-between rounded-xl border px-3 py-2.5 transition-colors duration-500 ${
+          sealActive
+            ? "border-rose-200 bg-white shadow-[inset_0_0_0_1px_rgba(244,63,94,0.1)]"
+            : "border-zinc-100 bg-zinc-50"
         }`}
         animate={{ scale: phase === 2 ? [1, 1.03, 1] : 1 }}
         transition={{ ...SPRING }}
       >
-        <span className={`text-sm font-semibold font-mono ${sealActive ? "text-fuchsia-400" : "text-zinc-600"}`}>Seal</span>
-        <span className={sealActive ? "text-fuchsia-400" : "text-zinc-600"}>{sealActive ? <HUnlock className="w-4 h-4" /> : <HLock className="w-4 h-4" />}</span>
+        <div className="flex items-center gap-2.5">
+          <div className={`w-1 h-6 rounded-full transition-colors duration-500 ${sealActive ? "bg-rose-400" : "bg-zinc-200"}`} />
+          <div>
+            <div className={`text-[11px] font-bold font-mono tracking-wide transition-colors duration-300 ${sealActive ? "text-rose-600" : "text-zinc-500"}`}>SEAL</div>
+            <div className="text-[9px] font-mono text-zinc-400 mt-0.5">{sealActive ? "policy · approved" : "threshold t=2"}</div>
+          </div>
+        </div>
+        <span className={`transition-colors duration-300 ${sealActive ? "text-rose-500" : "text-zinc-300"}`}>
+          {sealActive ? <HUnlock className="w-4 h-4" /> : <HLock className="w-4 h-4" />}
+        </span>
       </motion.div>
 
       <Connector active={phase === 2} />
 
       {/* Device B — recovered */}
       <motion.div
-        className={`rounded-2xl border px-4 py-3 ${
-          recovered ? "border-emerald-300 bg-emerald-50 glow-emerald" : "border-dashed border-zinc-200 bg-zinc-50"
+        className={`rounded-2xl border px-4 py-3 transition-colors duration-500 ${
+          recovered
+            ? "border-emerald-200 bg-white shadow-[inset_0_0_0_1px_rgba(16,185,129,0.12)]"
+            : "border-dashed border-zinc-200 bg-zinc-50"
         }`}
-        animate={recovered ? { scale: [0.96, 1] } : { scale: 1 }}
+        animate={recovered ? { scale: [0.97, 1] } : { scale: 1 }}
         transition={{ ...SPRING }}
       >
-        <div className="flex items-center justify-between">
-          <span className="text-[10px] text-zinc-500 uppercase tracking-widest">Any browser</span>
+        <div className="flex items-center justify-between mb-1">
+          <div className="flex items-center gap-2">
+            <div className={`w-1 h-4 rounded-full transition-colors duration-500 ${recovered ? "bg-emerald-400" : "bg-zinc-200"}`} />
+            <span className="text-[9px] font-mono text-zinc-500 uppercase tracking-[0.15em]">Any browser</span>
+          </div>
           {recovered ? (
-            <span className="text-emerald-700 text-sm">✓</span>
+            <span className="text-[9px] font-mono text-emerald-600 tracking-wide">RECOVERED</span>
           ) : (
-            <span className="text-[10px] font-mono text-zinc-600">awaiting…</span>
+            <span className="text-[9px] font-mono text-zinc-400">awaiting…</span>
           )}
         </div>
+
         {recovered ? (
           <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-            <div className="mt-1 font-mono text-xl font-bold text-emerald-700 tracking-tight">5.0 SUI recovered</div>
-            <div className="mt-1 inline-flex items-center gap-1.5 rounded-full border border-blue-300 bg-blue-50 px-2 py-0.5">
+            <div className="font-mono text-base font-bold text-emerald-700 tracking-tight">5.0 SUI recovered</div>
+            <div className="mt-1.5 inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5">
               <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
-              <span className="text-[10px] font-mono text-blue-700">same wallet · zkLogin</span>
+              <span className="text-[9px] font-mono text-blue-700">same wallet · zkLogin</span>
             </div>
           </motion.div>
         ) : (
-          <div className="mt-1 font-mono text-xl font-bold text-zinc-700 tracking-[0.15em] select-none">———</div>
+          <div className="font-mono text-base font-bold text-zinc-300 tracking-[0.2em] select-none">———</div>
         )}
       </motion.div>
 
-      {/* caption — surfaces sponsors only as functional waypoints */}
-      <p className="mt-3 text-center text-[10px] font-mono text-zinc-600">
-        on <span className="text-cyan-700">Walrus</span> · behind <span className="text-rose-600">Seal</span> · re-derived by <span className="text-blue-700">zkLogin</span>
+      {/* Caption */}
+      <p className="pt-3 text-center text-[9px] font-mono text-zinc-400 tracking-[0.15em] uppercase">
+        <span className="text-cyan-600">Walrus</span> · <span className="text-rose-500">Seal</span> · <span className="text-blue-600">zkLogin</span>
       </p>
+
     </div>
   );
 }
