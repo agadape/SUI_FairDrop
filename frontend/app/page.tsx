@@ -200,66 +200,56 @@ function HeroSection() {
       >
         <defs>
           <radialGradient id="pulseFill" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#818cf8" stopOpacity="0.9" />
-            <stop offset="60%" stopColor="#818cf8" stopOpacity="0.35" />
-            <stop offset="100%" stopColor="#818cf8" stopOpacity="0" />
+            <stop offset="0%" stopColor="#93a4e8" stopOpacity="0.85" />
+            <stop offset="60%" stopColor="#93a4e8" stopOpacity="0.3" />
+            <stop offset="100%" stopColor="#93a4e8" stopOpacity="0" />
           </radialGradient>
         </defs>
 
-        {/* TrustLine-style enclosing frame: a large faint rounded rectangle
-            that the cards overlap, a central vertical axis with up/down arrow
-            tips + nodes, and short stubs docking each card. One connected graph. */}
+        {/* TrustLine-style schematic: large dashed light-blue rounded "stage"
+            the cards sit inside, plus full-height vertical axes capped with
+            arrow tips + nodes. Everything dashed, very light, behind cards. */}
 
-        {/* main frame loop */}
+        {/* large rounded stage frame */}
         <motion.path
           id="frame"
-          d="M 640 150 L 934 150 Q 980 150 980 196 L 980 594 Q 980 640 934 640 L 346 640 Q 300 640 300 594 L 300 196 Q 300 150 346 150 Z"
-          fill="none" stroke="#e4e4e7" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
+          d="M 136 150 L 1144 150 Q 1216 150 1216 222 L 1216 628 Q 1216 700 1144 700 L 136 700 Q 64 700 64 628 L 64 222 Q 64 150 136 150 Z"
+          fill="none" stroke="#dbe2ee" strokeWidth="1.25" strokeDasharray="5 6" strokeLinecap="round" strokeLinejoin="round"
           initial={{ pathLength: 0, opacity: 0 }}
           animate={{ pathLength: 1, opacity: 1 }}
-          transition={{ delay: 0.5, duration: 1.7, ease: [0.16, 1, 0.3, 1] }} />
+          transition={{ delay: 0.5, duration: 1.8, ease: [0.16, 1, 0.3, 1] }} />
 
-        {/* central vertical axis — dashed, with arrow tips above & below */}
-        <motion.line x1="640" y1="100" x2="640" y2="150"
-          stroke="#dcdce0" strokeWidth="1.25" strokeDasharray="4 4" strokeLinecap="round"
-          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.4, duration: 0.6 }} />
-        <motion.polyline points="634 110 640 102 646 110"
-          fill="none" stroke="#cfcfd4" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
-          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.6, duration: 0.5 }} />
-        <motion.line x1="640" y1="640" x2="640" y2="694"
-          stroke="#dcdce0" strokeWidth="1.25" strokeDasharray="4 4" strokeLinecap="round"
-          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.4, duration: 0.6 }} />
-        <motion.polyline points="634 684 640 692 646 684"
-          fill="none" stroke="#cfcfd4" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
-          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.6, duration: 0.5 }} />
+        {/* left full-height vertical axis (up-arrow at top) */}
+        <motion.line x1="210" y1="48" x2="210" y2="744"
+          stroke="#dbe2ee" strokeWidth="1.25" strokeDasharray="5 6" strokeLinecap="round"
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.3, duration: 0.7 }} />
+        <motion.polyline points="203 60 210 49 217 60"
+          fill="none" stroke="#c3cee0" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.5, duration: 0.5 }} />
 
-        {/* short stubs: frame edge → each card */}
-        {[
-          "M 300 380 L 250 380", "M 300 560 L 250 560",
-          "M 980 330 L 1030 330", "M 980 510 L 1030 510",
-        ].map((d, i) => (
-          <motion.path key={`s${i}`} d={d}
-            fill="none" stroke="#e4e4e7" strokeWidth="1.5" strokeLinecap="round"
-            initial={{ pathLength: 0, opacity: 0 }}
-            animate={{ pathLength: 1, opacity: 1 }}
-            transition={{ delay: 1.5 + i * 0.06, duration: 0.5, ease: "easeOut" }} />
-        ))}
+        {/* right-center vertical axis (down-arrow at bottom) */}
+        <motion.line x1="1010" y1="430" x2="1010" y2="744"
+          stroke="#dbe2ee" strokeWidth="1.25" strokeDasharray="5 6" strokeLinecap="round"
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.3, duration: 0.7 }} />
+        <motion.polyline points="1003 732 1010 743 1017 732"
+          fill="none" stroke="#c3cee0" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.5, duration: 0.5 }} />
 
-        {/* axis tip nodes (top + bottom center) */}
-        {[[640, 100], [640, 694]].map(([cx, cy]) => (
-          <motion.circle key={`a${cy}`} cx={cx} cy={cy} r="3.5" fill="#c7d2fe"
+        {/* arrow-tip nodes */}
+        {[[210, 41], [1010, 700]].map(([cx, cy]) => (
+          <motion.circle key={`a${cx}-${cy}`} cx={cx} cy={cy} r="3.5" fill="#c7d2fe"
             initial={{ opacity: 0, scale: 0 }} animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 1.7, duration: 0.4, ease: "backOut" }} />
+            transition={{ delay: 1.6, duration: 0.4, ease: "backOut" }} />
         ))}
 
-        {/* frame corner + dock nodes */}
-        {[[640, 150], [640, 640], [300, 380], [300, 560], [980, 330], [980, 510]].map(([cx, cy]) => (
-          <motion.circle key={`n${cx}-${cy}`} cx={cx} cy={cy} r="3" fill="#d4d4d8"
+        {/* junction nodes where axes meet the stage frame */}
+        {[[210, 150], [210, 700], [1010, 150], [1010, 700]].map(([cx, cy]) => (
+          <motion.circle key={`n${cx}-${cy}`} cx={cx} cy={cy} r="3" fill="#cdd6e6"
             initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-            transition={{ delay: 1.5, duration: 0.4 }} />
+            transition={{ delay: 1.6, duration: 0.4 }} />
         ))}
 
-        {/* two pulses chasing around the frame */}
+        {/* two pulses chasing around the stage */}
         {[1.9, 6.4].map((begin, i) => (
           <circle key={`p${i}`} r="4" fill="url(#pulseFill)">
             <animateMotion dur="9s" begin={`${begin}s`} repeatCount="indefinite" calcMode="linear">
