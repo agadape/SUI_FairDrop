@@ -21,6 +21,7 @@ function Icon({ d, className = "w-4 h-4" }: { d: string; className?: string }) {
 const ICheck = (p: { className?: string }) => <Icon className={p.className} d="M20 6 9 17l-5-5" />;
 const IExternal = (p: { className?: string }) => <Icon className={p.className} d="M15 3h6v6M10 14 21 3M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5" />;
 const IChevron = (p: { className?: string }) => <Icon className={p.className} d="M9 6l6 6-6 6" />;
+const IArrowRight = (p: { className?: string }) => <Icon className={p.className} d="M5 12h14M13 6l6 6-6 6" />;
 const IBolt = (p: { className?: string }) => <Icon className={p.className} d="M13 2 3 14h7l-1 8 10-12h-7l1-8z" />;
 const PATH_BOT = "M12 8V4H8M4 8h16v12H4zM2 14h2m16 0h2M9 13v2m6-2v2";
 const PATH_EYE = "M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7zM12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z";
@@ -184,274 +185,161 @@ function NavBar() {
 function HeroSection() {
   return (
     <section className="relative overflow-hidden">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-4 pb-10 lg:pt-6 lg:pb-14 grid lg:grid-cols-[1.85fr_1fr] gap-4 lg:gap-5 items-stretch">
 
-      {/* Circuit bus — desktop only, decorative. A central vertical spine
-          feeds four symmetric branches that dock at the card columns. The
-          shared hub + perfect mirror symmetry read as an intentional node
-          graph (vs. floating connectors). Self-draws on load; pulses travel
-          hub → card continuously. Center-anchored so xMid slice keeps it
-          stable across widths. Sits behind the cards (cards cover branch
-          ends, so they appear plugged in). */}
-      <svg
-        className="absolute inset-0 w-full h-full pointer-events-none hidden lg:block"
-        viewBox="0 0 1280 780"
-        preserveAspectRatio="xMidYMid slice"
-        aria-hidden
-      >
-        <defs>
-          <radialGradient id="pulseFill" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#93a4e8" stopOpacity="0.85" />
-            <stop offset="60%" stopColor="#93a4e8" stopOpacity="0.3" />
-            <stop offset="100%" stopColor="#93a4e8" stopOpacity="0" />
-          </radialGradient>
-        </defs>
-
-        {/* TrustLine-style schematic: a large dashed light-blue rounded
-            container with an OPEN top (so the headline breathes), parallel
-            left rails, and vertical axes capped with arrow tips + nodes.
-            Everything dashed, very light, behind the cards. */}
-
-        {/* open-top rounded container (arms stop short of center → open top) */}
-        <motion.path
-          id="frame"
-          d="M 360 150 L 212 150 Q 140 150 140 222 L 140 628 Q 140 700 212 700 L 1068 700 Q 1140 700 1140 628 L 1140 222 Q 1140 150 1068 150 L 920 150"
-          fill="none" stroke="#dbe2ee" strokeWidth="1.25" strokeDasharray="5 6" strokeLinecap="round" strokeLinejoin="round"
-          initial={{ pathLength: 0, opacity: 0 }}
-          animate={{ pathLength: 1, opacity: 1 }}
-          transition={{ delay: 0.5, duration: 1.9, ease: [0.16, 1, 0.3, 1] }} />
-
-        {/* left vertical axis — parallel to the container's left rail (up-arrow) */}
-        <motion.line x1="210" y1="48" x2="210" y2="744"
-          stroke="#dbe2ee" strokeWidth="1.25" strokeDasharray="5 6" strokeLinecap="round"
-          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.3, duration: 0.7 }} />
-        <motion.polyline points="203 60 210 49 217 60"
-          fill="none" stroke="#c3cee0" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
-          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.5, duration: 0.5 }} />
-
-        {/* right-center vertical axis (down-arrow at bottom) */}
-        <motion.line x1="1010" y1="430" x2="1010" y2="744"
-          stroke="#dbe2ee" strokeWidth="1.25" strokeDasharray="5 6" strokeLinecap="round"
-          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.3, duration: 0.7 }} />
-        <motion.polyline points="1003 732 1010 743 1017 732"
-          fill="none" stroke="#c3cee0" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
-          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.5, duration: 0.5 }} />
-
-        {/* arrow-tip nodes */}
-        {[[210, 41], [1010, 700]].map(([cx, cy]) => (
-          <motion.circle key={`a${cx}-${cy}`} cx={cx} cy={cy} r="3.5" fill="#c7d2fe"
-            initial={{ opacity: 0, scale: 0 }} animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 1.6, duration: 0.4, ease: "backOut" }} />
-        ))}
-
-        {/* nodes: open-top arm ends + left axis ↔ bottom-rail junction */}
-        {[[360, 150], [920, 150], [210, 700]].map(([cx, cy]) => (
-          <motion.circle key={`n${cx}-${cy}`} cx={cx} cy={cy} r="3" fill="#cdd6e6"
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-            transition={{ delay: 1.6, duration: 0.4 }} />
-        ))}
-
-        {/* two pulses chasing around the container */}
-        {[1.9, 6.4].map((begin, i) => (
-          <circle key={`p${i}`} r="4" fill="url(#pulseFill)">
-            <animateMotion dur="9s" begin={`${begin}s`} repeatCount="indefinite" calcMode="linear">
-              <mpath href="#frame" />
-            </animateMotion>
-          </circle>
-        ))}
-      </svg>
-
-      {/* 3-column spatial grid: [left floater] [center] [right floater] */}
-      <div className="relative max-w-7xl mx-auto px-6 py-16 lg:py-20 grid lg:grid-cols-[220px_1fr_220px] gap-8 items-start">
-
-        {/* ── LEFT FLOATER: Blind Bid Status ─────────────────────────── */}
+        {/* ── LEFT: big light "stage" card ─────────────────────────────── */}
         <motion.div
-          className="hidden lg:block pt-20 sticky top-28"
-          initial={{ opacity: 0, x: -24, scale: 0.95 }}
-          animate={{ opacity: 1, x: 0, scale: 1 }}
-          transition={{ delay: 0.8, type: "spring", stiffness: 120, damping: 16 }}
+          className="relative overflow-hidden rounded-[2.25rem] sm:rounded-[2.5rem] bg-[#f1f0ee] border border-black/[0.04] p-7 sm:p-10 lg:p-12 min-h-[480px] lg:min-h-[560px] flex flex-col"
+          initial={{ opacity: 0, y: 18 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
         >
-          <motion.div
-            className="rounded-2xl bg-white border border-zinc-100 shadow-[0_20px_40px_-12px_rgba(0,0,0,0.06)] p-4"
-            animate={{ y: [0, -6, 0] }}
-            transition={{ duration: 5.5, repeat: Infinity, ease: "easeInOut" }}
-            whileHover={{ y: -9, boxShadow: "0 30px 55px -12px rgba(0,0,0,0.13)", borderColor: "rgba(0,0,0,0.07)" }}
-          >
-            <div className="flex items-center gap-2 mb-3">
-              <motion.span
-                className="w-2 h-2 rounded-full bg-amber-400"
-                animate={{ opacity: [0.5, 1, 0.5] }}
-                transition={{ duration: 2, repeat: Infinity }}
-              />
-              <span className="text-[10px] font-mono text-zinc-400 uppercase tracking-widest">Blind Bid</span>
-            </div>
-            <div className="font-mono text-sm font-bold text-zinc-700 mb-3 tracking-tight">0x7c1b…????</div>
-            <div className="space-y-1.5 mb-3">
-              <div className="flex items-center justify-between text-[9px] font-mono text-zinc-400">
-                <span>amount</span><span className="text-zinc-300">hidden</span>
-              </div>
-              <div className="h-1 rounded-full bg-zinc-100 overflow-hidden">
-                <motion.div
-                  className="h-full rounded-full bg-amber-300"
-                  animate={{ width: ["35%", "60%", "35%"] }}
-                  transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
-                />
-              </div>
-            </div>
-            <div className="text-[9px] font-mono text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-2.5 py-1">COMMIT phase · active</div>
-          </motion.div>
-
-          {/* Extra mini-card below */}
-          <motion.div
-            className="mt-3 rounded-2xl bg-white border border-zinc-100 shadow-[0_8px_20px_-8px_rgba(0,0,0,0.04)] p-3"
-            animate={{ y: [0, -5, 0] }}
-            transition={{ duration: 6.5, repeat: Infinity, ease: "easeInOut", delay: 0.8 }}
-            whileHover={{ y: -7, boxShadow: "0 22px 40px -12px rgba(0,0,0,0.10)", borderColor: "rgba(0,0,0,0.07)" }}
-          >
-            <div className="text-[9px] font-mono text-zinc-400 uppercase tracking-widest mb-2">sui::random</div>
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-lg bg-violet-50 border border-violet-100 flex items-center justify-center">
-                <span className="text-[8px] font-bold text-violet-500">0x8</span>
-              </div>
-              <div>
-                <div className="text-[10px] font-semibold text-zinc-700">validator DKG</div>
-                <div className="text-[9px] font-mono text-zinc-400">bias-proof randomness</div>
-              </div>
-            </div>
-          </motion.div>
-        </motion.div>
-
-        {/* ── CENTER COLUMN ───────────────────────────────────────────── */}
-        <div className="flex flex-col items-center text-center min-w-0">
-
-          {/* Eyebrow */}
-          <motion.div
-            className="mb-7"
-            initial={{ opacity: 0, y: -8 }}
+          {/* badge pill */}
+          <motion.a
+            href="#auction"
+            className="group inline-flex items-center gap-2 self-start rounded-full border border-amber-300/70 bg-amber-50 pl-3 pr-1.5 py-1 text-[11px] font-semibold text-amber-700"
+            initial={{ opacity: 0, y: -6 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
+            transition={{ delay: 0.15, duration: 0.5 }}
           >
-            <p className={`${EYEBROW} mb-0`}>Sealed-Bid · Fair-Launch · Sui Overflow 2026 · Testnet</p>
-          </motion.div>
-
-          {/* Headline — light-reflecting "ink" gradient */}
-          <motion.h1
-            className="font-bold tracking-[-0.02em] leading-[1.05] text-5xl sm:text-6xl lg:text-7xl mb-5 max-w-2xl pb-1"
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.75, ease: [0.16, 1, 0.3, 1] }}
-          >
-            <span className="text-transparent bg-clip-text bg-gradient-to-b from-zinc-900 via-zinc-800 to-zinc-600">
-              Lose your device.
-            </span>{" "}
-            <span className="text-transparent bg-clip-text bg-gradient-to-b from-zinc-400 to-zinc-300">
-              Keep your bid.
+            <span className="relative flex h-1.5 w-1.5">
+              <span className="absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75 animate-ping" />
+              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-amber-500" />
             </span>
+            Live on testnet · sealed-bid auction open
+            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-amber-500 text-white transition-transform duration-300 group-hover:translate-x-0.5">
+              <IArrowRight className="w-3 h-3" />
+            </span>
+          </motion.a>
+
+          {/* headline — ink */}
+          <motion.h1
+            className="relative z-10 mt-7 font-bold tracking-[-0.03em] leading-[0.98] text-[2.6rem] sm:text-6xl lg:text-7xl max-w-[16ch]"
+            initial={{ opacity: 0, y: 22 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1, duration: 0.75, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <span className="text-transparent bg-clip-text bg-gradient-to-b from-zinc-900 to-zinc-700">Lose your device.</span>{" "}
+            <span className="text-transparent bg-clip-text bg-gradient-to-b from-zinc-500 to-zinc-400">Keep your bid.</span>
           </motion.h1>
 
-          {/* Subhead */}
+          {/* subhead */}
           <motion.p
-            className="text-zinc-500 text-lg leading-relaxed max-w-xl mb-2"
-            initial={{ opacity: 0, y: 16 }}
+            className="relative z-10 mt-5 max-w-md text-zinc-500 text-base leading-relaxed"
+            initial={{ opacity: 0, y: 14 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.18, duration: 0.6 }}
+            transition={{ delay: 0.24, duration: 0.6 }}
           >
-            One Google login, a blind bid only you can open. Lose this device and the bid lands on the next one — held on Walrus, locked by Seal.
-          </motion.p>
-          <motion.p
-            className="text-zinc-400 text-sm mb-8 max-w-md"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.28, duration: 0.55 }}
-          >
-            No server, no FairDrop team, ever sees it. zkLogin re-derives your wallet on any device.
+            One Google login, a blind bid only you can open — held on Walrus, locked by Seal.
+            No server, no FairDrop team, ever sees it.
           </motion.p>
 
-          {/* CTAs */}
+          {/* CTA */}
           <motion.div
-            className="flex flex-wrap justify-center gap-3 mb-5"
+            className="relative z-10 mt-7 flex flex-wrap items-center gap-3"
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3, duration: 0.5 }}
+            transition={{ delay: 0.34, duration: 0.5 }}
           >
-            <a href="#auction" className={BTN_PRIMARY}>Launch Live Auction →</a>
+            <a href="#auction" className="inline-flex items-center gap-2 rounded-full bg-zinc-950 px-6 py-3 text-sm font-semibold text-white hover:-translate-y-0.5 hover:shadow-xl transition-all duration-300 active:scale-[0.98]">
+              Launch live auction <IArrowRight className="w-4 h-4" />
+            </a>
             {AUCTION_ID && (
-              <a href={objUrl(AUCTION_ID)} target="_blank" rel="noopener noreferrer" className={BTN_SECONDARY}>
+              <a href={objUrl(AUCTION_ID)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm font-medium text-zinc-500 hover:text-zinc-900 transition-colors">
                 Verify on Explorer <IExternal className="w-3.5 h-3.5" />
               </a>
             )}
           </motion.div>
 
-          {/* Trust pills */}
+          <div className="flex-1" />
+
+          {/* trust row */}
           <motion.div
-            className="flex flex-wrap justify-center gap-x-4 gap-y-1.5 mb-10"
+            className="relative z-10 flex flex-wrap gap-x-4 gap-y-1.5"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 0.44, duration: 0.5 }}
+            transition={{ delay: 0.5, duration: 0.5 }}
           >
-            {["Bids hidden until reveal", "Recover from any device", "No backend", "No admin key"].map((t) => (
+            {["Bids hidden until reveal", "Recover from any device", "No backend"].map((t) => (
               <span key={t} className="text-[11px] text-zinc-400 flex items-center gap-1.5">
                 <ICheck className="w-3 h-3 text-emerald-500" /> {t}
               </span>
             ))}
           </motion.div>
 
-          <div className="pb-12" />
-        </div>
-
-        {/* ── RIGHT FLOATER: Secured by Seal ─────────────────────────── */}
-        <motion.div
-          className="hidden lg:block pt-16 sticky top-24"
-          initial={{ opacity: 0, x: 24, scale: 0.95 }}
-          animate={{ opacity: 1, x: 0, scale: 1 }}
-          transition={{ delay: 0.9, type: "spring", stiffness: 120, damping: 16 }}
-        >
+          {/* illustration — bottom-right, behind text via z-0 */}
           <motion.div
-            className="rounded-2xl bg-white border border-zinc-100 shadow-[0_20px_40px_-12px_rgba(0,0,0,0.06)] p-4"
-            animate={{ y: [0, -6, 0] }}
-            transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 0.4 }}
-            whileHover={{ y: -9, boxShadow: "0 30px 55px -12px rgba(0,0,0,0.13)", borderColor: "rgba(0,0,0,0.07)" }}
-          >
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-[10px] font-mono text-zinc-400 uppercase tracking-widest">Seal</span>
-              <motion.span
-                className="w-2 h-2 rounded-full bg-rose-400"
-                animate={{ opacity: [0.4, 1, 0.4] }}
-                transition={{ duration: 1.8, repeat: Infinity }}
-              />
-            </div>
-            <div className="flex items-center gap-2.5 mb-3">
-              <div className="w-9 h-9 rounded-xl bg-rose-50 border border-rose-100 flex items-center justify-center flex-shrink-0">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 text-rose-400" aria-hidden>
-                  <path d="M12 2L3 7v5c0 5.5 3.8 10.7 9 12 5.2-1.3 9-6.5 9-12V7L12 2z" />
-                </svg>
-              </div>
-              <div>
-                <div className="text-[11px] font-semibold text-zinc-700">threshold t=2</div>
-                <div className="text-[9px] font-mono text-zinc-400">seal_approve ✓</div>
-              </div>
-            </div>
-            <div className="text-[9px] font-mono text-rose-700 bg-rose-50 border border-rose-100 rounded-lg px-2.5 py-1">policy · Entry owner</div>
-          </motion.div>
-
-          {/* Extra mini-card below */}
-          <motion.div
-            className="mt-3 rounded-2xl bg-white border border-zinc-100 shadow-[0_8px_20px_-8px_rgba(0,0,0,0.04)] p-3"
-            animate={{ y: [0, -5, 0] }}
-            transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 1.1 }}
-            whileHover={{ y: -7, boxShadow: "0 22px 40px -12px rgba(0,0,0,0.10)", borderColor: "rgba(0,0,0,0.07)" }}
-          >
-            <div className="text-[9px] font-mono text-zinc-400 uppercase tracking-widest mb-2">Walrus</div>
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-lg bg-cyan-50 border border-cyan-100 flex items-center justify-center">
-                <span className="text-[8px] font-bold text-cyan-500">W</span>
-              </div>
-              <div>
-                <div className="text-[10px] font-semibold text-zinc-700">blob stored</div>
-                <div className="text-[9px] font-mono text-zinc-400">off-device backup</div>
-              </div>
-            </div>
-          </motion.div>
+            aria-hidden
+            className="pointer-events-none absolute bottom-0 right-0 z-0 h-[58%] w-[64%] sm:h-[64%] sm:w-[58%] bg-[url('/illustrations/mobile-encryption.svg')] bg-contain bg-right-bottom bg-no-repeat opacity-[0.92]"
+            initial={{ opacity: 0, scale: 0.96, y: 12 }}
+            animate={{ opacity: 0.92, scale: 1, y: 0 }}
+            transition={{ delay: 0.4, duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
+          />
         </motion.div>
+
+        {/* ── RIGHT: two stacked accent cards ──────────────────────────── */}
+        <div className="flex flex-col gap-4 lg:gap-5">
+
+          {/* TOP — bold accent CTA card with rising chart */}
+          <motion.a
+            href="#auction"
+            className="group relative flex flex-1 flex-col justify-between overflow-hidden rounded-[2rem] bg-gradient-to-br from-[#ff5a2c] to-[#ff7a45] p-7 text-white min-h-[260px]"
+            initial={{ opacity: 0, y: 18 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2, duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <h2 className="relative z-10 text-2xl font-bold leading-tight tracking-tight">
+              Enter the<br />sealed-bid auction
+            </h2>
+
+            {/* rising line chart */}
+            <div className="relative z-10 mt-4 h-24">
+              <span className="absolute right-0 top-0 rounded-full bg-yellow-300 px-2.5 py-0.5 text-[11px] font-bold text-zinc-900">live</span>
+              <svg viewBox="0 0 300 100" className="h-full w-full" fill="none" preserveAspectRatio="none" aria-hidden>
+                <motion.polyline
+                  points="6,86 100,62 196,72 294,18"
+                  stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+                  initial={{ pathLength: 0 }} animate={{ pathLength: 1 }}
+                  transition={{ delay: 0.7, duration: 1.1, ease: "easeOut" }}
+                />
+                {[[100, 62], [196, 72]].map(([cx, cy]) => (
+                  <circle key={`c${cx}`} cx={cx} cy={cy} r="4" fill="white" />
+                ))}
+                <circle cx="294" cy="18" r="7" fill="white" />
+                <circle cx="294" cy="18" r="11" fill="white" opacity="0.3" />
+              </svg>
+            </div>
+          </motion.a>
+
+          {/* BOTTOM — black recovery card with primitive chips */}
+          <motion.div
+            className="relative flex flex-1 flex-col justify-between overflow-hidden rounded-[2rem] bg-zinc-950 p-7 text-white min-h-[230px]"
+            initial={{ opacity: 0, y: 18 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3, duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <h2 className="text-2xl font-bold leading-tight tracking-tight">
+              Recover from<br />any device
+            </h2>
+
+            <div className="flex items-center gap-3">
+              <div className="flex -space-x-2">
+                {[
+                  { label: "W", ring: "bg-cyan-500/20 border-cyan-400/40 text-cyan-300" },
+                  { label: "S", ring: "bg-rose-500/20 border-rose-400/40 text-rose-300" },
+                  { label: "zk", ring: "bg-blue-500/20 border-blue-400/40 text-blue-300" },
+                ].map((c) => (
+                  <span key={c.label} className={`flex h-9 w-9 items-center justify-center rounded-full border text-[11px] font-bold font-mono ${c.ring} ring-2 ring-zinc-950`}>
+                    {c.label}
+                  </span>
+                ))}
+              </div>
+              <span className="rounded-full border border-white/15 px-3 py-1.5 text-xs font-medium text-zinc-300">
+                Walrus · Seal · zkLogin
+              </span>
+            </div>
+          </motion.div>
+        </div>
 
       </div>
     </section>
