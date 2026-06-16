@@ -163,6 +163,7 @@ function NavBar() {
     <nav className="sticky top-0 z-50 border-b border-black/[0.05] bg-white/80 backdrop-blur-xl">
       <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
         <div className="flex items-center gap-3">
+          <img src="/logo.png" alt="" className="w-7 h-7 rounded-md" />
           <span className="text-zinc-900 font-bold text-lg tracking-tight">FairDrop</span>
           <span className="hidden sm:block text-[10px] text-zinc-400 font-medium border border-black/[0.06] rounded-full px-2.5 py-0.5 bg-zinc-50">
             Sui Overflow 2026
