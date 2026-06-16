@@ -183,91 +183,231 @@ function NavBar() {
 
 function HeroSection() {
   return (
-    <section className="relative flex flex-col items-center overflow-hidden bg-white pt-14 pb-28">
+    <section className="relative overflow-hidden bg-white">
 
-      {/* Architectural line grid — edge to edge */}
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,#e4e4e7_1px,transparent_1px),linear-gradient(to_bottom,#e4e4e7_1px,transparent_1px)] bg-[size:4rem_4rem]" />
-      {/* Top white fade */}
-      <div className="absolute top-0 inset-x-0 h-20 bg-gradient-to-b from-white to-transparent pointer-events-none z-10" />
-      {/* Bottom white fade — dissolves grid before next section */}
-      <div className="absolute bottom-0 inset-x-0 h-56 bg-gradient-to-b from-transparent to-white pointer-events-none z-10" />
-
-      {/* Eyebrow — centered */}
-      <motion.div
-        className="relative z-20 flex items-center gap-2 mb-10"
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
+      {/* Circuit-trace SVG network — desktop only, purely decorative */}
+      <svg
+        className="absolute inset-0 w-full h-full pointer-events-none hidden lg:block"
+        viewBox="0 0 1280 860"
+        preserveAspectRatio="xMidYMid slice"
+        aria-hidden
       >
-        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-        <p className={`${EYEBROW} mb-0`}>
-          Sealed-Bid · Fair-Launch · Sui Overflow 2026 · Testnet
-        </p>
-      </motion.div>
+        {/* Left floater → center headline elbow trace */}
+        <path d="M 230 190 L 310 190 Q 330 190 330 210 L 330 270 Q 330 295 355 295 L 490 295"
+          fill="none" stroke="#e4e4e7" strokeWidth="1.5" strokeLinecap="round" />
+        {/* dot terminus */}
+        <circle cx="490" cy="295" r="3" fill="#d4d4d8" />
 
-      {/* Monument headline — dead center */}
-      <motion.h1
-        className="relative z-20 text-center font-black tracking-[-0.05em] leading-[0.88] text-zinc-900 px-4 w-full"
-        style={{ fontSize: "clamp(3.2rem, 11vw, 12rem)" }}
-        initial={{ opacity: 0, y: 50 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
-      >
-        Lose your<br />device.
-        <br />
-        <span className="text-zinc-300">Keep your<br />bid.</span>
-      </motion.h1>
+        {/* Right floater → center headline elbow trace */}
+        <path d="M 1050 175 L 970 175 Q 950 175 950 195 L 950 270 Q 950 295 925 295 L 790 295"
+          fill="none" stroke="#e4e4e7" strokeWidth="1.5" strokeLinecap="round" />
+        <circle cx="790" cy="295" r="3" fill="#d4d4d8" />
 
-      {/* Recovery terminal — dead center, overlaps bottom half of headline */}
-      <motion.div
-        className="relative z-30 -mt-12 sm:-mt-16 lg:-mt-20 w-full max-w-[360px] px-4"
-        initial={{ opacity: 0, y: 32, scale: 0.95 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ delay: 0.45, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-      >
-        <div className="bg-white/95 backdrop-blur-2xl border border-zinc-200 rounded-[2rem] shadow-[0_40px_100px_-15px_rgba(0,0,0,0.18),0_0_0_1px_rgba(0,0,0,0.04)] overflow-hidden">
-          {/* Terminal chrome */}
-          <div className="flex items-center gap-1.5 px-5 pt-4 pb-3 border-b border-zinc-100">
-            <span className="w-2.5 h-2.5 rounded-full bg-zinc-200" />
-            <span className="w-2.5 h-2.5 rounded-full bg-zinc-200" />
-            <span className="w-2.5 h-2.5 rounded-full bg-zinc-200" />
-            <span className="ml-3 text-[10px] font-mono text-zinc-400 tracking-[0.15em] uppercase">Recovery Flow · Live</span>
+        {/* Center CTA → RecoveryHero dashed vertical */}
+        <line x1="640" y1="530" x2="640" y2="590"
+          stroke="#e4e4e7" strokeWidth="1.5" strokeDasharray="5 3" strokeLinecap="round" />
+        <circle cx="640" cy="592" r="3" fill="#d4d4d8" />
+
+        {/* Ambient corner traces — give depth without noise */}
+        <path d="M 0 60 L 80 60 Q 100 60 100 80 L 100 140" fill="none" stroke="#f0f0f0" strokeWidth="1" />
+        <path d="M 1280 40 L 1200 40 Q 1180 40 1180 60 L 1180 130" fill="none" stroke="#f0f0f0" strokeWidth="1" />
+        <path d="M 0 760 L 100 760 Q 120 760 120 740 L 120 680" fill="none" stroke="#f0f0f0" strokeWidth="1" />
+      </svg>
+
+      {/* 3-column spatial grid: [left floater] [center] [right floater] */}
+      <div className="relative max-w-7xl mx-auto px-6 py-16 lg:py-20 grid lg:grid-cols-[220px_1fr_220px] gap-8 items-start">
+
+        {/* ── LEFT FLOATER: Blind Bid Status ─────────────────────────── */}
+        <motion.div
+          className="hidden lg:block pt-20 sticky top-28"
+          initial={{ opacity: 0, x: -24 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.5, duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+        >
+          <div className="rounded-2xl bg-white border border-zinc-100 shadow-[0_20px_40px_-12px_rgba(0,0,0,0.06)] p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <motion.span
+                className="w-2 h-2 rounded-full bg-amber-400"
+                animate={{ opacity: [0.5, 1, 0.5] }}
+                transition={{ duration: 2, repeat: Infinity }}
+              />
+              <span className="text-[10px] font-mono text-zinc-400 uppercase tracking-widest">Blind Bid</span>
+            </div>
+            <div className="font-mono text-sm font-bold text-zinc-700 mb-3 tracking-tight">0x7c1b…????</div>
+            <div className="space-y-1.5 mb-3">
+              <div className="flex items-center justify-between text-[9px] font-mono text-zinc-400">
+                <span>amount</span><span className="text-zinc-300">hidden</span>
+              </div>
+              <div className="h-1 rounded-full bg-zinc-100 overflow-hidden">
+                <motion.div
+                  className="h-full rounded-full bg-amber-300"
+                  animate={{ width: ["35%", "60%", "35%"] }}
+                  transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
+                />
+              </div>
+            </div>
+            <div className="text-[9px] font-mono text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-2.5 py-1">COMMIT phase · active</div>
           </div>
-          <div className="p-5">
-            <RecoveryHero />
+
+          {/* Extra mini-card below */}
+          <div className="mt-3 rounded-2xl bg-white border border-zinc-100 shadow-[0_8px_20px_-8px_rgba(0,0,0,0.04)] p-3">
+            <div className="text-[9px] font-mono text-zinc-400 uppercase tracking-widest mb-2">sui::random</div>
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded-lg bg-violet-50 border border-violet-100 flex items-center justify-center">
+                <span className="text-[8px] font-bold text-violet-500">0x8</span>
+              </div>
+              <div>
+                <div className="text-[10px] font-semibold text-zinc-700">validator DKG</div>
+                <div className="text-[9px] font-mono text-zinc-400">bias-proof randomness</div>
+              </div>
+            </div>
           </div>
+        </motion.div>
+
+        {/* ── CENTER COLUMN ───────────────────────────────────────────── */}
+        <div className="flex flex-col items-center text-center min-w-0">
+
+          {/* Eyebrow */}
+          <motion.div
+            className="flex items-center gap-2 mb-7"
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            <p className={`${EYEBROW} mb-0`}>Sealed-Bid · Fair-Launch · Sui Overflow 2026 · Testnet</p>
+          </motion.div>
+
+          {/* Headline */}
+          <motion.h1
+            className="font-bold text-zinc-900 tracking-tight leading-tight text-5xl sm:text-6xl lg:text-7xl mb-5 max-w-2xl"
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.75, ease: [0.16, 1, 0.3, 1] }}
+          >
+            Lose your device.{" "}
+            <span className="text-zinc-400">Keep your bid.</span>
+          </motion.h1>
+
+          {/* Subhead */}
+          <motion.p
+            className="text-zinc-500 text-lg leading-relaxed max-w-xl mb-2"
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.18, duration: 0.6 }}
+          >
+            One Google login, a blind bid only you can open. Lose this device and the bid lands on the next one — held on Walrus, locked by Seal.
+          </motion.p>
+          <motion.p
+            className="text-zinc-400 text-sm mb-8 max-w-md"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.28, duration: 0.55 }}
+          >
+            No server, no FairDrop team, ever sees it. zkLogin re-derives your wallet on any device.
+          </motion.p>
+
+          {/* CTAs */}
+          <motion.div
+            className="flex flex-wrap justify-center gap-3 mb-5"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.35, duration: 0.5 }}
+          >
+            <a href="#auction" className={BTN_PRIMARY}>Launch Live Auction →</a>
+            {AUCTION_ID && (
+              <a href={objUrl(AUCTION_ID)} target="_blank" rel="noopener noreferrer" className={BTN_SECONDARY}>
+                Verify on Explorer <IExternal className="w-3.5 h-3.5" />
+              </a>
+            )}
+          </motion.div>
+
+          {/* Trust pills */}
+          <motion.div
+            className="flex flex-wrap justify-center gap-x-4 gap-y-1.5 mb-10"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.44, duration: 0.5 }}
+          >
+            {["Bids hidden until reveal", "Recover from any device", "No backend", "No admin key"].map((t) => (
+              <span key={t} className="text-[11px] text-zinc-400 flex items-center gap-1.5">
+                <ICheck className="w-3 h-3 text-emerald-500" /> {t}
+              </span>
+            ))}
+          </motion.div>
+
+          {/* Connector line: CTAs → RecoveryHero */}
+          <div className="w-px h-8 bg-gradient-to-b from-zinc-200 to-zinc-100" />
+
+          {/* RecoveryHero — bottom center, connected */}
+          <motion.div
+            className="w-full max-w-sm mt-0"
+            initial={{ opacity: 0, y: 20, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ delay: 0.55, duration: 0.75, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <div className="rounded-[2rem] bg-white border border-zinc-100 shadow-[0_24px_60px_-12px_rgba(0,0,0,0.10),0_0_0_1px_rgba(0,0,0,0.03)] overflow-hidden">
+              <div className="flex items-center gap-1.5 px-5 pt-4 pb-3 border-b border-zinc-50">
+                <span className="w-2 h-2 rounded-full bg-zinc-100" />
+                <span className="w-2 h-2 rounded-full bg-zinc-100" />
+                <span className="w-2 h-2 rounded-full bg-zinc-100" />
+                <span className="ml-3 text-[10px] font-mono text-zinc-400 tracking-[0.15em] uppercase">Recovery Flow · Live</span>
+              </div>
+              <div className="p-5">
+                <RecoveryHero />
+              </div>
+            </div>
+          </motion.div>
+
+          <div className="pb-10" />
         </div>
-      </motion.div>
 
-      {/* CTAs — centered below terminal */}
-      <motion.div
-        className="relative z-20 mt-7 flex flex-col items-center gap-5"
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.7, duration: 0.55 }}
-      >
-        <div className="flex flex-wrap justify-center gap-3">
-          <a href="#auction" className={BTN_PRIMARY}>Launch Live Auction →</a>
-          {AUCTION_ID && (
-            <a href={objUrl(AUCTION_ID)} target="_blank" rel="noopener noreferrer" className={BTN_SECONDARY}>
-              Verify on Explorer <IExternal className="w-3.5 h-3.5" />
-            </a>
-          )}
-        </div>
+        {/* ── RIGHT FLOATER: Secured by Seal ─────────────────────────── */}
+        <motion.div
+          className="hidden lg:block pt-16 sticky top-24"
+          initial={{ opacity: 0, x: 24 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.6, duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+        >
+          <div className="rounded-2xl bg-white border border-zinc-100 shadow-[0_20px_40px_-12px_rgba(0,0,0,0.06)] p-4">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-[10px] font-mono text-zinc-400 uppercase tracking-widest">Seal</span>
+              <motion.span
+                className="w-2 h-2 rounded-full bg-rose-400"
+                animate={{ opacity: [0.4, 1, 0.4] }}
+                transition={{ duration: 1.8, repeat: Infinity }}
+              />
+            </div>
+            <div className="flex items-center gap-2.5 mb-3">
+              <div className="w-9 h-9 rounded-xl bg-rose-50 border border-rose-100 flex items-center justify-center flex-shrink-0">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 text-rose-400" aria-hidden>
+                  <path d="M12 2L3 7v5c0 5.5 3.8 10.7 9 12 5.2-1.3 9-6.5 9-12V7L12 2z" />
+                </svg>
+              </div>
+              <div>
+                <div className="text-[11px] font-semibold text-zinc-700">threshold t=2</div>
+                <div className="text-[9px] font-mono text-zinc-400">seal_approve ✓</div>
+              </div>
+            </div>
+            <div className="text-[9px] font-mono text-rose-700 bg-rose-50 border border-rose-100 rounded-lg px-2.5 py-1">policy · Entry owner</div>
+          </div>
 
-        <p className="text-zinc-400 text-sm text-center max-w-sm leading-relaxed px-4">
-          One Google login. A blind bid only you can open. Lose this device — the bid is on the next one. No server, no team, ever sees it.
-        </p>
+          {/* Extra mini-card below */}
+          <div className="mt-3 rounded-2xl bg-white border border-zinc-100 shadow-[0_8px_20px_-8px_rgba(0,0,0,0.04)] p-3">
+            <div className="text-[9px] font-mono text-zinc-400 uppercase tracking-widest mb-2">Walrus</div>
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded-lg bg-cyan-50 border border-cyan-100 flex items-center justify-center">
+                <span className="text-[8px] font-bold text-cyan-500">W</span>
+              </div>
+              <div>
+                <div className="text-[10px] font-semibold text-zinc-700">blob stored</div>
+                <div className="text-[9px] font-mono text-zinc-400">off-device backup</div>
+              </div>
+            </div>
+          </div>
+        </motion.div>
 
-        <div className="flex flex-wrap justify-center gap-x-5 gap-y-1.5">
-          {["Bids hidden until reveal", "Recover from any device", "No backend", "No admin key"].map((t) => (
-            <span key={t} className="text-[11px] text-zinc-400 flex items-center gap-1.5">
-              <ICheck className="w-3 h-3 text-emerald-500" /> {t}
-            </span>
-          ))}
-        </div>
-      </motion.div>
-
+      </div>
     </section>
   );
 }
