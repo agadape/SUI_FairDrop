@@ -267,12 +267,12 @@ function HeroSection() {
             ))}
           </motion.div>
 
-          {/* illustration — bottom-right, behind text via z-0 */}
+          {/* illustration — tucked into the bottom-right corner, clear of text */}
           <motion.div
             aria-hidden
-            className="pointer-events-none absolute bottom-0 right-0 z-0 h-[58%] w-[64%] sm:h-[64%] sm:w-[58%] bg-[url('/illustrations/mobile-encryption.svg')] bg-contain bg-right-bottom bg-no-repeat opacity-[0.92]"
+            className="pointer-events-none absolute -bottom-2 -right-2 z-0 hidden sm:block h-[42%] w-[38%] lg:h-[46%] lg:w-[40%] bg-[url('/illustrations/mobile-encryption.svg')] bg-contain bg-right-bottom bg-no-repeat opacity-[0.85]"
             initial={{ opacity: 0, scale: 0.96, y: 12 }}
-            animate={{ opacity: 0.92, scale: 1, y: 0 }}
+            animate={{ opacity: 0.85, scale: 1, y: 0 }}
             transition={{ delay: 0.4, duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
           />
         </motion.div>
@@ -292,21 +292,38 @@ function HeroSection() {
               Enter the<br />sealed-bid auction
             </h2>
 
-            {/* rising line chart */}
-            <div className="relative z-10 mt-4 h-24">
-              <span className="absolute right-0 top-0 rounded-full bg-yellow-300 px-2.5 py-0.5 text-[11px] font-bold text-zinc-900">live</span>
-              <svg viewBox="0 0 300 100" className="h-full w-full" fill="none" preserveAspectRatio="none" aria-hidden>
-                <motion.polyline
-                  points="6,86 100,62 196,72 294,18"
-                  stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
-                  initial={{ pathLength: 0 }} animate={{ pathLength: 1 }}
-                  transition={{ delay: 0.7, duration: 1.1, ease: "easeOut" }}
+            {/* rising area chart */}
+            <div className="relative z-10 mt-4 h-28">
+              {/* live tag + pulsing dot, parked at the curve's peak (top-right) */}
+              <div className="absolute right-0 -top-1 flex items-center gap-1.5">
+                <span className="rounded-full bg-yellow-300 px-2.5 py-0.5 text-[11px] font-bold text-zinc-900">live</span>
+                <span className="relative flex h-3 w-3">
+                  <span className="absolute inline-flex h-full w-full rounded-full bg-white opacity-60 animate-ping" />
+                  <span className="relative inline-flex h-3 w-3 rounded-full bg-white ring-2 ring-white/30" />
+                </span>
+              </div>
+              <svg viewBox="0 0 300 110" className="h-full w-full" preserveAspectRatio="none" aria-hidden>
+                <defs>
+                  <linearGradient id="chartArea" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="white" stopOpacity="0.3" />
+                    <stop offset="100%" stopColor="white" stopOpacity="0" />
+                  </linearGradient>
+                </defs>
+                {/* soft area under the curve */}
+                <motion.path
+                  d="M 6 88 C 44 84 66 70 102 70 C 138 70 150 80 184 72 C 226 62 250 30 294 20 L 294 110 L 6 110 Z"
+                  fill="url(#chartArea)" stroke="none"
+                  initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                  transition={{ delay: 1.1, duration: 0.8 }}
                 />
-                {[[100, 62], [196, 72]].map(([cx, cy]) => (
-                  <circle key={`c${cx}`} cx={cx} cy={cy} r="4" fill="white" />
-                ))}
-                <circle cx="294" cy="18" r="7" fill="white" />
-                <circle cx="294" cy="18" r="11" fill="white" opacity="0.3" />
+                {/* the curve itself — uniform stroke regardless of x/y scaling */}
+                <motion.path
+                  d="M 6 88 C 44 84 66 70 102 70 C 138 70 150 80 184 72 C 226 62 250 30 294 20"
+                  fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+                  vectorEffect="non-scaling-stroke"
+                  initial={{ pathLength: 0 }} animate={{ pathLength: 1 }}
+                  transition={{ delay: 0.7, duration: 1.2, ease: "easeOut" }}
+                />
               </svg>
             </div>
           </motion.a>
@@ -321,6 +338,25 @@ function HeroSection() {
             <h2 className="text-2xl font-bold leading-tight tracking-tight">
               Recover from<br />any device
             </h2>
+
+            {/* recovery rail — the real flow, in miniature */}
+            <div className="space-y-2">
+              {[
+                { dot: "bg-zinc-500", label: "Device lost", note: "localStorage gone" },
+                { dot: "bg-cyan-400", label: "Walrus", note: "encrypted blob fetched" },
+                { dot: "bg-rose-400", label: "Seal", note: "policy approved" },
+                { dot: "bg-emerald-400", label: "Bid restored", note: "same wallet · zkLogin" },
+              ].map((s, i, arr) => (
+                <div key={s.label} className="flex items-center gap-2.5">
+                  <span className="relative flex flex-col items-center">
+                    <span className={`h-1.5 w-1.5 rounded-full ${s.dot}`} />
+                    {i < arr.length - 1 && <span className="absolute top-1.5 h-3.5 w-px bg-white/10" />}
+                  </span>
+                  <span className="text-[12px] font-semibold text-zinc-100">{s.label}</span>
+                  <span className="text-[11px] font-mono text-zinc-500">{s.note}</span>
+                </div>
+              ))}
+            </div>
 
             <div className="flex items-center gap-3">
               <div className="flex -space-x-2">
