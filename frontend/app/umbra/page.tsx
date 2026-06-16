@@ -51,20 +51,6 @@ export default function UmbraPage() {
             </Link>
           </motion.div>
 
-          <motion.span
-            variants={fadeUp}
-            custom={1}
-            initial="hidden"
-            animate="visible"
-            className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50/80 backdrop-blur px-3 py-1 text-[11px] font-semibold text-blue-700"
-          >
-            <span className="relative flex h-1.5 w-1.5">
-              <span className="absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75 animate-ping" />
-              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-blue-500" />
-            </span>
-            Live on testnet · MEV-proof settlement
-          </motion.span>
-
           <motion.div
             variants={fadeUp}
             custom={2}
