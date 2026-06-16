@@ -183,13 +183,11 @@ function NavBar() {
 
 function HeroSection() {
   return (
-    <section className="relative overflow-hidden pt-20 pb-32 lg:pt-28 lg:pb-44">
-      {/* Aurora blobs */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute -top-32 -left-32 w-[40rem] h-[40rem] bg-violet-200 rounded-full blur-3xl opacity-[0.35]" />
-        <div className="absolute top-20 -right-20 w-80 h-80 bg-rose-200 rounded-full blur-3xl opacity-[0.3]" />
-        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[30rem] h-64 bg-cyan-200 rounded-full blur-3xl opacity-[0.25]" />
-      </div>
+    <section className="relative overflow-hidden pt-20 pb-32 lg:pt-28 lg:pb-44 bg-white">
+      {/* Technical dot grid */}
+      <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(#d4d4d8_1px,transparent_1px)] [background-size:20px_20px] opacity-60" />
+      {/* Subtle vignette fade at edges */}
+      <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_80%_60%_at_50%_50%,transparent_60%,white_100%)]" />
 
       <div className="relative max-w-6xl mx-auto px-6">
         <div className="grid lg:grid-cols-[5fr_4fr] gap-12 lg:gap-20 items-center">
@@ -200,10 +198,11 @@ function HeroSection() {
               <p className={`${EYEBROW} border-l-2 border-zinc-200 pl-3`}>
                 Sealed-Bid Fair-Launch Auction · Sui Overflow 2026 · Testnet
               </p>
-              <h1 className="text-[2.8rem] lg:text-6xl xl:text-7xl font-bold tracking-tight leading-[1.05] text-zinc-900 mb-6">
+              <h1 className="text-[2.8rem] lg:text-6xl xl:text-7xl font-black tracking-[-0.04em] leading-[1.02] text-zinc-900 mb-6">
                 Lose your device.{" "}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-violet-500">
+                <span className="relative inline-block">
                   Keep your bid.
+                  <span className="absolute -bottom-1 left-0 right-0 h-[3px] bg-zinc-900 rounded-full opacity-[0.15]" />
                 </span>
               </h1>
             </motion.div>
@@ -264,7 +263,7 @@ function HeroSection() {
             transition={{ delay: 0.2, duration: 0.6 }}
             className="w-full"
           >
-            <div className={`${CARD} p-5 overflow-hidden`}>
+            <div className="rounded-[2rem] bg-white border border-black/[0.04] shadow-[0_32px_80px_-20px_rgba(0,0,0,0.12),0_0_0_1px_rgba(0,0,0,0.03)] p-5 overflow-hidden">
               <RecoveryHero />
             </div>
             <a
@@ -538,7 +537,7 @@ function FooterSection() {
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-[#F5F5F7]">
+    <main className="min-h-screen bg-[#FAFAFA]">
       <NavBar />
       <HeroSection />
       <ProblemSection />
