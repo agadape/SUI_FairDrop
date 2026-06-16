@@ -267,12 +267,12 @@ function HeroSection() {
             ))}
           </motion.div>
 
-          {/* illustration — tucked into the bottom-right corner, clear of text */}
+          {/* illustration — fills the empty right column (headline is left-aligned) */}
           <motion.div
             aria-hidden
-            className="pointer-events-none absolute -bottom-2 -right-2 z-0 hidden sm:block h-[42%] w-[38%] lg:h-[46%] lg:w-[40%] bg-[url('/illustrations/mobile-encryption.svg')] bg-contain bg-right-bottom bg-no-repeat opacity-[0.85]"
+            className="pointer-events-none absolute bottom-0 right-0 z-0 hidden sm:block h-[66%] w-[46%] lg:h-[74%] lg:w-[48%] bg-[url('/illustrations/mobile-encryption.svg')] bg-contain bg-right-bottom bg-no-repeat opacity-90"
             initial={{ opacity: 0, scale: 0.96, y: 12 }}
-            animate={{ opacity: 0.85, scale: 1, y: 0 }}
+            animate={{ opacity: 0.9, scale: 1, y: 0 }}
             transition={{ delay: 0.4, duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
           />
         </motion.div>
@@ -292,38 +292,28 @@ function HeroSection() {
               Enter the<br />sealed-bid auction
             </h2>
 
-            {/* rising area chart */}
-            <div className="relative z-10 mt-4 h-28">
-              {/* live tag + pulsing dot, parked at the curve's peak (top-right) */}
-              <div className="absolute right-0 -top-1 flex items-center gap-1.5">
-                <span className="rounded-full bg-yellow-300 px-2.5 py-0.5 text-[11px] font-bold text-zinc-900">live</span>
-                <span className="relative flex h-3 w-3">
-                  <span className="absolute inline-flex h-full w-full rounded-full bg-white opacity-60 animate-ping" />
-                  <span className="relative inline-flex h-3 w-3 rounded-full bg-white ring-2 ring-white/30" />
-                </span>
-              </div>
-              <svg viewBox="0 0 300 110" className="h-full w-full" preserveAspectRatio="none" aria-hidden>
-                <defs>
-                  <linearGradient id="chartArea" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="white" stopOpacity="0.3" />
-                    <stop offset="100%" stopColor="white" stopOpacity="0" />
-                  </linearGradient>
-                </defs>
-                {/* soft area under the curve */}
-                <motion.path
-                  d="M 6 88 C 44 84 66 70 102 70 C 138 70 150 80 184 72 C 226 62 250 30 294 20 L 294 110 L 6 110 Z"
-                  fill="url(#chartArea)" stroke="none"
-                  initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                  transition={{ delay: 1.1, duration: 0.8 }}
-                />
-                {/* the curve itself — uniform stroke regardless of x/y scaling */}
-                <motion.path
-                  d="M 6 88 C 44 84 66 70 102 70 C 138 70 150 80 184 72 C 226 62 250 30 294 20"
+            {/* rising line chart — clean white line, round nodes, pulsing peak */}
+            <div className="relative z-10 mt-2 h-28">
+              <span className="absolute right-9 top-1 z-10 rounded-full bg-yellow-300 px-2.5 py-0.5 text-[11px] font-bold text-zinc-900">live</span>
+              <svg viewBox="0 0 340 112" className="h-full w-full" preserveAspectRatio="xMidYMid meet" aria-hidden>
+                {/* the line */}
+                <motion.polyline
+                  points="10,86 120,66 226,74 330,24"
                   fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
-                  vectorEffect="non-scaling-stroke"
                   initial={{ pathLength: 0 }} animate={{ pathLength: 1 }}
-                  transition={{ delay: 0.7, duration: 1.2, ease: "easeOut" }}
+                  transition={{ delay: 0.6, duration: 1.2, ease: "easeOut" }}
                 />
+                {/* node dots */}
+                {[[120, 66], [226, 74]].map(([cx, cy]) => (
+                  <motion.circle key={`cn${cx}`} cx={cx} cy={cy} r="4" fill="white" stroke="#ff5a2c" strokeWidth="2"
+                    initial={{ opacity: 0, scale: 0 }} animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 1.3, duration: 0.4, ease: "backOut" }} />
+                ))}
+                {/* pulsing peak */}
+                <motion.circle cx="330" cy="24" r="10" fill="white"
+                  animate={{ r: [8, 13, 8], opacity: [0.35, 0.08, 0.35] }}
+                  transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }} />
+                <circle cx="330" cy="24" r="5" fill="white" />
               </svg>
             </div>
           </motion.a>
