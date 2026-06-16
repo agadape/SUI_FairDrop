@@ -270,7 +270,7 @@ function HeroSection() {
           {/* illustration — fills the empty right column (headline is left-aligned) */}
           <motion.div
             aria-hidden
-            className="pointer-events-none absolute bottom-4 right-[3%] z-0 hidden sm:block h-[70%] w-[50%] lg:h-[80%] lg:w-[53%] bg-[url('/illustrations/mobile-encryption.svg')] bg-contain bg-right-bottom bg-no-repeat opacity-90"
+            className="pointer-events-none absolute bottom-2 -right-[5%] z-0 hidden sm:block h-[70%] w-[50%] lg:h-[80%] lg:w-[53%] bg-[url('/illustrations/mobile-encryption.svg')] bg-contain bg-right-bottom bg-no-repeat opacity-90"
             initial={{ opacity: 0, scale: 0.96, y: 12 }}
             animate={{ opacity: 0.9, scale: 1, y: 0 }}
             transition={{ delay: 0.4, duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
