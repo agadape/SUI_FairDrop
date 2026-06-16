@@ -206,20 +206,21 @@ function HeroSection() {
           </radialGradient>
         </defs>
 
-        {/* TrustLine-style schematic: large dashed light-blue rounded "stage"
-            the cards sit inside, plus full-height vertical axes capped with
-            arrow tips + nodes. Everything dashed, very light, behind cards. */}
+        {/* TrustLine-style schematic: a large dashed light-blue rounded
+            container with an OPEN top (so the headline breathes), parallel
+            left rails, and vertical axes capped with arrow tips + nodes.
+            Everything dashed, very light, behind the cards. */}
 
-        {/* large rounded stage frame */}
+        {/* open-top rounded container (arms stop short of center → open top) */}
         <motion.path
           id="frame"
-          d="M 136 150 L 1144 150 Q 1216 150 1216 222 L 1216 628 Q 1216 700 1144 700 L 136 700 Q 64 700 64 628 L 64 222 Q 64 150 136 150 Z"
+          d="M 360 150 L 212 150 Q 140 150 140 222 L 140 628 Q 140 700 212 700 L 1068 700 Q 1140 700 1140 628 L 1140 222 Q 1140 150 1068 150 L 920 150"
           fill="none" stroke="#dbe2ee" strokeWidth="1.25" strokeDasharray="5 6" strokeLinecap="round" strokeLinejoin="round"
           initial={{ pathLength: 0, opacity: 0 }}
           animate={{ pathLength: 1, opacity: 1 }}
-          transition={{ delay: 0.5, duration: 1.8, ease: [0.16, 1, 0.3, 1] }} />
+          transition={{ delay: 0.5, duration: 1.9, ease: [0.16, 1, 0.3, 1] }} />
 
-        {/* left full-height vertical axis (up-arrow at top) */}
+        {/* left vertical axis — parallel to the container's left rail (up-arrow) */}
         <motion.line x1="210" y1="48" x2="210" y2="744"
           stroke="#dbe2ee" strokeWidth="1.25" strokeDasharray="5 6" strokeLinecap="round"
           initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.3, duration: 0.7 }} />
@@ -242,14 +243,14 @@ function HeroSection() {
             transition={{ delay: 1.6, duration: 0.4, ease: "backOut" }} />
         ))}
 
-        {/* junction nodes where axes meet the stage frame */}
-        {[[210, 150], [210, 700], [1010, 150], [1010, 700]].map(([cx, cy]) => (
+        {/* nodes: open-top arm ends + left axis ↔ bottom-rail junction */}
+        {[[360, 150], [920, 150], [210, 700]].map(([cx, cy]) => (
           <motion.circle key={`n${cx}-${cy}`} cx={cx} cy={cy} r="3" fill="#cdd6e6"
             initial={{ opacity: 0 }} animate={{ opacity: 1 }}
             transition={{ delay: 1.6, duration: 0.4 }} />
         ))}
 
-        {/* two pulses chasing around the stage */}
+        {/* two pulses chasing around the container */}
         {[1.9, 6.4].map((begin, i) => (
           <circle key={`p${i}`} r="4" fill="url(#pulseFill)">
             <animateMotion dur="9s" begin={`${begin}s`} repeatCount="indefinite" calcMode="linear">
