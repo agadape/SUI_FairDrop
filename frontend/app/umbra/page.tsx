@@ -1,17 +1,33 @@
 "use client";
 
 import Link from "next/link";
+import { motion } from "framer-motion";
 import { UmbraTerminal } from "@/app/components/UmbraTerminal";
 
 export default function UmbraPage() {
   return (
-    <main
+    <motion.main
       className="min-h-screen bg-white text-zinc-900 relative"
       style={{
         backgroundImage:
           "linear-gradient(to right,rgba(0,0,0,0.04) 1px,transparent 1px)," +
           "linear-gradient(to bottom,rgba(0,0,0,0.04) 1px,transparent 1px)",
         backgroundSize: "40px 40px",
+      }}
+      animate={{
+        backgroundPosition: [
+          "0px 0px",
+          "18px 8px",
+          "8px 18px",
+          "-8px 12px",
+          "0px 0px",
+        ],
+      }}
+      transition={{
+        duration: 18,
+        ease: "easeInOut",
+        repeat: Infinity,
+        repeatType: "loop",
       }}
     >
       <div className="mx-auto max-w-5xl px-4 sm:px-6 py-16 sm:py-24 space-y-12">
@@ -36,6 +52,6 @@ export default function UmbraPage() {
           <p className="mt-1">The left panel is a documented sandwich; the right panel is a live on-chain Umbra order.</p>
         </footer>
       </div>
-    </main>
+    </motion.main>
   );
 }
