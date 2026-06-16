@@ -6,6 +6,7 @@ import { ConnectButton } from "@mysten/dapp-kit";
 import { LiveAuction } from "@/app/components/LiveAuction";
 import { RecoveryHero } from "@/app/components/RecoveryHero";
 import { ArchitectureFlow } from "@/app/components/ArchitectureFlow";
+import Image from "next/image";
 import { PACKAGE_ID, AUCTION_ID, RANDOM_ID, NETWORK } from "@/lib/constants";
 
 // ─── Icons ───────────────────────────────────────────────────────────────────
@@ -19,7 +20,6 @@ function Icon({ d, className = "w-4 h-4" }: { d: string; className?: string }) {
 }
 const ICheck = (p: { className?: string }) => <Icon className={p.className} d="M20 6 9 17l-5-5" />;
 const IExternal = (p: { className?: string }) => <Icon className={p.className} d="M15 3h6v6M10 14 21 3M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5" />;
-const IArrowDown = (p: { className?: string }) => <Icon className={p.className} d="M12 5v14m-6-6 6 6 6-6" />;
 const IChevron = (p: { className?: string }) => <Icon className={p.className} d="M9 6l6 6-6 6" />;
 const IBolt = (p: { className?: string }) => <Icon className={p.className} d="M13 2 3 14h7l-1 8 10-12h-7l1-8z" />;
 const PATH_BOT = "M12 8V4H8M4 8h16v12H4zM2 14h2m16 0h2M9 13v2m6-2v2";
@@ -163,7 +163,7 @@ function NavBar() {
     <nav className="sticky top-0 z-50 border-b border-black/[0.05] bg-white/80 backdrop-blur-xl">
       <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <img src="/logo.png" alt="" className="w-7 h-7 rounded-md" />
+          <Image src="/logo.png" alt="" width={28} height={28} className="rounded-md" />
           <span className="text-zinc-900 font-bold text-lg tracking-tight">FairDrop</span>
           <span className="hidden sm:block text-[10px] text-zinc-400 font-medium border border-black/[0.06] rounded-full px-2.5 py-0.5 bg-zinc-50">
             Sui Overflow 2026
