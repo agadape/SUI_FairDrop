@@ -1,0 +1,22 @@
+{
+  "name": "fairdrop-umbra-video",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Remotion demo video for FairDrop + Umbra (Sui Overflow 2026)",
+  "scripts": {
+    "start": "remotion studio",
+    "render": "remotion render FairUmbra out/fairdrop-umbra.mp4 --codec=h264",
+    "still": "remotion still FairUmbra out/cover.png --frame=60",
+    "upgrade": "remotion upgrade"
+  },
+  "dependencies": {
+    "@remotion/cli": "^4.0.0",
+    "remotion": "^4.0.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.1",
+    "typescript": "^5.4.0"
+  }
+}

@@ -1,0 +1,5 @@
+node_modules/
+out/
+.remotion/
+public/clips/*.mp4
+public/vo.mp3
