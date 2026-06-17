@@ -72,7 +72,10 @@ export async function buildSealApproveTx(
       tx.object(CLOCK_ID),
     ],
   });
-  return await tx.build({ client: suiClient });
+  // Seal key servers BCS-decode txBytes as a TransactionKind (SessionKey does
+  // txBytes.slice(1) → ProgrammableTransaction). A full TransactionData build
+  // fails to decode → "Invalid PTB: Invalid BCS" + 403. Build kind-only.
+  return await tx.build({ client: suiClient, onlyTransactionKind: true });
 }
 
 // Decrypt ciphertext using a fully-configured SessionKey and the approve tx bytes.

@@ -132,7 +132,9 @@ export async function buildUmbraSealApproveTx(
     target: `${UMBRA_PACKAGE_ID}::umbra_policy::seal_approve`,
     arguments: [tx.pure.vector("u8", poolIdBytes), tx.object(orderId), tx.object(UMBRA_POOL_ID), tx.object(CLOCK_ID)],
   });
-  return await tx.build({ client: suiClient });
+  // Kind-only: Seal key servers BCS-decode txBytes as a TransactionKind. A full
+  // TransactionData build → "Invalid PTB: Invalid BCS" + 403 at the key server.
+  return await tx.build({ client: suiClient, onlyTransactionKind: true });
 }
 
 // Move Option<vector<u8>> arrives in several RPC/SDK shapes (flat bytes, {vec},
