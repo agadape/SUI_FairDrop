@@ -63,15 +63,43 @@ export const FairDropScene: React.FC<{ clipsReady: boolean }> = ({ clipsReady })
   </FootageFrame>
 );
 
-// ── Scene 3 · RANDOM TIE-BREAK (1:40–2:10) ──────────────────────────────────────
-export const TieBreakScene: React.FC<{ clipsReady: boolean }> = ({ clipsReady }) => (
-  <FootageFrame kicker="Verifiable resolution">
-    <ClipSlot name="tiebreak.mp4" ready={clipsReady} label="Resolve → SuiScan → sui::random 0x8" />
-    <Sequence from={30} durationInFrames={200}><Caption>Two bids tie at the clearing price.</Caption></Sequence>
-    <Sequence from={300} durationInFrames={250}><Caption>Validator randomness · sui::random @ 0x8</Caption></Sequence>
-    <Sequence from={620} durationInFrames={250}><Caption accent>The winner is chosen on-chain. Not by us.</Caption></Sequence>
-  </FootageFrame>
-);
+// ── Scene 3 · RANDOM TIE-BREAK (1:40–2:10) — branded, no footage needed ─────────
+export const TieBreakScene: React.FC = () => {
+  const head = useReveal(6);
+  const chip = useReveal(40, 14);
+  const rows = [
+    "Two bids tie at the clearing price.",
+    "The winner is drawn with validator DKG randomness —",
+    "consumed inside the settlement transaction.",
+  ];
+  return (
+    <AbsoluteFill style={{ background: COLORS.paper, alignItems: "center", justifyContent: "center", padding: 140 }}>
+      <div style={{ textAlign: "center", ...head }}>
+        <Kicker>Verifiable resolution</Kicker>
+        <div style={{ fontFamily: FONT, fontSize: 60, fontWeight: 700, color: COLORS.ink, marginTop: 10, lineHeight: 1.15 }}>
+          When bids tie, validators decide.
+        </div>
+      </div>
+      {/* on-chain randomness chip — the 0x8 beat */}
+      <div style={{ display: "flex", alignItems: "center", gap: 16, marginTop: 50, background: "#fff", border: `1px solid ${COLORS.grayLine}`, borderRadius: 16, padding: "22px 34px", boxShadow: "0 20px 60px rgba(37,99,235,0.10)", ...chip }}>
+        <span style={{ width: 12, height: 12, borderRadius: 999, background: COLORS.blue, boxShadow: `0 0 16px ${COLORS.blue}` }} />
+        <span style={{ fontFamily: MONO, fontSize: 34, color: COLORS.ink }}>sui::random</span>
+        <span style={{ fontFamily: MONO, fontSize: 34, color: COLORS.blue, fontWeight: 700 }}>0x8</span>
+      </div>
+      <div style={{ marginTop: 46, textAlign: "center" }}>
+        {rows.map((r, i) => {
+          const rr = useReveal(70 + i * 18, 12);
+          return (
+            <div key={i} style={{ fontFamily: FONT, fontSize: 27, color: i === 0 ? COLORS.ink : COLORS.gray, lineHeight: 1.5, ...rr }}>{r}</div>
+          );
+        })}
+      </div>
+      <div style={{ marginTop: 40, fontFamily: FONT, fontSize: 24, fontWeight: 600, color: COLORS.blue, ...useReveal(150, 14) }}>
+        Unpredictable before the transaction. Unbiasable by us.
+      </div>
+    </AbsoluteFill>
+  );
+};
 
 // ── Scene 4 · THE SEAM (2:10–2:45) — the hero beat ──────────────────────────────
 const CODE: { t: string; blue?: boolean; dim?: boolean }[] = [

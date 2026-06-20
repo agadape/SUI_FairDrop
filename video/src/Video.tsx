@@ -34,7 +34,7 @@ export const FairUmbra: React.FC = () => {
         <FairDropScene clipsReady={CLIPS_READY} />
       </Sequence>
       <Sequence {...next(SCENES.tiebreak)}>
-        <TieBreakScene clipsReady={CLIPS_READY} />
+        <TieBreakScene />
       </Sequence>
       <Sequence {...next(SCENES.seam)}>
         <SeamScene />
