@@ -257,7 +257,8 @@ export function UmbraTerminal() {
       setOrderBlobId(foundBlob);
       setNftId(foundNft);
       setNftStats(foundStats);
-    } catch (e) { console.error(e); }
+      return foundOrder;
+    } catch (e) { console.error(e); return null; }
   }, [client, account?.address]);
 
   useEffect(() => {
@@ -271,8 +272,8 @@ export function UmbraTerminal() {
 
   // ── Submit a blind order (the live hero moment) ─────────────────────────────
   async function handleSubmit() {
-    const busy = stage === "hashing" || stage === "sealing" || stage === "walrus" || stage === "submitting";
-    if (!account || busy) return;
+    const busy = stage === "hashing" || stage === "sealing" || stage === "walrus" || stage === "submitting" || stage === "done";
+    if (!account || busy || orderId) return; // orderId set or submit done → block duplicate (EAlreadyOrdered)
 
     // Validate input (guard against NaN / negative / non-finite BigInt throws).
     const priceF = parseFloat(price), qtyF = parseFloat(qty);
@@ -322,10 +323,15 @@ export function UmbraTerminal() {
     setStage("submitting"); toast.update(tid, { title: "Broadcasting — nothing for the mempool to see…" });
     const tx = buildSubmitOrderTx(hash, escrowMist, blobIdBytes);
     signAndExecute({ transaction: tx }, {
-      onSuccess: (data) => {
+      onSuccess: async (data) => {
         setStage("done"); setLastDigest(data.digest);
         toast.update(tid, { kind: "success", title: "Order live — the mempool saw a 32-byte shadow.", href: txUrl(data.digest) });
-        refresh();
+        // Poll until the new SealedOrder is indexed so the UI advances on its own —
+        // a single refetch races RPC indexing and leaves the submit button up.
+        for (let i = 0; i < 15; i++) {
+          if (await fetchUserObjects()) break;
+          await new Promise((r) => setTimeout(r, 1500));
+        }
       },
       onError: (e) => {
         setStage("error");
