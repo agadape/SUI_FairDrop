@@ -116,7 +116,7 @@ No other stack composes these into one guarantee.
 | FairDrop package | [`0xf08336…2e13`](https://suiscan.xyz/testnet/object/0xf08336b2299d763459348f25923e07bb0a4f38767d9e1244f6fb88cd12922e13) |
 | FairDrop auction | [`0xe3a9dc…1348`](https://suiscan.xyz/testnet/object/0xe3a9dca034664a0d75730f6e4c63858550787bf390befa6ae1c6858c25e21348) |
 | Umbra package | [`0xe515f1…5886`](https://suiscan.xyz/testnet/object/0xe515f10377693b0d1b44434783ab7d2e5ed58dd33415bd46b34ed61f4faf5886) |
-| Umbra pool | [`0x24b960…a85d`](https://suiscan.xyz/testnet/object/0x24b960574caacfdc41e668d327106fd3f4dcf09565616eaec732923bee9ca85d) |
+| Umbra pool | [`0x43641b…98a8`](https://suiscan.xyz/testnet/object/0x43641b09ffd909b1d5f60f85b114d87966a1cc1b5ab241d7abcf6da7b57598a8) |
 | Randomness | `0x8` (Sui shared object) |
 | Clock | `0x6` (Sui shared object) |
 
